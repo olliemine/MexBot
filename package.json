@@ -1,0 +1,17 @@
+{
+  "name": "mexbot",
+  "version": "1.0.0",
+  "description": "Bot para el servidor de ranking mexicano",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Oliver",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "fetch": "^1.1.0",
+    "mongoose": "^5.12.1",
+    "nodemon": "^2.0.7"
+  }
+}
