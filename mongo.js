@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
-const {password} = require("./config.json")
-const mongoPath = `mongodb+srv://MexBot:${password}@cluster0.dcqnu.mongodb.net/MexBot?retryWrites=true&w=majority`
+const {mongoPath} = require("./config.json")
 
 module.exports = async () => {
 	await mongoose.connect(mongoPath, {
