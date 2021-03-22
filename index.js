@@ -126,7 +126,7 @@ async function Verificacion(member, msg) {
 				"discord": member.id,
 				"beatsaber": body.playerInfo.playerId,
 				"active": true,
-				"lastrank": playerinfo.playerInfo.countryRank
+				"lastrank": body.playerInfo.countryRank
 			}
 			try {
 				await new UserSchema(user).save()
