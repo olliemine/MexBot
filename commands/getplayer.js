@@ -53,8 +53,8 @@ module.exports = {
 			.setThumbnail(`https://new.scoresaber.com${body.playerInfo.avatar}`)
 			.setFooter(lateFooter())
 			.addField("PP", `${body.playerInfo.pp}pp
-Week diference: ${Addplus(extra_playerinfo.players[0].difference)}${extra_playerinfo.players[0].difference}`)
-			.addField("RAKN", `Rank: #${body.playerInfo.rank}
+Week difference: ${Addplus(extra_playerinfo.players[0].difference)}${extra_playerinfo.players[0].difference}`)
+			.addField("RANK", `Rank: #${body.playerInfo.rank}
 Country rank: #${body.playerInfo.countryRank}`)
 			.addField("RANKED", `Average Accuracy: ${body.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
