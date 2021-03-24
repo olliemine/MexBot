@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-const { token } = require("./config.json")
+//const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -9,7 +9,7 @@ const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith("
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
-client.login(token)
+client.login(process.env.TOKEN)
 
 client.once("ready", async() => {
 	await mongo().then(() => {
@@ -20,7 +20,13 @@ client.once("ready", async() => {
 	console.log(`Prefix ${prefix}
 Running version: ${version}
 Ready POG`)
-
+	client.user.setPresence({
+		status: "online",
+		activity: {
+			name: "Beat Saber",
+			type: "PLAYING"
+		}
+	})
 })
 
 client.on("message", message => {
