@@ -1,5 +1,6 @@
 const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
+const fetch = require("node-fetch")
 
 module.exports = {
 	name: "forceupdate",
