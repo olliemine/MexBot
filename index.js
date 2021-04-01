@@ -98,14 +98,14 @@ async function UpdateUsers() {
 				if(body.playerInfo.countryRank <= 10) {//Top 10?
 					if(!discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.add(ranks[0])//Checkar si tiene role y si no dar role
 					if(body.playerInfo.countryRank <= 3) {//Es top 3?
-						if(!discorduser.roles.cache.find(r => r.id === ranks[body.playerInfo.countryRank])) {//Tiene el role?
+						if(!discorduser.roles.cache.find(r => r.id === ranks[body.playerInfo.countryRank].id)) {//Tiene el role?
 							discorduser.roles.add(ranks[body.playerInfo.countryRank])
 							for (let index = 1; index <= 3; index++) {
 								if(index == body.playerInfo.countryRank) continue
-								if(body.playerInfo.countryRank != index && discorduser.roles.cache.find(r => r.id === ranks[index])) discorduser.roles.remove(ranks[index])
+								if(discorduser.roles.cache.find(r => r.id === ranks[index].id)) discorduser.roles.remove(ranks[index])
 							}
 						}
-					} else if(discorduser.roles.cache.find(r => r.id === ranks[1]) || discorduser.roles.cache.find(r => r.id === ranks[2]) || discorduser.roles.cache.find(r => r.id === ranks[3])) { //Quitar roles y return
+					} else if(discorduser.roles.cache.find(r => r.id === ranks[1].id) || discorduser.roles.cache.find(r => r.id === ranks[2].id) || discorduser.roles.cache.find(r => r.id === ranks[3].id)) { //Quitar roles y return
 						for (let index = 1; index <= 3; index++) {
 							discorduser.roles.remove(ranks[index])
 						}
