@@ -9,6 +9,7 @@ const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith("
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
+const ms = require("ms")
 client.login(process.env.TOKEN)
 
 client.once("ready", async() => {
@@ -126,25 +127,34 @@ setInterval(() => {
 	UpdateUsers()
 }, (1000*60)*30)//30m
 
+function SendAndDelete(content, msg) {
+	msg.delete()
+	msg.reply(content).then(mesagege => {
+		setTimeout(() => {
+			mesagege.delete()
+		}, ms("5s"))
+	})
+}
+
 async function Verificacion(member, msg) {
 	if(+msg.content) {
 		await fetch(`https://new.scoresaber.com/api/player/${msg.content}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) return msg.channel.send("Invalid ID")
+			if(body.error) return SendAndDelete("Invalid ID", msg)
 			await mongo()
 			try {
 				exists = await UserSchema.countDocuments({ beatsaber: body.playerInfo.playerId })
 				if(exists != 0) {
-					return msg.channel.send("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```")
+					return SendAndDelete("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```", msg)
 				}
 			} catch(err) {
 				console.log(err)
-				return msg.channel.send("Unexpected error")
+				return SendAndDelete("Unexpected error", msg)
 			}
 			if(body.playerInfo.country != "MX") {
 				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-				return msg.channel.send("Gracias por visitar!")
+				return SendAndDelete("Gracias por visitar!", msg)
 			}
 			member.setNickname(`#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`)
 			const user = {
@@ -155,38 +165,38 @@ async function Verificacion(member, msg) {
 			}
 			try {
 				await new UserSchema(user).save()
-				msg.channel.send("Ahora estas verificado!")
+				SendAndDelete("Ahora estas verificado!", msg)
 			} catch(err) {
 				console.log(err)
-				return msg.channel.send("Unexpected Error")
+				return SendAndDelete("Unexpected Error", msg)
 			}
 			member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
 		})
 	} else { //MonkaS
-		if(msg.content.length <= 3 || msg.content.length >= 32) return msg.channel.send("Invalid Name")
+		if(msg.content.length <= 3 || msg.content.length >= 32) return SendAndDelete("Invalid Name", msg)
 		if(msg.content.toLowerCase() === "visitante") {
 			member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-			return msg.channel.send("Gracias por visitar!")
+			return SendAndDelete("Gracias por visitar!", msg)
 		}
 		await fetch(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) return msg.channel.send("Invalid Name")
-			if(body.players[1]) return msg.channel.send("Hay varios usuarios con este nombre, porfavor utiliza el Id")
+			if(body.error) return SendAndDelete("Invalid Name", msg)
+			if(body.players[1]) return SendAndDelete("Hay varios usuarios con este nombre, porfavor utiliza el Id", msg)
 			await mongo()
 			try {
 				exists = await UserSchema.countDocuments({ beatsaber: body.players[0].playerId })
 				if(exists != 0) {
-					return msg.channel.send("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```")
+					return SendAndDelete("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```", msg)
 				}
 			} catch(err) {
 				console.log(err)
-				return msg.channel.send("Unexpected error")
+				return SendAndDelete("Unexpected error", msg)
 			}
 
 			if(body.players[0].country != "MX") {
 				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-				return msg.channel.send("Gracias por visitar!")
+				return SendAndDelete("Gracias por visitar!", msg)
 			}
 			let playerinfo
 			await fetch(`https://new.scoresaber.com/api/player/${body.players[0].playerId}/full`).then(res => res.json()).then(body => playerinfo = body)
@@ -199,10 +209,10 @@ async function Verificacion(member, msg) {
 			}
 			try {
 				await new UserSchema(user).save()
-				msg.channel.send("Ahora estas verificado!")
+				SendAndDelete("Ahora estas verificado!", msg)
 			} catch(err) {
 				console.log(err)
-				return msg.channel.send("Unexpected Error")
+				return SendAndDelete("Unexpected Error", msg)
 			}
 			member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
 		})

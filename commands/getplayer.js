@@ -2,29 +2,34 @@ const fetch = require('node-fetch');
 const Discord = require("discord.js");
 const UserSchema = require("../models/UserSchema")
 const mongo = require("../mongo")
+const UserCacheSchema = require("../models/UserCacheSchema")
 
 module.exports = {
 	name: "getplayer",
 	description: "Te da la informacion de un jugador",
 	aliases: ["get"],
-	execute(message, DiscordClient, args) {
+	async execute(message, DiscordClient, args) {
 	let extra_playerinfo;
+	await mongo()
 	if (!Array.isArray(args) || !args.length) {
-		mongo().then(async () => {
-			try {
-				user = await UserSchema.findOne({ discord: message.author.id })
-				if(user) {
-					GetPlayerDataID(user.beatsaber)
-				} else {
-					message.channel.send("Tienes que mencionar a un usuario!")
-				}
-			} catch(error) {
-				console.log(error)
-				message.channel.send("Unexpected Error")
+		try {
+			user = await UserSchema.findOne({ discord: message.author.id })
+			if(user) {
+				GetPlayerDataID(user.beatsaber)
+			} else {
+				message.channel.send("Tienes que mencionar a un usuario!")
 			}
-		})
+		} catch(error) {
+			console.log(error)
+			message.channel.send("Unexpected Error")
+		}
 	} else {
-		GetPlayerDataName(args.join("%20"))
+		cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
+		if(cacheduser) {
+			GetPlayerDataID(cacheduser.id)
+		} else {
+			GetPlayerDataName(args.join("%20"))
+		}
 	}
 	function Addplus(number) {
 		if(number > 0) return "+"
@@ -46,15 +51,14 @@ module.exports = {
 				.setFooter(lateFooter())
 				return message.channel.send(embed)
 			}
-			await fetch(`https://new.scoresaber.com/api/players/by-name/${body.playerInfo.playerName}`).then(res => res.json()).then(body => extra_playerinfo = body)
+			const history = body.playerInfo.history.split(",")
 			const embed = new Discord.MessageEmbed()
 			.setColor("#4C9CF6")
 			.setTitle(body.playerInfo.playerName + ` :flag_${body.playerInfo.country.toLowerCase()}:`)
-			//.setThumbnail(`https://new.scoresaber.com${body.playerInfo.avatar}`)
-			.setThumbnail("https://scoresaber.com/imports/images/denyahsus.png")
+			.setThumbnail(`https://new.scoresaber.com${body.playerInfo.avatar}`)
 			.setFooter(lateFooter())
 			.addField("PP", `${body.playerInfo.pp}pp
-Week difference: ${Addplus(extra_playerinfo.players[0].difference)}${extra_playerinfo.players[0].difference}`)
+Week difference: ${Addplus(history[history.length - 7] - body.playerInfo.rank)}${history[history.length - 7] - body.playerInfo.rank}`)
 			.addField("RANK", `Rank: #${body.playerInfo.rank}
 Country rank: #${body.playerInfo.countryRank}`)
 			.addField("RANKED", `Average Accuracy: ${body.scoreStats.averageRankedAccuracy.toFixed(2)}%
@@ -79,8 +83,7 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 		const embed = new Discord.MessageEmbed()
 		.setColor("#4C9CF6")
 		.setTitle(player.playerName + ` :flag_${player.country.toLowerCase()}:`)
-		//.setThumbnail(`https://new.scoresaber.com${player.avatar}`)
-		.setThumbnail("https://scoresaber.com/imports/images/denyahsus.png")
+		.setThumbnail(`https://new.scoresaber.com${player.avatar}`)
 		.setFooter(lateFooter())
 		.addField("PP", `${player.pp}pp
 Week difference: ${Addplus(player.difference)}${player.difference}`, false)
@@ -88,6 +91,17 @@ Week difference: ${Addplus(player.difference)}${player.difference}`, false)
 Country rank: #${extra_playerinfo.playerInfo.countryRank}`, false)
 		.addField("RANKED", `Average Accuracy: ${extra_playerinfo.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${extra_playerinfo.scoreStats.rankedPlayCount}`)
+		if(Date.now() - message.createdTimestamp >= 1000*5) {
+			const user = {
+				name: args.join(" ").toLowerCase(),
+				id: player.playerId
+			}
+			try {
+				await new UserCacheSchema(user).save()
+			} catch(err) {
+				console.log(err)
+			}
+		}
 		message.channel.send(embed)
 	})
 	}
