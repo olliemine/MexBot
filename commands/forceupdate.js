@@ -40,7 +40,7 @@ module.exports = {
 						}
 					} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
 
-					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`)
+					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 					await UserSchema.findOneAndUpdate({
 						discord: user.discord
 					}, {

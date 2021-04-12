@@ -55,6 +55,7 @@ module.exports = {
 			const embed = new Discord.MessageEmbed()
 			.setColor("#4C9CF6")
 			.setTitle(body.playerInfo.playerName + ` :flag_${body.playerInfo.country.toLowerCase()}:`)
+			.setURL(`https://scoresaber.com/u/${body.playerInfo.playerId}`)
 			.setThumbnail(`https://new.scoresaber.com${body.playerInfo.avatar}`)
 			.setFooter(lateFooter())
 			.addField("PP", `${body.playerInfo.pp}pp
@@ -83,6 +84,7 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 		const embed = new Discord.MessageEmbed()
 		.setColor("#4C9CF6")
 		.setTitle(player.playerName + ` :flag_${player.country.toLowerCase()}:`)
+		.setURL(`https://scoresaber.com/u/${player.playerId}`)
 		.setThumbnail(`https://new.scoresaber.com${player.avatar}`)
 		.setFooter(lateFooter())
 		.addField("PP", `${player.pp}pp

@@ -113,7 +113,7 @@ async function UpdateUsers() {
 					}
 				} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
 				
-				discorduser.setNickname(`#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`)
+				discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 				await UserSchema.findOneAndUpdate({
 					discord: user.discord
 				}, {
@@ -156,12 +156,21 @@ async function Verificacion(member, msg) {
 				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 				return SendAndDelete("Gracias por visitar!", msg)
 			}
-			member.setNickname(`#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`)
+			const fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
+			let user_name
+			if(fullname.length > 32) {
+				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+				user_name = "!changename"
+			} else {
+				user_name = body.playerInfo.playerName
+			}
+			member.setNickname(`#${body.playerInfo.countryRank} | ${user_name}`)
 			const user = {
 				"discord": member.id,
 				"beatsaber": body.playerInfo.playerId,
 				"active": true,
-				"lastrank": body.playerInfo.countryRank
+				"lastrank": body.playerInfo.countryRank,
+				"name": user_name
 			}
 			try {
 				await new UserSchema(user).save()
@@ -200,12 +209,21 @@ async function Verificacion(member, msg) {
 			}
 			let playerinfo
 			await fetch(`https://new.scoresaber.com/api/player/${body.players[0].playerId}/full`).then(res => res.json()).then(body => playerinfo = body)
-			member.setNickname(`#${playerinfo.playerInfo.countryRank} | ${body.players[0].playerName}`)
+			const fullname = `#${playerinfo.playerInfo.countryRank} | ${body.players[0].playerName}`
+			let user_name
+			if(fullname.length > 32) {
+				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+				user_name = "!changename"
+			} else {
+				user_name = body.players[0].playerName
+			}
+			member.setNickname(`#${playerinfo.playerInfo.countryRank} | ${user_name}`)
 			const user = {
 				"discord": member.id,
 				"beatsaber": body.players[0].playerId,
 				"active": true,
-				"lastrank": playerinfo.playerInfo.countryRank
+				"lastrank": playerinfo.playerInfo.countryRank,
+				"name": user_name
 			}
 			try {
 				await new UserSchema(user).save()
