@@ -37,7 +37,7 @@ module.exports = {
 				}
 				user.setNickname(`${body.playerInfo.country} | ${username}`)
 				const nonuser = {
-					"discord": member.id,
+					"discord": user.user.id,
 					"beatsaber": body.playerInfo.playerId,
 					"active": true,
 					"lastrank": null,
