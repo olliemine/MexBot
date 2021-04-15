@@ -8,7 +8,7 @@ module.exports = {
 	async execute(message, DiscordClient) {
 		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		await mongo().then(async () => {
-			const UserList = await UserSchema.find({ active: true })
+			const UserList = await UserSchema.find({ active: true, lastrank: {$ne: null} })
 			const server = await DiscordClient.guilds.fetch("822514160154706010")
 			const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 			UserList.forEach(async (user) => {

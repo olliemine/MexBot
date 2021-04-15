@@ -87,7 +87,7 @@ for(const file of commandFiles) {
 
 async function UpdateUsers() {
 	await mongo().then(async () => {
-		const UserList = await UserSchema.find({ active: true })
+		const UserList = await UserSchema.find({ active: true, lastrank: {$ne: null} })
 		const server = await client.guilds.fetch("822514160154706010")
 		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 		UserList.forEach(async (user) => {
@@ -153,14 +153,36 @@ async function Verificacion(member, msg) {
 				return SendAndDelete("Unexpected error", msg)
 			}
 			if(body.playerInfo.country != "MX") {
-				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-				return SendAndDelete("Gracias por visitar!", msg)
+				const fullnonname = `${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
+				let usernonname
+				if(fullnonname.length > 32) {
+					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					usernonname = "changename"
+				} else {
+					usernonname = body.playerInfo.playerName
+				}
+				member.setNickname(`${body.playerInfo.country} | ${usernonname}`)
+				const nonuser = {
+					"discord": member.id,
+					"beatsaber": body.playerInfo.playerId,
+					"active": true,
+					"lastrank": null,
+					"name": usernonname
+				}
+				try {
+					await new UserSchema(nonuser).save()
+					SendAndDelete("Ahora estas verificado!", msg)
+				} catch(err) {
+					console.log(err)
+					return SendAndDelete("Unexpected Error", msg)
+				}
+				return member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			}
 			const fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
 			let user_name
 			if(fullname.length > 32) {
 				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-				user_name = "!changename"
+				user_name = "changename"
 			} else {
 				user_name = body.playerInfo.playerName
 			}
@@ -204,8 +226,30 @@ async function Verificacion(member, msg) {
 			}
 
 			if(body.players[0].country != "MX") {
-				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-				return SendAndDelete("Gracias por visitar!", msg)
+				const fullnonname = `${body.players[0].country} | ${body.players[0].playerName}`
+				let usernonname
+				if(fullnonname.length > 32) {
+					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					usernonname = "changename"
+				} else {
+					usernonname = body.players[0].playerName
+				}
+				member.setNickname(`${body.players[0].country} | ${usernonname}`)
+				const nonuser = {
+					"discord": member.id,
+					"beatsaber": body.players[0].playerId,
+					"active": true,
+					"lastrank": null,
+					"name": usernonname
+				}
+				try {
+					await new UserSchema(nonuser).save()
+					SendAndDelete("Ahora estas verificado!", msg)
+				} catch(err) {
+					console.log(err)
+					return SendAndDelete("Unexpected Error", msg)
+				}
+				return member.roles.add(msg.guild.roles.cache.get("822582078784012298"))				
 			}
 			let playerinfo
 			await fetch(`https://new.scoresaber.com/api/player/${body.players[0].playerId}/full`).then(res => res.json()).then(body => playerinfo = body)
@@ -213,7 +257,7 @@ async function Verificacion(member, msg) {
 			let user_name
 			if(fullname.length > 32) {
 				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-				user_name = "!changename"
+				user_name = "changename"
 			} else {
 				user_name = body.players[0].playerName
 			}

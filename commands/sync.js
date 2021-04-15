@@ -1,7 +1,6 @@
 const fetch = require("node-fetch")
 const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
-const Discord = require("discord.js")
 
 module.exports = {
 	name : "sync",
@@ -9,8 +8,8 @@ module.exports = {
 	async execute(message, DiscordClient, args) {
 		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		if(args.length != 2) return message.channel.send("Tienes que mencionar a un usuario y a un jugador de beatsaber")
-		let user = await message.guild.members.fetch(args[0])
-		if(!user) return message.channel.send("Ese usuario es invalido, porfavor pon su id que me da weba programar")
+		let user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
+		if(!user) return message.channel.send("Ese usuario es invalido")
 		if(!+args[1]) return message.channel.send("Sorry me da flojera implementar un beatsaber name looker porfavor usa el id Pepega")
 		fetch(`https://new.scoresaber.com/api/player/${args[1]}/full`)
 		.then(res => res.json())
@@ -26,15 +25,49 @@ module.exports = {
 				console.log(err)
 				return message.channel.send("Unexpected error")
 			}
+			let fullname
+			let username
 			if(body.playerInfo.country != "MX") {
-				return message.channel.send("men no es del mexico land Sadge")
+				fullname = `${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
+				if(fullname.length > 32) {
+					member.send("Su nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					username = "changename"
+				} else {
+					username = body.playerInfo.playerName
+				}
+				member.setNickname(`${body.playerInfo.country} | ${username}`)
+				const nonuser = {
+					"discord": member.id,
+					"beatsaber": body.playerInfo.playerId,
+					"active": true,
+					"lastrank": null,
+					"name": username
+				}
+				try {
+					await new UserSchema(nonuser).save()
+					SendAndDelete("Ahora estas verificado!", msg)
+				} catch(err) {
+					console.log(err)
+					return SendAndDelete("Unexpected Error", msg)
+				}
+				return member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			}
-			user.setNickname(`#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`)
+			
+			fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
+			if(fullname.length > 32) {
+				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+				username = "changename"
+			} else {
+				username = body.playerInfo.playerName
+			}
+			
+			user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
 			const obj = {
 				"discord": user.user.id,
 				"beatsaber": body.playerInfo.playerId,
 				"active": true,
-				"lastrank": body.playerInfo.countryRank
+				"lastrank": body.playerInfo.countryRank,
+				"name": username
 			}
 
 			try {

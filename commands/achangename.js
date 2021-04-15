@@ -21,7 +21,12 @@ module.exports = {
 		.then(res => res.json())
 		.then(async (body) => {
 			if(body.error) return message.channel.send("Unexpected error")
-			const fullname = `#${body.playerInfo.countryRank} | ${newname}`
+			let backtext
+			if(UserInfo.lastrank === null) {
+				backtext = `${body.playerInfo.country} | `
+			} else backtext = `#${body.playerInfo} | `
+
+			const fullname = `${backtext}${newname}`
 			if(fullname.length > 32) return message.channel.send("El nombre ta muy grande smh")
 			await UserSchema.findOneAndUpdate({
 				discord: user.id
