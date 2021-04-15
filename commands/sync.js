@@ -50,7 +50,7 @@ module.exports = {
 					console.log(err)
 					return message.channel.send("Unexpected Error")
 				}
-				return user.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+				return user.roles.add(message.guild.roles.cache.get("822582078784012298"))
 			}
 
 			fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
