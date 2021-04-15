@@ -30,12 +30,12 @@ module.exports = {
 			if(body.playerInfo.country != "MX") {
 				fullname = `${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
 				if(fullname.length > 32) {
-					member.send("Su nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					user.send("Su nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
 					username = "changename"
 				} else {
 					username = body.playerInfo.playerName
 				}
-				member.setNickname(`${body.playerInfo.country} | ${username}`)
+				user.setNickname(`${body.playerInfo.country} | ${username}`)
 				const nonuser = {
 					"discord": member.id,
 					"beatsaber": body.playerInfo.playerId,
@@ -50,12 +50,12 @@ module.exports = {
 					console.log(err)
 					return SendAndDelete("Unexpected Error", msg)
 				}
-				return member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+				return user.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			}
-			
+
 			fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
 			if(fullname.length > 32) {
-				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+				user.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
 				username = "changename"
 			} else {
 				username = body.playerInfo.playerName
