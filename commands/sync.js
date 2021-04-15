@@ -45,7 +45,7 @@ module.exports = {
 				}
 				try {
 					await new UserSchema(nonuser).save()
-					message.channel.send("Ahora estas verificado!")
+					message.channel.send("Ahora " + user.user.username + " es un visitante!")
 				} catch(err) {
 					console.log(err)
 					return message.channel.send("Unexpected Error")
