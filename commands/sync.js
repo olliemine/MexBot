@@ -45,10 +45,10 @@ module.exports = {
 				}
 				try {
 					await new UserSchema(nonuser).save()
-					SendAndDelete("Ahora estas verificado!", msg)
+					message.channel.send("Ahora estas verificado!")
 				} catch(err) {
 					console.log(err)
-					return SendAndDelete("Unexpected Error", msg)
+					return message.channel.send("Unexpected Error")
 				}
 				return user.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			}
