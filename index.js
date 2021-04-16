@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-//const { token } = require("./config.json")
+const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -10,7 +10,7 @@ const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
-client.login(process.env.TOKEN)
+client.login(token)
 
 client.once("ready", async() => {
 	await mongo().then(() => {
@@ -61,10 +61,15 @@ client.on("guildMemberAdd", async (member) => {
 	await mongo()
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
-		member.roles.add("822553633098170449")
 		const user = await UserSchema.findOne({ discord: member.id })
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
-			member.setNickname(`#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`)
+			if(body.playerInfo.country == "MX") {
+				member.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
+				member.roles.add("822553633098170449")
+			} else {
+				member.setNickname(`${body.playerInfo.country} | ${user.name}`)
+				member.roles.add("822582078784012298")
+			}
 			await UserSchema.findOneAndUpdate({
 				discord: member.id
 			}, {
@@ -135,6 +140,11 @@ function SendAndDelete(content, msg) {
 		}, ms("5s"))
 	})
 }
+function Refresh(uuid, pfp) {
+	if(pfp == "/images/steam.png") {
+		fetch(`https://new.scoresaber.com/api/user/${uuid}/refresh`)
+	}
+}
 
 async function Verificacion(member, msg) {
 	if(+msg.content) {
@@ -152,6 +162,7 @@ async function Verificacion(member, msg) {
 				console.log(err)
 				return SendAndDelete("Unexpected error", msg)
 			}
+			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
 			if(body.playerInfo.country != "MX") {
 				const fullnonname = `${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
 				let usernonname
@@ -209,7 +220,8 @@ async function Verificacion(member, msg) {
 			member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			return SendAndDelete("Gracias por visitar!", msg)
 		}
-		await fetch(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
+		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
+		await fetch(NAMEURL)
 		.then(res => res.json())
 		.then(async (body) => {
 			if(body.error) return SendAndDelete("Invalid Name", msg)
@@ -224,7 +236,7 @@ async function Verificacion(member, msg) {
 				console.log(err)
 				return SendAndDelete("Unexpected error", msg)
 			}
-
+			Refresh(body.players[0].playerId, body.players[0].avatar)
 			if(body.players[0].country != "MX") {
 				const fullnonname = `${body.players[0].country} | ${body.players[0].playerName}`
 				let usernonname
