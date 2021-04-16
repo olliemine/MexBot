@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-const { token } = require("./config.json")
+//const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -10,7 +10,7 @@ const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
-client.login(token)
+client.login(process.env.TOKEN)
 
 client.once("ready", async() => {
 	await mongo().then(() => {
