@@ -40,13 +40,14 @@ module.exports = {
 		return ""
 	}
 	function GetPlayerDataID(Id) {
-		fetch(`https://new.scoresaber.com/api/player/${Id}/full`)
+		const IDURL = new URL(`https://new.scoresaber.com/api/player/${Id}/full`)
+		fetch(IDURL)
 		.then(res => res.json())
 		.then(async body => {
 			if(body.error) { //Error handler
 				const embed = new Discord.MessageEmbed()
 				.setTitle("Error!")
-				.setDescription(info.error.message)
+				.setDescription(body.error.message)
 				.setColor("#F83939")
 				.setFooter(lateFooter())
 				return message.channel.send(embed)
@@ -68,10 +69,12 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 		})
 	}
 	function GetPlayerDataName(name) {
-		fetch(`https://new.scoresaber.com/api/players/by-name/${name}`)
+		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${name}`)
+		fetch(NAMEURL)
 		.then(res => res.json())
 		.then(async info => {
 		if(info.error) { //Error handler
+			if(+name) return GetPlayerDataID(name)
 			const embed = new Discord.MessageEmbed()
 			.setTitle("Error!")
 			.setDescription(info.error.message)
