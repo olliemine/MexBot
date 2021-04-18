@@ -20,7 +20,6 @@ client.once("ready", async() => {
 	}).catch((err) => {
 		errorhandle(client, err)
 	})
-	infohandle(client, "Bot Started", "MexBot has just been executed and started succesfully, if no error it also connected to mongodb succesfully")
 	console.log(`Prefix ${prefix}
 Running version: ${version}
 Ready POG`)
@@ -94,7 +93,6 @@ for(const file of commandFiles) {
 }
 
 async function UpdateUsers() {
-	infohandle(client, "Started UpdateUsers", "The bot has officially started its Update cycle and will continue to do so for some seconds")
 	await mongo().then(async () => {
 		const UserList = await UserSchema.find({ active: true, lastrank: {$ne: null} })
 		const server = await client.guilds.fetch("822514160154706010")
@@ -149,7 +147,7 @@ function Refresh(uuid, pfp) {
 		fetch(`https://new.scoresaber.com/api/user/${uuid}/refresh`)
 	}
 }
-function validURL(str) {
+function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
 	  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
 	  '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
@@ -158,11 +156,18 @@ function validURL(str) {
 	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
 	return !!pattern.test(str);
 }
-function VerifictionviaID(ID, msg, member) {
+function tryURLagain(url, msg, member) {
+	VerifictionviaID(url.slice(0, -14), msg, member)
+}
+function VerifictionviaID(ID, msg, member, link = true) {
 	fetch(`https://new.scoresaber.com/api/player/${ID}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) return SendAndDelete("Invalid ID", msg)
+			if(body.error) {
+				if(link == false) return tryURLagain(ID, msg, member)
+				infohandle(client, "Verification", `User ${member.user.username} failed verification with ${msg.content}`)
+				return SendAndDelete("Invalid ID", msg)
+			}
 			await mongo()
 			try {
 				exists = await UserSchema.countDocuments({ beatsaber: body.playerInfo.playerId })
@@ -233,7 +238,7 @@ async function Verificacion(member, msg) {
 	} else if(validURL(msg.content)) { //LINK?
 		let URLseparated = []
 		URLseparated = msg.content.split("/")
-		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member)
+		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member, false)
 	} else {//NAME?
 		if(msg.content.length <= 3 || msg.content.length >= 32) return SendAndDelete("Invalid Name", msg)
 		if(msg.content.toLowerCase() === "visitante") {
