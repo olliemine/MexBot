@@ -1,5 +1,6 @@
 const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
+const errorhandle = require("../error")
 
 module.exports = {
 	name : "desync",
@@ -16,7 +17,7 @@ module.exports = {
 				return message.channel.send("El men no tiene una cuenta (`!sync` para añadir una)")
 			}
 		} catch(err) {
-			console.log(err)
+			errorhandle(DiscordClient, err)
 			return message.channel.send("Unexpected error")
 		}
 		user.setNickname("")
@@ -24,9 +25,10 @@ module.exports = {
 			await UserSchema.findOneAndDelete({ discord: user.id })
 			message.channel.send("Ahora " + user.user.username + " no tiene cuenta")
 		} catch(err) {
-			console.log(err)
+			errorhandle(DiscordClient, err)
 			return message.channel.send("Unexpected Error")
 		}
+		user.roles.remove(message.guild.roles.cache.get("822582078784012298"))
 		user.roles.remove(message.guild.roles.cache.get("822553633098170449"))
 	},
 };

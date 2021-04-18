@@ -3,6 +3,7 @@ const Discord = require("discord.js");
 const UserSchema = require("../models/UserSchema")
 const mongo = require("../mongo")
 const UserCacheSchema = require("../models/UserCacheSchema")
+const errorhandle = require("../error")
 
 module.exports = {
 	name: "getplayer",
@@ -20,7 +21,7 @@ module.exports = {
 				message.channel.send("Tienes que mencionar a un usuario!")
 			}
 		} catch(error) {
-			console.log(error)
+			errorhandle(DiscordClient, error)
 			message.channel.send("Unexpected Error")
 		}
 	} else {
@@ -104,7 +105,7 @@ Ranked playcount: ${extra_playerinfo.scoreStats.rankedPlayCount}`)
 			try {
 				await new UserCacheSchema(user).save()
 			} catch(err) {
-				console.log(err)
+				errorhandle(DiscordClient, err)
 			}
 		}
 		message.channel.send(embed)

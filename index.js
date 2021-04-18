@@ -10,14 +10,17 @@ const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
+const errorhandle = require("./error")
+const infohandle = require("./info");
 client.login(process.env.TOKEN)
 
 client.once("ready", async() => {
 	await mongo().then(() => {
 		console.log("Connected to mongo")
-	}).catch(() => {
-		console.log("No funciona oh no")
+	}).catch((err) => {
+		errorhandle(client, err)
 	})
+	infohandle(client, "Bot Started", "MexBot has just been executed and started succesfully, if no error it also connected to mongodb succesfully")
 	console.log(`Prefix ${prefix}
 Running version: ${version}
 Ready POG`)
@@ -42,7 +45,7 @@ client.on("message", message => {
 	try{
 		command.execute(message, DiscordClient, args);
 	}catch(error) {
-		console.error(error);
+		errorhandle(client, error)
 		message.reply("There was a unexpected error.");
 	}
 })
@@ -91,13 +94,14 @@ for(const file of commandFiles) {
 }
 
 async function UpdateUsers() {
+	infohandle(client, "Started UpdateUsers", "The bot has officially started its Update cycle and will continue to do so for some seconds")
 	await mongo().then(async () => {
 		const UserList = await UserSchema.find({ active: true, lastrank: {$ne: null} })
 		const server = await client.guilds.fetch("822514160154706010")
 		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 		UserList.forEach(async (user) => {
 			await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
-				if(body.error) return console.log("Coudnt fetch user " + user.discord)
+				if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
 				if(user.lastrank == body.playerInfo.countryRank) return
 				const discorduser = await server.members.fetch(user.discord)
 				
@@ -145,10 +149,17 @@ function Refresh(uuid, pfp) {
 		fetch(`https://new.scoresaber.com/api/user/${uuid}/refresh`)
 	}
 }
-
-async function Verificacion(member, msg) {
-	if(+msg.content) {
-		await fetch(`https://new.scoresaber.com/api/player/${msg.content}/full`)
+function validURL(str) {
+	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+	  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+	  '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+	  '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+	  '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+	return !!pattern.test(str);
+}
+function VerifictionviaID(ID, msg, member) {
+	fetch(`https://new.scoresaber.com/api/player/${ID}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
 			if(body.error) return SendAndDelete("Invalid ID", msg)
@@ -156,68 +167,78 @@ async function Verificacion(member, msg) {
 			try {
 				exists = await UserSchema.countDocuments({ beatsaber: body.playerInfo.playerId })
 				if(exists != 0) {
+					infohandle(client, "Verification", `User ${member.user.username} tried to login to ${body.playerInfo.playerName} which has already been taken`)
 					return SendAndDelete("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```", msg)
 				}
 			} catch(err) {
-				console.log(err)
+				errorhandle(client, err)
 				return SendAndDelete("Unexpected error", msg)
 			}
 			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
-			if(body.playerInfo.country != "MX") {
-				const fullnonname = `${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
-				let usernonname
-				if(fullnonname.length > 32) {
+			let fullname
+			let username
+			let user
+			//Easier to read, i think
+			if(body.playerInfo.country != "MX") {//non mex
+				fullname = `${body.playerInfo.country} | ${body.playerInfo.playerName}`
+				if(fullname.length > 32) {
 					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-					usernonname = "changename"
+					username = "changename"
 				} else {
-					usernonname = body.playerInfo.playerName
+					username = body.playerInfo.playerName
 				}
-				member.setNickname(`${body.playerInfo.country} | ${usernonname}`)
-				const nonuser = {
+				member.setNickname(`${body.playerInfo.country} | ${username}`)
+				user = {
 					"discord": member.id,
 					"beatsaber": body.playerInfo.playerId,
 					"active": true,
 					"lastrank": null,
-					"name": usernonname
+					"name": username
 				}
-				try {
-					await new UserSchema(nonuser).save()
-					SendAndDelete("Ahora estas verificado!", msg)
-				} catch(err) {
-					console.log(err)
-					return SendAndDelete("Unexpected Error", msg)
+				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+			} else { //mex
+				fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
+				if(fullname.length > 32) {
+					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					username = "changename"
+				} else {
+					username = body.playerInfo.playerName
 				}
-				return member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-			}
-			const fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
-			let user_name
-			if(fullname.length > 32) {
-				member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-				user_name = "changename"
-			} else {
-				user_name = body.playerInfo.playerName
-			}
-			member.setNickname(`#${body.playerInfo.countryRank} | ${user_name}`)
-			const user = {
-				"discord": member.id,
-				"beatsaber": body.playerInfo.playerId,
-				"active": true,
-				"lastrank": body.playerInfo.countryRank,
-				"name": user_name
+				member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
+				user = {
+					"discord": member.id,
+					"beatsaber": body.playerInfo.playerId,
+					"active": true,
+					"lastrank": body.playerInfo.countryRank,
+					"name": username
+				}
+				member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+
+
 			}
 			try {
 				await new UserSchema(user).save()
 				SendAndDelete("Ahora estas verificado!", msg)
 			} catch(err) {
-				console.log(err)
+				errorhandle(client, err)
 				return SendAndDelete("Unexpected Error", msg)
 			}
-			member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+			infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully`)
 		})
-	} else { //MonkaS
+}
+
+async function Verificacion(member, msg) {
+	if(+msg.content) {//ID?
+		VerifictionviaID(msg.content, msg, member)
+	} else if(validURL(msg.content)) { //LINK?
+		let URLseparated = []
+		URLseparated = msg.content.split("/")
+		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member)
+	} else {//NAME?
 		if(msg.content.length <= 3 || msg.content.length >= 32) return SendAndDelete("Invalid Name", msg)
 		if(msg.content.toLowerCase() === "visitante") {
 			member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+			infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
 			return SendAndDelete("Gracias por visitar!", msg)
 		}
 		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
@@ -230,10 +251,11 @@ async function Verificacion(member, msg) {
 			try {
 				exists = await UserSchema.countDocuments({ beatsaber: body.players[0].playerId })
 				if(exists != 0) {
+					infohandle(client, "Verification", `User ${member.user.username} tried to login to ${body.playerInfo.playerName} which has already been taken`)
 					return SendAndDelete("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```", msg)
 				}
 			} catch(err) {
-				console.log(err)
+				errorhandle(client, err)
 				return SendAndDelete("Unexpected error", msg)
 			}
 			Refresh(body.players[0].playerId, body.players[0].avatar)
@@ -258,9 +280,10 @@ async function Verificacion(member, msg) {
 					await new UserSchema(nonuser).save()
 					SendAndDelete("Ahora estas verificado!", msg)
 				} catch(err) {
-					console.log(err)
+					errorhandle(client, err)
 					return SendAndDelete("Unexpected Error", msg)
 				}
+				infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.players[0].playerName} successfully`)
 				return member.roles.add(msg.guild.roles.cache.get("822582078784012298"))				
 			}
 			let playerinfo
@@ -285,9 +308,10 @@ async function Verificacion(member, msg) {
 				await new UserSchema(user).save()
 				SendAndDelete("Ahora estas verificado!", msg)
 			} catch(err) {
-				console.log(err)
+				errorhandle(client, err)
 				return SendAndDelete("Unexpected Error", msg)
 			}
+			infohandle(client, "Verification", `User ${member.user.username} verified with account ${playerinfo.playerInfo.playerName} successfully`)
 			member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
 		})
 	}

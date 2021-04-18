@@ -1,6 +1,7 @@
 const fetch = require("node-fetch")
 const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
+const errorhandle = require("../error")
 
 module.exports = {
 	name : "sync",
@@ -22,7 +23,7 @@ module.exports = {
 					return message.channel.send("El men ya tiene una cuenta (`!desync` para borrarla)")
 				}
 			} catch(err) {
-				console.log(err)
+				errorhandle(DiscordClient, err)
 				return message.channel.send("Unexpected error")
 			}
 			let fullname
@@ -47,7 +48,7 @@ module.exports = {
 					await new UserSchema(nonuser).save()
 					message.channel.send("Ahora " + user.user.username + " es un visitante!")
 				} catch(err) {
-					console.log(err)
+					errorhandle(DiscordClient, err)
 					return message.channel.send("Unexpected Error")
 				}
 				return user.roles.add(message.guild.roles.cache.get("822582078784012298"))
@@ -74,7 +75,7 @@ module.exports = {
 				await new UserSchema(obj).save()
 				message.channel.send("Ahora " + user.user.username + " esta verificado!")
 			} catch(err) {
-				console.log(err)
+				errorhandle(client, err)
 				return message.channel.send("Unexpected Error")
 			}
 			user.roles.add(message.guild.roles.cache.get("822553633098170449"))
