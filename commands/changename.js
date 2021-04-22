@@ -18,7 +18,7 @@ module.exports = {
 					let backtext
 					if(user.lastrank === null) {
 						backtext = `${body.playerInfo.country} | `
-					} else backtext = `#${body.playerInfo} | `
+					} else backtext = `#${body.playerInfo.countryRank} | `
 					
 					const fullname = `${backtext}${body.playerInfo.playerName}`
 					if(fullname.length > 32) return message.channel.send("Could'nt change name because default name is too big.")
@@ -43,7 +43,7 @@ module.exports = {
 				if(user.lastrank === null) {
 					backtext = `${body.playerInfo.country} | `
 				} else {
-					backtext = `#${body.playerInfo} | `
+					backtext = `#${body.playerInfo.countryRank} | `
 				}
 				const full_new_name = `${backtext}${new_name}`
 				if(full_new_name.length > 32) return message.channel.send("El nombre es muy largo, porfavor elige un nombre mas pequeño")
