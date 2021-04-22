@@ -42,7 +42,8 @@ module.exports = {
 					"beatsaber": body.playerInfo.playerId,
 					"active": true,
 					"lastrank": null,
-					"name": username
+					"name": username,
+					"realname": body.playerInfo.playerName
 				}
 				try {
 					await new UserSchema(nonuser).save()
@@ -68,7 +69,8 @@ module.exports = {
 				"beatsaber": body.playerInfo.playerId,
 				"active": true,
 				"lastrank": body.playerInfo.countryRank,
-				"name": username
+				"name": username,
+				"realname": body.playerInfo.playerName
 			}
 
 			try {

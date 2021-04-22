@@ -70,6 +70,7 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 		})
 	}
 	function GetPlayerDataName(name) {
+		if(name.length <= 3 || name.length > 32) return message.channel.send("Invalid Name lenght")
 		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${name}`)
 		fetch(NAMEURL)
 		.then(res => res.json())

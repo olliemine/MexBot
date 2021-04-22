@@ -13,6 +13,7 @@ const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info");
 client.login(process.env.TOKEN)
+const UpdateUsers = require("./UpdateUsers");
 
 client.once("ready", async() => {
 	await mongo().then(() => {
@@ -30,6 +31,10 @@ Ready POG`)
 			type: "PLAYING"
 		}
 	})
+	//const guld = client.guilds.cache.get("822514160154706010");
+	//const membre = guld.members.cache.get("138842995029049344");
+	//
+	//console.log(membre.user.presence.activities[1].state);
 })
 
 client.on("message", message => {
@@ -92,46 +97,8 @@ for(const file of commandFiles) {
 	}
 }
 
-async function UpdateUsers() {
-	await mongo().then(async () => {
-		const UserList = await UserSchema.find({ active: true, lastrank: {$ne: null} })
-		const server = await client.guilds.fetch("822514160154706010")
-		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
-		UserList.forEach(async (user) => {
-			await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
-				if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
-				if(user.lastrank == body.playerInfo.countryRank) return
-				const discorduser = await server.members.fetch(user.discord)
-				
-				if(body.playerInfo.countryRank <= 10) {//Top 10?
-					if(!discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.add(ranks[0])//Checkar si tiene role y si no dar role
-					if(body.playerInfo.countryRank <= 3) {//Es top 3?
-						if(!discorduser.roles.cache.find(r => r.id === ranks[body.playerInfo.countryRank].id)) {//Tiene el role?
-							discorduser.roles.add(ranks[body.playerInfo.countryRank])
-							for (let index = 1; index <= 3; index++) {
-								if(index == body.playerInfo.countryRank) continue
-								if(discorduser.roles.cache.find(r => r.id === ranks[index].id)) discorduser.roles.remove(ranks[index])
-							}
-						}
-					} else if(discorduser.roles.cache.find(r => r.id === ranks[1].id) || discorduser.roles.cache.find(r => r.id === ranks[2].id) || discorduser.roles.cache.find(r => r.id === ranks[3].id)) { //Quitar roles y return
-						for (let index = 1; index <= 3; index++) {
-							discorduser.roles.remove(ranks[index])
-						}
-					}
-				} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
-				
-				discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
-				await UserSchema.findOneAndUpdate({
-					discord: user.discord
-				}, {
-					lastrank: body.playerInfo.countryRank
-				})
-			})
-		})
-	})
-}
 setInterval(() => {
-	UpdateUsers()
+	UpdateUsers(client)
 }, (1000*60)*30)//30m
 
 function SendAndDelete(content, msg) {
@@ -156,15 +123,12 @@ function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
 	return !!pattern.test(str);
 }
-function tryURLagain(url, msg, member) {
-	VerifictionviaID(url.slice(0, -14), msg, member)
-}
 function VerifictionviaID(ID, msg, member, link = true) {
 	fetch(`https://new.scoresaber.com/api/player/${ID}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
 			if(body.error) {
-				if(link == false) return tryURLagain(ID, msg, member)
+				if(link == false) return VerifictionviaID(ID.slice(0, -14), msg, member)
 				infohandle(client, "Verification", `User ${member.user.username} failed verification with ${msg.content}`)
 				return SendAndDelete("Invalid ID", msg)
 			}
@@ -198,7 +162,8 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"beatsaber": body.playerInfo.playerId,
 					"active": true,
 					"lastrank": null,
-					"name": username
+					"name": username,
+					"realname": null
 				}
 				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			} else { //mex
@@ -215,7 +180,8 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"beatsaber": body.playerInfo.playerId,
 					"active": true,
 					"lastrank": body.playerInfo.countryRank,
-					"name": username
+					"name": username,
+					"realname": body.playerInfo.playerName
 				}
 				member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
 
@@ -240,7 +206,7 @@ async function Verificacion(member, msg) {
 		URLseparated = msg.content.split("/")
 		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member, false)
 	} else {//NAME?
-		if(msg.content.length <= 3 || msg.content.length >= 32) return SendAndDelete("Invalid Name", msg)
+		if(msg.content.length <= 3 || msg.content.length > 32) return SendAndDelete("Invalid Name", msg)
 		if(msg.content.toLowerCase() === "visitante") {
 			member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
@@ -279,7 +245,8 @@ async function Verificacion(member, msg) {
 					"beatsaber": body.players[0].playerId,
 					"active": true,
 					"lastrank": null,
-					"name": usernonname
+					"name": usernonname,
+					"realname": null
 				}
 				try {
 					await new UserSchema(nonuser).save()
@@ -307,7 +274,8 @@ async function Verificacion(member, msg) {
 				"beatsaber": body.players[0].playerId,
 				"active": true,
 				"lastrank": playerinfo.playerInfo.countryRank,
-				"name": user_name
+				"name": user_name,
+				"realname": body.players[0].playerName
 			}
 			try {
 				await new UserSchema(user).save()

@@ -5,7 +5,8 @@ const UserSchema = new mongoose.Schema({
 	"beatsaber": String,
 	"active": Boolean,
 	"lastrank": Number,
-	"name": String
+	"name": String,
+	"realname": String
 })
 
 module.exports = mongoose.model("users", UserSchema)
