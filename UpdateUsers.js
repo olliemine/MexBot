@@ -62,6 +62,10 @@ module.exports = async (Client) => {
 			}
 		} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
 	}
+	function EmojiArrow(unumber, dnumber) {
+		if(unumber < dnumber) return "⬆️"
+		return "⬇️"
+	}
 	if(searchusers.length) {
 		searchusers.forEach((user) => {
 			info.forEach(async (row) => {
@@ -69,7 +73,7 @@ module.exports = async (Client) => {
 					const discorduser = await server.members.fetch(user.discord)
 					CheckRoles(row[0], discorduser)
 					discorduser.setNickname(`#${row[0]} | ${user.name}`)
-					usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank}`)
+					usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
 					await UserSchema.findOneAndUpdate({
 						discord: user.discord
 					}, {
@@ -86,7 +90,7 @@ module.exports = async (Client) => {
 			if(user.lastrank == body.playerInfo.countryRank) return
 			const discorduser = await server.members.fetch(user.discord)
 			CheckRoles(body.playerInfo.countryRank, discorduser)
-			usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank}`)
+			usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank} ${EmojiArrow(body,playerInfo.countryRank, user.lastrank)}`)
 			discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 			await UserSchema.findOneAndUpdate({
 				discord: user.discord
