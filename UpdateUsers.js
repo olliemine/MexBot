@@ -10,9 +10,7 @@ module.exports = async (Client) => {
 	//Gets puppeteer to get all top 50 players
 	await mongo()
 	const users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 } })
-	const browser = await puppeteer.launch({
-		headless: true
-	})
+	const browser = await puppeteer.launch({args: ['--no-sandbox']})
 	const page = await browser.newPage()
 	await page.goto("https://scoresaber.com/global?country=mx", { waitUntil: "networkidle0" })
 	let info
