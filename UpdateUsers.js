@@ -40,7 +40,6 @@ module.exports = async (Client) => {
 		if(!ifis) searchusers.push(user)
 		return		
 	})
-	console.log(searchusers)
 	const server = await Client.guilds.fetch("822514160154706010")
 	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 	
@@ -70,7 +69,7 @@ module.exports = async (Client) => {
 					const discorduser = await server.members.fetch(user.discord)
 					CheckRoles(row[0], discorduser)
 					discorduser.setNickname(`#${row[0]} | ${user.name}`)
-					usersupdated.push(user.realname)
+					usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank}`)
 					await UserSchema.findOneAndUpdate({
 						discord: user.discord
 					}, {
@@ -87,7 +86,7 @@ module.exports = async (Client) => {
 			if(user.lastrank == body.playerInfo.countryRank) return
 			const discorduser = await server.members.fetch(user.discord)
 			CheckRoles(body.playerInfo.countryRank, discorduser)
-			usersupdated.push(user.realname)
+			usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank}`)
 			discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 			await UserSchema.findOneAndUpdate({
 				discord: user.discord
