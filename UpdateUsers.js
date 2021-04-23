@@ -4,6 +4,7 @@ const fetch = require("node-fetch")
 const puppeteer = require("puppeteer")
 const errorhandle = require("./error")
 const infohandle = require("./info")
+const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
 	
@@ -100,4 +101,29 @@ module.exports = async (Client) => {
 		})
 	})
 	if(usersupdated.length) infohandle(Client, "Updated Users", `Updated users ${usersupdated.join(", ")}`)
+	let leaderboardobject = []
+	info.forEach((row) => {
+		leaderboardobject.push({
+			"playername": row[1],
+			"pp": row[2]
+		})
+	})
+	const leaderboard = {
+		"date": Date.now(),
+		"leaderboard": leaderboardobject
+	}
+	function Compare(leaderboard1, leaderboard2) {
+		let comparison = true
+		let count = 0
+		leaderboard1.forEach((user) => {
+			count++
+			if(user.playername != leaderboard2[count - 1].playername) comparison = false
+		})
+		return comparison
+	}
+	const anotherleaderboard = await MXleaderboard.find({ "date": -1 }).limit(1)
+	if(!Compare(leaderboard.leaderboard, anotherleaderboard.leaderboard)) {
+		await new MXleaderboard(leaderboard).save()
+		infohandle(Client, "Saved", "Saved mx leaderboard, this is a temporary info handler.")
+	}
 }
