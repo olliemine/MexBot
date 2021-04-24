@@ -103,33 +103,33 @@ module.exports = async (Client) => {
 		})
 	})
 	if(usersupdated.length) infohandle(Client, "Updated Users", `Updated users ${usersupdated.join(", ")}`)
-	let leaderboardobject = []
-	info.forEach((row) => {
-		leaderboardobject.push({
-			"playername": row[1],
-			"pp": row[2]
-		})
-	})
-	const leaderboard = {
-		"date": Date.now(),
-		"leaderboard": leaderboardobject
-	}
-	function Compare(leaderboard1, leaderboard2) {
-		let comparison = true
-		let count = 0
-		leaderboard1.forEach((user) => {
-			count++
-			if(user.playername != leaderboard2[count - 1].playername) comparison = false
-		})
-		return comparison
-	}
-	const anotherleaderboard = await MXleaderboard.find().sort({ date: -1 }).limit(1)
-	try {
-		if(!Compare(leaderboard.leaderboard, anotherleaderboard[0].leaderboard)) {
-			await new MXleaderboard(leaderboard).save()
-			infohandle(Client, "Saved", "Saved mx leaderboard, this is a temporary info handler.")
-		}
-	} catch(err) {
-		errorhandle(Client, err)
-	}
+	//let leaderboardobject = []
+	//info.forEach((row) => {
+	//	leaderboardobject.push({
+	//		"playername": row[1],
+	//		"pp": row[2]
+	//	})
+	//})
+	//const leaderboard = {
+	//	"date": Date.now(),
+	//	"leaderboard": leaderboardobject
+	//}
+	//function Compare(leaderboard1, leaderboard2) {
+	//	let comparison = true
+	//	let count = 0
+	//	leaderboard1.forEach((user) => {
+	//		count++
+	//		if(user.playername != leaderboard2[count - 1].playername) comparison = false
+	//	})
+	//	return comparison
+	//}
+	//const anotherleaderboard = await MXleaderboard.find().sort({ date: -1 }).limit(1)
+	//try {
+	//	if(!Compare(leaderboard.leaderboard, anotherleaderboard[0].leaderboard)) {
+	//		await new MXleaderboard(leaderboard).save()
+	//		infohandle(Client, "Saved", "Saved mx leaderboard, this is a temporary info handler.")
+	//	}
+	//} catch(err) {
+	//	errorhandle(Client, err)
+	//}
 }
