@@ -11,7 +11,9 @@ module.exports = async (Client) => {
 	//Gets puppeteer to get all top 50 players
 	await mongo()
 	const users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 } })
-	const browser = await puppeteer.launch({args: ['--no-sandbox']})
+	const browser = await puppeteer.launch({
+		args: ['--no-sandbox']
+	})
 	const page = await browser.newPage()
 	await page.goto("https://scoresaber.com/global?country=mx", { waitUntil: "networkidle0" })
 	let info
@@ -121,9 +123,13 @@ module.exports = async (Client) => {
 		})
 		return comparison
 	}
-	const anotherleaderboard = await MXleaderboard.find({ "date": -1 }).limit(1)
-	if(!Compare(leaderboard.leaderboard, anotherleaderboard.leaderboard)) {
-		await new MXleaderboard(leaderboard).save()
-		infohandle(Client, "Saved", "Saved mx leaderboard, this is a temporary info handler.")
+	const anotherleaderboard = await MXleaderboard.find().sort({ date: -1 }).limit(1)
+	try {
+		if(!Compare(leaderboard.leaderboard, anotherleaderboard[0].leaderboard)) {
+			await new MXleaderboard(leaderboard).save()
+			infohandle(Client, "Saved", "Saved mx leaderboard, this is a temporary info handler.")
+		}
+	} catch(err) {
+		errorhandle(Client, err)
 	}
 }
