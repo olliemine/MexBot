@@ -69,10 +69,13 @@ module.exports = async (Client) => {
 		if(unumber < dnumber) return "⬆️"
 		return "⬇️"
 	}
+	let otherusers = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
 	if(searchusers.length) {
 		searchusers.forEach((user) => {
+			let ifLooped = false	
 			info.forEach(async (row) => {
 				if(row[1] == user.realname) {
+					ifLooped = true
 					const discorduser = await server.members.fetch(user.discord)
 					CheckRoles(row[0], discorduser)
 					discorduser.setNickname(`#${row[0]} | ${user.name}`)
@@ -84,9 +87,9 @@ module.exports = async (Client) => {
 					})
 				}
 			})
+			if(!ifLooped) otherusers.push(user)
 		})
 	}
-	const otherusers = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
 	otherusers.forEach(async (user) => {
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
