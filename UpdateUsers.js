@@ -96,7 +96,7 @@ module.exports = async (Client) => {
 			if(user.lastrank == body.playerInfo.countryRank) return
 			const discorduser = await server.members.fetch(user.discord)
 			CheckRoles(body.playerInfo.countryRank, discorduser)
-			usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank} ${EmojiArrow(body,playerInfo.countryRank, user.lastrank)}`)
+			usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank} ${EmojiArrow(body.playerInfo.countryRank, user.lastrank)}`)
 			discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 			await UserSchema.findOneAndUpdate({
 				discord: user.discord
