@@ -24,7 +24,8 @@ module.exports = {
 			let backtext
 			if(UserInfo.lastrank === null) {
 				backtext = `${body.playerInfo.country} | `
-			} else backtext = `#${body.playerInfo.countryRank} | `
+			} else if(UserInfo.active == false) backtext = `IA | `
+			else backtext = `#${body.playerInfo.countryRank} | `
 
 			const fullname = `${backtext}${newname}`
 			if(fullname.length > 32) return message.channel.send("El nombre ta muy grande smh")

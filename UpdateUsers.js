@@ -38,24 +38,34 @@ module.exports = async (Client) => {
 	}
 	let searchusers = []
 	let usersupdated = []
-	function InactiveAccount(user) {
+	const server = await Client.guilds.fetch("822514160154706010")
+	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+	async function InactiveAccount(user) {
 		const discorduser = await server.members.fetch(user.discord)
-		discorduser.message("Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!")
+		discorduser.send("Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!")
+		discorduser.setNickname(`IA | ${user.name}`)
 		await UserSchema.findOneAndUpdate({
 			discord: user.discord
 		}, {
 			active: false
 		})
+		ranks.forEach((rank) => {
+			discorduser.roles.remove(rank)
+		})
 		infohandle(Client, "User updated", `User ${user.name} is now inactive`)
 	}
-	users.forEach((user) => {
-		if(user.lastrank == 0) return InactiveAccount(user)
+	users.forEach(async (user) => {
+		if(user.lastrank == 0) {	
+			try {
+				await InactiveAccount(user)
+			} catch(err) {
+				errorhandle(Client, err)
+			}
+		}
 		const ifis = info[user.lastrank - 1][1] == user.realname ? true : false //For some weird reason i cant put this directly in the if statement, weird	
 		if(!ifis) searchusers.push(user)
-		return		
+		return
 	})
-	const server = await Client.guilds.fetch("822514160154706010")
-	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 	
 	
 	function CheckRoles(number, discorduser) {
