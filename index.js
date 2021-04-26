@@ -98,7 +98,11 @@ for(const file of commandFiles) {
 }
 
 setInterval(() => {
-	UpdateUsers(client)
+	try {
+		UpdateUsers(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
 }, (1000*60)*30)//30m
 
 function SendAndDelete(content, msg) {

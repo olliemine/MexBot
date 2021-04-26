@@ -5,6 +5,7 @@ const fetch = require("node-fetch")
 module.exports = {
 	name : "changename",
 	description: "Te cambia el nombre",
+	aliases: ["ch"],
 	async execute(message, DiscordClient, args) {
 		await mongo()
 		if (!Array.isArray(args) || !args.length) {
