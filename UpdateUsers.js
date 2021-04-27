@@ -4,7 +4,7 @@ const fetch = require("node-fetch")
 const puppeteer = require("puppeteer")
 const errorhandle = require("./error")
 const infohandle = require("./info")
-const MXleaderboard = require("./models/MXleaderboard")
+//const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
 	
@@ -52,16 +52,10 @@ module.exports = async (Client) => {
 		ranks.forEach((rank) => {
 			discorduser.roles.remove(rank)
 		})
-		infohandle(Client, "User updated", `User ${user.name} is now inactive`)
+		usersupdated.push(`${user.name} is now inactive`)
 	}
 	users.forEach(async (user) => {
-		if(user.lastrank == 0) {	
-			try {
-				await InactiveAccount(user)
-			} catch(err) {
-				errorhandle(Client, err)
-			}
-		}
+		if(user.lastrank == 0) return InactiveAccount(user)
 		const ifis = info[user.lastrank - 1][1] == user.realname ? true : false //For some weird reason i cant put this directly in the if statement, weird	
 		if(!ifis) searchusers.push(user)
 		return
@@ -114,7 +108,7 @@ module.exports = async (Client) => {
 	otherusers.forEach(async (user) => {
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
-			if(body.playerInfo.countryRank == 0) return InactiveAccount(user)
+			if(body.playerInfo.inactive == 1) return InactiveAccount(user)
 			if(user.lastrank == body.playerInfo.countryRank) return
 			const discorduser = await server.members.fetch(user.discord)
 			CheckRoles(body.playerInfo.countryRank, discorduser)

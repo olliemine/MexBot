@@ -10,7 +10,7 @@ module.exports = {
 	async execute(message, DiscordClient) {
 		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id, active: false, lastrank: {$ne: null} })
-		if(!user) return message.channel.send("")
+		if(!user) return message.channel.send("Tu cuenta ya esta activada")
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
 		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 		function CheckRoles(number, discorduser) {

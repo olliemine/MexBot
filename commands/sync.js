@@ -15,7 +15,8 @@ module.exports = {
 		fetch(`https://new.scoresaber.com/api/player/${args[1]}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) message.channel.send("Invalid Id")
+			if(body.error) return message.channel.send("Invalid Id")
+			if(body.playerInfo.inactive == 1) return message.channel.send("Account is inactive") 
 			await mongo()
 			try {
 				exists = await UserSchema.countDocuments({ discord: user.id })

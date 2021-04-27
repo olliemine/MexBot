@@ -1,6 +1,6 @@
-const Discord = require("discord.js")
+const { MessageEmbed } = require("discord.js")
 module.exports = (Client, error) => {
-	const embed = new Discord.MessageEmbed()
+	const embed = new MessageEmbed()
 	.setColor("#F31919")
 	.setTitle(error.name)
 	.setDescription(`${error.stack}

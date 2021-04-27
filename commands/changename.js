@@ -13,9 +13,8 @@ module.exports = {
 			await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`)
 				.then(res => res.json())
 				.then(async (body) => {
-					if(body.error) {
-						return message.channel.send("Unexpected error")
-					}
+					if(body.error) return message.channel.send("Unexpected error")
+
 					let backtext
 					if(user.lastrank === null) {
 						backtext = `${body.playerInfo.country} | `
@@ -29,6 +28,7 @@ module.exports = {
 					}, {
 						name: body.playerInfo.playerName
 					})
+
 					message.member.setNickname(`${backtext}${body.playerInfo.playerName}`)
 					return message.channel.send(`Succesfully changed name to ${body.playerInfo.playerName}`)
 				})
@@ -38,9 +38,8 @@ module.exports = {
 			await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`)
 			.then(res => res.json())
 			.then(async (body) => {
-				if(body.error) {
-					return message.channel.send("Unexpected error")
-				}
+				if(body.error) return message.channel.send("Unexpected error")
+				
 				let backtext
 				if(user.lastrank === null) {
 					backtext = `${body.playerInfo.country} | `
@@ -54,6 +53,7 @@ module.exports = {
 				}, {
 					name: new_name
 				})
+				
 				message.member.setNickname(full_new_name)
 				return message.channel.send(`Succesfully changed name to ${new_name}`)
 			})

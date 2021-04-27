@@ -38,9 +38,9 @@ Ready POG`)
 })
 
 client.on("message", message => {
-	if(message.author.bot) return
+	if(message.author.bot || message.guild === null) return
 	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
-	if(!message.content.startsWith(prefix) || message.guild === null) return
+	if(!message.content.startsWith(prefix)) return
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
 	const DiscordClient = client;

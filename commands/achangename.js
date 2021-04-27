@@ -11,10 +11,9 @@ module.exports = {
 		if(!user) return message.channel.send("Tienes que mencionar a un usuario smh")
 		await mongo()
 		const UserInfo = await UserSchema.findOne({
-			discord: user.id,
-			active: true
+			discord: user.id
 		})
-		if(!UserInfo) return message.channel.send("El men no tiene una entrada activa")
+		if(!UserInfo) return message.channel.send("El men no tiene cuenta idk why")
 		args.shift()
 		const newname = args.join(" ")
 		await fetch(`https://new.scoresaber.com/api/player/${UserInfo.beatsaber}/full`)
