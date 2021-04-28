@@ -96,7 +96,6 @@ module.exports = async (Client) => {
 							const discorduser = await server.members.fetch(user.discord)
 							CheckRoles(row[0], discorduser)
 							discorduser.setNickname(`#${row[0]} | ${user.name}`)
-							console.log(user.realname)
 							try {
 								usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
 							} catch(err) {
