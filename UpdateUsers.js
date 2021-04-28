@@ -85,42 +85,62 @@ module.exports = async (Client) => {
 		return "⬇️"
 	}
 	let otherusers = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
-	if(searchusers.length) {
-		searchusers.forEach((user) => {
-			let ifLooped = false	
-			info.forEach(async (row) => {
-				if(row[1] == user.realname) {
-					ifLooped = true
+	function UpdateTop50Users() {
+		return new Promise((resolve, reject) => {
+			if(searchusers.length) {
+				searchusers.forEach((user) => {
+					let ifLooped = false	
+					info.forEach(async (row) => {
+						if(row[1] == user.realname) {
+							ifLooped = true
+							const discorduser = await server.members.fetch(user.discord)
+							CheckRoles(row[0], discorduser)
+							discorduser.setNickname(`#${row[0]} | ${user.name}`)
+							console.log(user.realname)
+							try {
+								usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
+							} catch(err) {
+								console.log(err)
+							}
+							await UserSchema.findOneAndUpdate({
+								discord: user.discord
+							}, {
+								lastrank: row[0]
+							})
+						}
+					})
+					if(!ifLooped) otherusers.push(user)
+				})
+			}
+			resolve()
+		})
+	}
+	function UpdateOtherUsers() {
+		return new Promise((resolve, reject) => {
+			let counter = 0 //Fucking javascript goddamit
+			otherusers.forEach(async (user) => {
+				counter++
+				await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
+					if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
+					if(body.playerInfo.inactive == 1) return InactiveAccount(user)
+					if(user.lastrank == body.playerInfo.countryRank) return
 					const discorduser = await server.members.fetch(user.discord)
-					CheckRoles(row[0], discorduser)
-					discorduser.setNickname(`#${row[0]} | ${user.name}`)
-					usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
+					CheckRoles(body.playerInfo.countryRank, discorduser)
+					usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank} ${EmojiArrow(body.playerInfo.countryRank, user.lastrank)}`)
+					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 					await UserSchema.findOneAndUpdate({
 						discord: user.discord
 					}, {
-						lastrank: row[0]
+						lastrank: body.playerInfo.countryRank
 					})
-				}
+				})
+				if(counter == otherusers.length) resolve()
 			})
-			if(!ifLooped) otherusers.push(user)
+			
 		})
 	}
-	otherusers.forEach(async (user) => {
-		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
-			if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
-			if(body.playerInfo.inactive == 1) return InactiveAccount(user)
-			if(user.lastrank == body.playerInfo.countryRank) return
-			const discorduser = await server.members.fetch(user.discord)
-			CheckRoles(body.playerInfo.countryRank, discorduser)
-			usersupdated.push(`${user.realname} to ${body.playerInfo.countryRank} from ${user.lastrank} ${EmojiArrow(body.playerInfo.countryRank, user.lastrank)}`)
-			discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
-			await UserSchema.findOneAndUpdate({
-				discord: user.discord
-			}, {
-				lastrank: body.playerInfo.countryRank
-			})
-		})
-	})
+	await UpdateTop50Users()
+	await UpdateOtherUsers()
 	if(usersupdated.length) infohandle(Client, "Updated Users", `Updated users ${usersupdated.join(", ")}`)
 	//let leaderboardobject = []
 	//info.forEach((row) => {
