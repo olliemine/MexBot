@@ -3,6 +3,7 @@ const { MessageEmbed } = require("discord.js")
 module.exports = {
 	name : "help",
 	description: "help",
+	api: false,
 	execute(message) {
 		const embed = new MessageEmbed()
 		.setColor("#4C9CF6")

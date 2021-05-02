@@ -132,6 +132,8 @@ module.exports = async (Client) => {
 					}, {
 						lastrank: body.playerInfo.countryRank
 					})
+				}).catch((err) => {
+					reject(err)
 				})
 				if(counter == otherusers.length) resolve()
 			})
@@ -139,7 +141,9 @@ module.exports = async (Client) => {
 		})
 	}
 	await UpdateTop50Users()
-	await UpdateOtherUsers()
+	await UpdateOtherUsers().then().catch((err) => {
+		errorhandle(Client, err, "Couldnt fetch Others, API probably down")
+	})
 	if(usersupdated.length) infohandle(Client, "Updated Users", `Updated users ${usersupdated.join(", ")}`)
 	//let leaderboardobject = []
 	//info.forEach((row) => {

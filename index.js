@@ -12,14 +12,35 @@ const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info");
-client.login(process.env.TOKEN)
+client.login(token)
 const UpdateUsers = require("./UpdateUsers");
+
+
+function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
+	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+	  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+	  '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+	  '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+	  '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+	return !!pattern.test(str);
+}
+function Refresh(id, pfp) {
+	if(pfp == "/images/steam.png") {
+		fetch(`https://new.scoresaber.com/api/user/${id}/refresh`)
+	}
+}
+
 
 client.once("ready", async() => {
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
 		errorhandle(client, err)
+	})
+	await fetch("https://new.scoresaber.com/api").then(response => {
+		if(response.status != 200) infohandle(client, "API Status", "API seems to be offline")
+		else console.log("Connected to Scoresaber API")
 	})
 	console.log(`Prefix ${prefix}
 Running version: ${version}
@@ -36,8 +57,9 @@ Ready POG`)
 	//
 	//console.log(membre.user.presence.activities[1].state);
 })
+	
 
-client.on("message", message => {
+client.on("message", async (message) => {
 	if(message.author.bot || message.guild === null) return
 	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
 	if(!message.content.startsWith(prefix)) return
@@ -45,7 +67,14 @@ client.on("message", message => {
 	const commandName = args.shift().toLowerCase();
 	const DiscordClient = client;
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
-	const command = client.commands.get(commandName) || client.aliases.get(commandName);		
+	const command = client.commands.get(commandName) || client.aliases.get(commandName)
+	if(command.api) {
+		const r = await fetch("https://new.scoresaber.com/api").then(response => {
+			if(response.status != 200) return false
+			return true
+		})
+		if(!r) return message.channel.send("Cant execute command (API_OFFLINE)")
+	}
 	try{
 		command.execute(message, DiscordClient, args);
 	}catch(error) {
@@ -69,6 +98,16 @@ client.on("guildMemberAdd", async (member) => {
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
 		const user = await UserSchema.findOne({ discord: member.id })
+		if(LastCheckedSSStatus < new Date() - ms("10m")) await CheckSSAPIStatus()
+		if(!SSAPISTATUS) {
+			member.roles.add("822582078784012298")
+			const action = {
+				type: "GM",
+				discord: member.id,
+				beatsaber: user.beatsaber
+			}
+			return new APIActions(action).save()
+		}
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.playerInfo.country == "MX") {
 				member.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
@@ -97,12 +136,15 @@ for(const file of commandFiles) {
 	}
 }
 
-setInterval(() => {
-	try {
-		UpdateUsers(client)
-	} catch(err) {
-		errorhandle(client, err)
-	}
+setInterval(async () => {
+	fetch("https://new.scoresaber.com/api").then((response) => {
+		if(response.status != 200) return
+		try {
+			UpdateUsers(client)
+		} catch(err) {
+			errorhandle(client, err)
+		}
+	})
 }, (1000*60)*30)//30m
 
 function SendAndDelete(content, msg) {
@@ -112,20 +154,6 @@ function SendAndDelete(content, msg) {
 			mesagege.delete()
 		}, ms("5s"))
 	})
-}
-function Refresh(uuid, pfp) {
-	if(pfp == "/images/steam.png") {
-		fetch(`https://new.scoresaber.com/api/user/${uuid}/refresh`)
-	}
-}
-function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
-	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-	  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-	  '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-	  '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-	  '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
-	return !!pattern.test(str);
 }
 function VerifictionviaID(ID, msg, member, link = true) {
 	fetch(`https://new.scoresaber.com/api/player/${ID}/full`)
@@ -199,10 +227,28 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				return SendAndDelete("Unexpected Error", msg)
 			}
 			infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully`)
+		}).catch((err) => {
+			SendAndDelete("Unexpected Error", msg)
+			errorhandle(client, err)
 		})
 }
 
 async function Verificacion(member, msg) {
+	if(msg.content.toLowerCase() === "visitante") {
+		member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
+		return SendAndDelete("Gracias por visitar!", msg)
+	}
+	const ohno = await fetch("https://new.scoresaber.com/api").then(response => {
+		if(response.status != 200) return false
+		return true
+	})
+	if(!ohno) {
+		member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor, API is offline, later use ${msg.content}`)
+		member.send("Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan")
+		return SendAndDelete("Gracias por visitar!", msg)
+	}
 	if(+msg.content) {//ID?
 		VerifictionviaID(msg.content, msg, member)
 	} else if(validURL(msg.content)) { //LINK?
@@ -211,11 +257,6 @@ async function Verificacion(member, msg) {
 		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member, false)
 	} else {//NAME?
 		if(msg.content.length <= 3 || msg.content.length > 32) return SendAndDelete("Invalid Name", msg)
-		if(msg.content.toLowerCase() === "visitante") {
-			member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
-			infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
-			return SendAndDelete("Gracias por visitar!", msg)
-		}
 		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
 		await fetch(NAMEURL)
 		.then(res => res.json())
@@ -290,6 +331,9 @@ async function Verificacion(member, msg) {
 			}
 			infohandle(client, "Verification", `User ${member.user.username} verified with account ${playerinfo.playerInfo.playerName} successfully`)
 			member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+		}).catch((err) => {
+			SendAndDelete("Unexpected Error", msg)
+			errorhandle(client, err)
 		})
 	}
 }

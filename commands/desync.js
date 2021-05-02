@@ -5,6 +5,7 @@ const errorhandle = require("../error")
 module.exports = {
 	name : "desync",
 	description: "pong",
+	api: false,
 	async execute(message, DiscordClient, args) {
 		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		if(args.length != 1) return message.channel.send("Tienes que mencionar a un usuario")

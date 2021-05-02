@@ -7,6 +7,7 @@ const UpdateUsers = require("../UpdateUsers")
 module.exports = {
 	name : "active",
 	description: "active",
+	api: true,
 	async execute(message, DiscordClient) {
 		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id, active: false, lastrank: {$ne: null} })
@@ -45,6 +46,8 @@ module.exports = {
 			})
 			await UpdateUsers(Client)
 			infohandle(Client, "User updated", `User ${user.name} is now active`)
+		}).catch(() => {
+			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
 		})
 	},
 };

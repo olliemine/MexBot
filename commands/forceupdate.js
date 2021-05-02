@@ -4,6 +4,7 @@ const errorhandle = require("../error")
 module.exports = {
 	name: "forceupdate",
 	description: "Aea",
+	api: true,
 	async execute(message, DiscordClient) {
 		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		message.channel.startTyping();

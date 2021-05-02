@@ -6,6 +6,7 @@ const errorhandle = require("../error")
 module.exports = {
 	name : "sync",
 	description: "Sincroniza a alguien con una cuenta de beatsaber, no funciona si no eres admin",
+	api: true,
 	async execute(message, DiscordClient, args) {
 		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		if(args.length != 2) return message.channel.send("Tienes que mencionar a un usuario y a un jugador de beatsaber")
@@ -82,6 +83,8 @@ module.exports = {
 				return message.channel.send("Unexpected Error")
 			}
 			user.roles.add(message.guild.roles.cache.get("822553633098170449"))
+		}).catch(() => {
+			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
 		})
 	},
 };

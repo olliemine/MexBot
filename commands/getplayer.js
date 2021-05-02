@@ -9,6 +9,7 @@ module.exports = {
 	name: "getplayer",
 	description: "Te da la informacion de un jugador",
 	aliases: ["get"],
+	api: true,
 	async execute(message, DiscordClient, args) {
 		let extra_playerinfo
 		await mongo()
@@ -62,6 +63,9 @@ Country rank: #${body.playerInfo.countryRank}`)
 				.addField("RANKED", `Average Accuracy: ${body.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 				message.channel.send(embed)
+			}).catch((err) => {
+				message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
+				errorhandle(DiscordClient, err)
 			})
 		}
 		function GetPlayerDataName(name) {
@@ -105,6 +109,9 @@ Ranked playcount: ${extra_playerinfo.scoreStats.rankedPlayCount}`)
 				}
 			}
 			message.channel.send(embed)
+		}).catch((err) => {
+			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
+			errorhandle(DiscordClient, err)
 		})
 		}
 	}

@@ -5,6 +5,7 @@ const fetch = require("node-fetch")
 module.exports = {
 	name : "achangename",
 	description: "Te cambia el nombre",
+	api: true,
 	async execute(message, DiscordClient, args) {
 		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
@@ -13,7 +14,13 @@ module.exports = {
 		const UserInfo = await UserSchema.findOne({
 			discord: user.id
 		})
-		if(!UserInfo) return message.channel.send("El men no tiene cuenta idk why")
+		if(!UserInfo) {
+			args.shift()
+			const new_name = args.join(" ")
+			if(new_name.length > 32) return message.channel.send("El nombre ta muy grande smh")
+			user.setNickname(new_name)
+			return message.channel.send(`Nombre cambiado a ${newname}`)
+		} 
 		args.shift()
 		const newname = args.join(" ")
 		await fetch(`https://new.scoresaber.com/api/player/${UserInfo.beatsaber}/full`)
@@ -35,6 +42,8 @@ module.exports = {
 			})
 			user.setNickname(fullname)
 			message.channel.send(`Nombre cambiado a ${newname}`)
+		}).catch(() => {
+			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
 		})
 	},
 };
