@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-//const { token } = require("./config.json")
+const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -14,7 +14,17 @@ const errorhandle = require("./error")
 const infohandle = require("./info");
 client.login(token)
 const UpdateUsers = require("./UpdateUsers");
+let lastchecked = new Date()
+let SSAPISTATUS = true
 
+async function CheckSSAPIStatus() {
+	lastchecked = new Date()
+	SSAPISTATUS = await fetch("https://new.scoresaber.com/api").then((response) => {
+		if(response.status != 200) return false
+		return true
+	})
+	return SSAPISTATUS
+}
 
 function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
@@ -69,11 +79,8 @@ client.on("message", async (message) => {
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
 	const command = client.commands.get(commandName) || client.aliases.get(commandName)
 	if(command.api) {
-		const r = await fetch("https://new.scoresaber.com/api").then(response => {
-			if(response.status != 200) return false
-			return true
-		})
-		if(!r) return message.channel.send("Cant execute command (API_OFFLINE)")
+		if(lastchecked < new Date() - ms("3h")) await CheckSSAPIStatus()
+		if(!SSAPISTATUS) return message.channel.send("Cant execute command (API_OFFLINE)")
 	}
 	try{
 		command.execute(message, DiscordClient, args);
@@ -137,14 +144,14 @@ for(const file of commandFiles) {
 }
 
 setInterval(async () => {
-	fetch("https://new.scoresaber.com/api").then((response) => {
-		if(response.status != 200) return
-		try {
-			UpdateUsers(client)
-		} catch(err) {
-			errorhandle(client, err)
-		}
-	})
+	if(lastchecked < new Date() - ms("1h")) await CheckSSAPIStatus()
+	if(!SSAPISTATUS) return
+	try {
+		UpdateUsers(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+	
 }, (1000*60)*30)//30m
 
 function SendAndDelete(content, msg) {
