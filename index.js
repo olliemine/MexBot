@@ -12,7 +12,7 @@ const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info");
-client.login(token)
+client.login(process.env.TOKEN)
 const UpdateUsers = require("./UpdateUsers");
 let lastchecked = new Date()
 let SSAPISTATUS = true
