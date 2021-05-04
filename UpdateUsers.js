@@ -114,6 +114,13 @@ module.exports = async (Client) => {
 			resolve()
 		})
 	}
+	async function UpdateName(id, newname) {
+		return await UserSchema.findOneAndUpdate({
+			discord: id
+		}, {
+			realname: newname
+		})
+	}
 	function UpdateOtherUsers() {
 		return new Promise((resolve, reject) => {
 			let counter = 0 //Fucking javascript goddamit
@@ -122,6 +129,7 @@ module.exports = async (Client) => {
 				await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 					if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
 					if(body.playerInfo.inactive == 1) return InactiveAccount(user)
+					if(user.realname != body.playerInfo.playerName) await UpdateName(user.discord, body.playerInfo.playerName)
 					if(user.lastrank == body.playerInfo.countryRank) return
 					const discorduser = await server.members.fetch(user.discord)
 					CheckRoles(body.playerInfo.countryRank, discorduser)
