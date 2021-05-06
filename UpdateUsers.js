@@ -95,12 +95,13 @@ module.exports = async (Client) => {
 							ifLooped = true
 							const discorduser = await server.members.fetch(user.discord)
 							CheckRoles(row[0], discorduser)
-							discorduser.setNickname(`#${row[0]} | ${user.name}`)
 							try {
-								usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
+								await discorduser.setNickname(`#${row[0]} | ${user.name}`)
+								infohandle(Client, "Temp", `Set ${discorduser.user.username} to "#${row[0]} | ${user.name}"`)
 							} catch(err) {
-								console.log(err)
+								errorhandle(Client, err)
 							}
+							usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
 							await UserSchema.findOneAndUpdate({
 								discord: user.discord
 							}, {
