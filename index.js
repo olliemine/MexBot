@@ -14,6 +14,7 @@ const errorhandle = require("./error")
 const infohandle = require("./info");
 client.login(process.env.TOKEN)
 const UpdateUsers = require("./UpdateUsers");
+const Top = require("./Top")
 let lastchecked = new Date()
 let SSAPISTATUS = true
 
@@ -49,7 +50,7 @@ client.once("ready", async() => {
 		errorhandle(client, err)
 	})
 	await fetch("https://new.scoresaber.com/api").then(response => {
-		if(response.status != 200) infohandle(client, "API Status", "API seems to be offline")
+		if(response.status != 200) infohandle(client, "API Status", "API is offline")
 		else console.log("Connected to Scoresaber API")
 	})
 	console.log(`Prefix ${prefix}
@@ -105,7 +106,7 @@ client.on("guildMemberAdd", async (member) => {
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
 		const user = await UserSchema.findOne({ discord: member.id })
-		if(LastCheckedSSStatus < new Date() - ms("10m")) await CheckSSAPIStatus()
+		if(LastCheckedSSStatus < new Date() - ms("1h")) await CheckSSAPIStatus()
 		if(!SSAPISTATUS) {
 			member.roles.add("822582078784012298")
 			const action = {
@@ -142,6 +143,14 @@ for(const file of commandFiles) {
 		});
 	}
 }
+setInterval(() => {
+	if(!SSAPISTATUS) return
+	try {
+		Top(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+}, (1000*60)*10)
 
 setInterval(async () => {
 	if(lastchecked < new Date() - ms("1h")) await CheckSSAPIStatus()
