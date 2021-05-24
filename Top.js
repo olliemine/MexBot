@@ -113,7 +113,7 @@ module.exports = async (DiscordClient) => {
 				const Time = new Date()
 				let firstmap
 				async function StoreMaps() {
-					console.log(`New from ${userid.name}`)
+					//console.log(`New from ${userid.name}`)
 					for await(const score of newscores) {
 						const map = await LevelSchema.findOne({ "LevelID": score.map })
 						if(map) {
@@ -126,7 +126,7 @@ module.exports = async (DiscordClient) => {
 								})
 								continue
 							}
-							console.log(`Better score ${score.score} better than ${map.TopScore}`)
+							//console.log(`Better score ${score.score} better than ${map.TopScore}`)
 							await LevelSchema.updateOne({
 								"LevelID": score.map
 							}, {
@@ -142,7 +142,7 @@ module.exports = async (DiscordClient) => {
 							"TopScore": score.score
 						}
 						await new LevelSchema(newmap).save()
-						console.log(`New map ${score.map}`)
+						//console.log(`New map ${score.map}`)
 						continue
 					}
 					await UsersLevelCacheSchema.updateOne({
@@ -186,22 +186,20 @@ module.exports = async (DiscordClient) => {
 		function UpdatePlayers() {
 			return new Promise(async (resolve, reject) => {
 				for await(const row of info) {
-					console.log("Checking " + row[1])
 					const userid = await GetUserID(row[1])
 					await UpdateUser(userid).then((response) => {
-						console.log(`Updated user ${userid.name} in ${response/1000}s`)
+					//	console.log(`Updated user ${userid.name} in ${response/1000}s`)
 
 					}, () => {
-						console.log(`${userid.name} had no new plays`)
+						//console.log(`${userid.name} had no new plays`)
 					})
 				}
 				for await (const user of otherplayers) {
-					console.log("Checking " + user.name)
 					const userid = await GetUserIDviaID(user.beatsaber, user.discord, user.realname)
 					await UpdateUser(userid).then((response) => {
-					console.log(`Updated user ${userid.name} in ${response/1000}s`)
+						//console.log(`Updated user ${userid.name} in ${response/1000}s`)
 					}, () => {
-						console.log(`${userid.name} had no new plays`)
+						//console.log(`${userid.name} had no new plays`)
 					})
 				}
 				resolve()
