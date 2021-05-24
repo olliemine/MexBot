@@ -53,7 +53,7 @@ module.exports = async (DiscordClient) => {
 			.then(async (body) => {
 				if(body.error) {
 					no = true
-					return errorhandle(DiscordClient, body.error.message, "The name is too short, probably, fill name manually " + name)
+					return errorhandle(DiscordClient, new Error(body.error.message), "The name is too short, probably, fill name manually " + name)
 				}
 				let checked = false
 				for await(const entity of usersid) {//Dumbass javascript stuff
@@ -77,13 +77,19 @@ module.exports = async (DiscordClient) => {
 					const user = await UserSchema.findOne({ beatsaber: body.players[0].playerId })
 					let discord = null
 					if(user) discord = user.discord
+					await new UsersLevelCacheSchema({
+						"name": name,
+						"id": body.players[0].playerId,
+						"lastmap": "0",
+						"discord": discord		
+					}).save()
 					userid = {
 						"name": name,
 						"id": body.players[0].playerId,
 						"lastmap": "0",
-						"discord": discord
+						"discord": discord, 
+						"new": true	
 					}
-					await new UsersLevelCacheSchema(userid).save()
 				}
 				
 			})
@@ -97,13 +103,19 @@ module.exports = async (DiscordClient) => {
 			})
 			if(userid) return userid
 			
-			userid = {
+			await new UsersLevelCacheSchema({
 				"name": name,
 				"id": id,
 				"lastmap": "0",
 				"discord": discordid
+			}).save()
+			userid = {
+				"name": name,
+				"id": id,
+				"lastmap": "0",
+				"discord": discordid,
+				"new": true
 			}
-			await new UsersLevelCacheSchema(userid).save()
 			return userid
 		}
 		function UpdateUser(userid) {
@@ -131,15 +143,19 @@ module.exports = async (DiscordClient) => {
 								"LevelID": score.map
 							}, {
 								"TopScore": score.score,
-								"TopPlayer": userid.id
+								"TopPlayer": userid.id,
+								"TopPlayerName": userid.name
 							})
-							topchannel.send(`${userid.name} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} | https://scoresaber.com/u/${userid.id}`)
+							if(userid.new) continue
+							const previousname = map.TopPlayerName
+							topchannel.send(`${userid.name} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${userid.id}`)
 							continue
 						}
 						const newmap = {
 							"LevelID": score.map,
 							"TopPlayer": userid.id,
-							"TopScore": score.score
+							"TopScore": score.score,
+							"TopPlayerName": userid.name
 						}
 						await new LevelSchema(newmap).save()
 						//console.log(`New map ${score.map}`)
@@ -162,6 +178,7 @@ module.exports = async (DiscordClient) => {
 				function GetMap(Page) {
 					fetch(`https://new.scoresaber.com/api/player/${userid.id}/scores/recent/${Page.toString()}`)
 					.then(async (res) => {
+						//console.log(Page)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) return StoreMaps()
 						const body = await res.json()
@@ -186,15 +203,17 @@ module.exports = async (DiscordClient) => {
 		function UpdatePlayers() {
 			return new Promise(async (resolve, reject) => {
 				for await(const row of info) {
+					//console.log(`Checking ${row[1]}`)
 					const userid = await GetUserID(row[1])
 					await UpdateUser(userid).then((response) => {
-					//	console.log(`Updated user ${userid.name} in ${response/1000}s`)
+						//console.log(`Updated user ${userid.name} in ${response/1000}s`)
 
 					}, () => {
 						//console.log(`${userid.name} had no new plays`)
 					})
 				}
 				for await (const user of otherplayers) {
+					//console.log(`Checking ${user.realname}`)
 					const userid = await GetUserIDviaID(user.beatsaber, user.discord, user.realname)
 					await UpdateUser(userid).then((response) => {
 						//console.log(`Updated user ${userid.name} in ${response/1000}s`)
@@ -206,6 +225,6 @@ module.exports = async (DiscordClient) => {
 			})
 		}
 		await UpdatePlayers()
-		infohandle(DiscordClient, "Top", "Updated users in " + (new Date() - Totaltime)/1000)
+		infohandle(DiscordClient, "Top", "Updated users in " + (new Date() - Totaltime)/1000 + "s")
 		return
 };

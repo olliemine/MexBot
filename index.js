@@ -1,5 +1,6 @@
 const Discord = require("discord.js")
-//const { token } = require("./config.json")
+//const { token, redisuri } = require("./config.json")
+const redisuri = process.env.REDISURL
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -15,8 +16,11 @@ const infohandle = require("./info");
 client.login(process.env.TOKEN)
 const UpdateUsers = require("./UpdateUsers");
 const Top = require("./Top")
+const redis = require("redis")
+let Mode;
 let lastchecked = new Date()
 let SSAPISTATUS = true
+module.exports = maintenance
 
 async function CheckSSAPIStatus() {
 	lastchecked = new Date()
@@ -44,6 +48,20 @@ function Refresh(id, pfp) {
 
 
 client.once("ready", async() => {
+	const redisclient = await redis.createClient(redisuri, {
+		tls: {
+			rejectUnauthorized: false
+		}
+	})	
+	redisclient.once("ready", () => {
+		console.log("Connected to Redis")
+		redisclient.get("mode", (err, reply) => {
+			if(err) return errorhandle(client, err)
+			if(reply == "true") return Mode = true
+			Mode = false
+		})
+		redisclient.quit()
+	})
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
@@ -56,13 +74,23 @@ client.once("ready", async() => {
 	console.log(`Prefix ${prefix}
 Running version: ${version}
 Ready POG`)
+	if(Mode) {
+		return client.user.setPresence({
+			status: "online",
+			activity: {
+				name: "Beat Saber",
+				type: "PLAYING"
+			}
+		})
+	}
 	client.user.setPresence({
-		status: "online",
+		status: "idle",
 		activity: {
-			name: "Beat Saber",
+			name: "Maintenance",
 			type: "PLAYING"
 		}
 	})
+	
 	//const guld = client.guilds.cache.get("822514160154706010");
 	//const membre = guld.members.cache.get("138842995029049344");
 	//
@@ -71,9 +99,9 @@ Ready POG`)
 	
 
 client.on("message", async (message) => {
-	if(message.author.bot || message.guild === null) return
+	if(message.author.bot || message.guild === null || !message.content.startsWith(prefix)) return
 	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
-	if(!message.content.startsWith(prefix)) return
+	if(!Mode && message.author.id !== "645068064144097347") return message.channel.send("Bot esta siendo reparado y no puede executar el comando")
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
 	const DiscordClient = client;
@@ -109,12 +137,7 @@ client.on("guildMemberAdd", async (member) => {
 		if(LastCheckedSSStatus < new Date() - ms("1h")) await CheckSSAPIStatus()
 		if(!SSAPISTATUS) {
 			member.roles.add("822582078784012298")
-			const action = {
-				type: "GM",
-				discord: member.id,
-				beatsaber: user.beatsaber
-			}
-			return new APIActions(action).save()
+			return infohandle(client, "API DOWN", "User " + member.user.username + " Couldnt verified because of API errors, " + user.beatsaber)
 		}
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.playerInfo.country == "MX") {
@@ -144,17 +167,17 @@ for(const file of commandFiles) {
 	}
 }
 setInterval(() => {
-	if(!SSAPISTATUS) return
+	if(!SSAPISTATUS || !Mode) return
 	try {
 		Top(client)
 	} catch(err) {
 		errorhandle(client, err)
 	}
-}, (1000*60)*10)
+}, (1000*60)*10)//10m
 
 setInterval(async () => {
 	if(lastchecked < new Date() - ms("1h")) await CheckSSAPIStatus()
-	if(!SSAPISTATUS) return
+	if(!SSAPISTATUS || !Mode) return
 	try {
 		UpdateUsers(client)
 	} catch(err) {
@@ -353,3 +376,36 @@ async function Verificacion(member, msg) {
 		})
 	}
 }
+function  maintenance() {
+	const redisclient = redis.createClient(redisuri, {
+		tls: {
+			rejectUnauthorized: false
+		}
+	})
+	redisclient.get("mode", (err, reply) => {
+		if(err) return errorhandle(client, err)
+		if(reply == "true") {
+			Mode = false 
+			client.user.setPresence({
+				status: "idle",
+				activity: {
+					name: "Maintenance",
+					type: "PLAYING"
+				}
+			})
+			redisclient.set("mode", "false")
+			return redisclient.quit()
+		}
+		Mode = true 
+		client.user.setPresence({
+			status: "online",
+			activity: {
+				name: "Beat Saber",
+				type: "PLAYING"
+			}
+		})
+		redisclient.set("mode", "true")
+		return redisclient.quit()
+	})
+}
+

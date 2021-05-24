@@ -33,7 +33,7 @@ module.exports = {
 			} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
 		}
 
-		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
+		fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.error) return message.channel.send("Unexpected error")
 			if(body.playerInfo.inactive == 1) return message.channel.send("Sigues inactivo en scoresaber, haz una nueva jugada y espera hasta 1 hora")
 			message.channel.send("Ahora estas activo!")
