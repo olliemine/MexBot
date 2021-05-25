@@ -173,7 +173,7 @@ setInterval(() => {
 	} catch(err) {
 		errorhandle(client, err)
 	}
-}, (1000*60)*10)//10m
+}, (1000*60)*5)//5m
 
 setInterval(async () => {
 	if(lastchecked < new Date() - ms("1h")) await CheckSSAPIStatus()
