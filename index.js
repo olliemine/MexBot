@@ -62,6 +62,9 @@ client.once("ready", async() => {
 		})
 		redisclient.quit()
 	})
+	redisclient.on("error", (err) => {
+		errorhandle(client, err, "Credentials probably invalid")
+	})
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
