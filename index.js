@@ -102,8 +102,9 @@ Ready POG`)
 	
 
 client.on("message", async (message) => {
-	if(message.author.bot || message.guild === null || !message.content.startsWith(prefix)) return
+	if(message.author.bot || message.guild === null) return
 	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
+	if(!message.content.startsWith(prefix)) return
 	if(!Mode && message.author.id !== "645068064144097347") return message.channel.send("Bot esta siendo reparado y no puede executar el comando")
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
@@ -379,7 +380,7 @@ async function Verificacion(member, msg) {
 		})
 	}
 }
-function  maintenance() {
+function maintenance() {
 	const redisclient = redis.createClient(redisuri, {
 		tls: {
 			rejectUnauthorized: false

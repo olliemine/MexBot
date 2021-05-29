@@ -225,6 +225,5 @@ module.exports = async (DiscordClient) => {
 			})
 		}
 		await UpdatePlayers()
-		infohandle(DiscordClient, "Top", "Updated users in " + (new Date() - Totaltime)/1000 + "s")
 		return
 };
