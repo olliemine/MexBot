@@ -48,23 +48,23 @@ function Refresh(id, pfp) {
 
 
 client.once("ready", async() => {
-	const redisclient = await redis.createClient(redisuri, {
-		tls: {
-			rejectUnauthorized: false
-		}
-	})	
-	redisclient.once("ready", () => {
-		console.log("Connected to Redis")
-		redisclient.get("mode", (err, reply) => {
-			if(err) return errorhandle(client, err)
-			if(reply == "true") return Mode = true
-			Mode = false
-		})
-		redisclient.quit()
-	})
-	redisclient.on("error", (err) => {
-		errorhandle(client, err, "Credentials probably invalid")
-	})
+	//const redisclient = await redis.createClient(redisuri, {
+	//	tls: {
+	//		rejectUnauthorized: false
+	//	}
+	//})	
+	//redisclient.once("ready", () => {
+	//	console.log("Connected to Redis")
+	//	redisclient.get("mode", (err, reply) => {
+	//		if(err) return errorhandle(client, err)
+	//		if(reply == "true") return Mode = true
+	//		Mode = false
+	//	})
+	//	redisclient.quit()
+	//})
+	//redisclient.on("error", (err) => {
+	//	errorhandle(client, err, "Credentials probably invalid")
+	//})
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
@@ -171,7 +171,7 @@ for(const file of commandFiles) {
 	}
 }
 setInterval(() => {
-	if(!SSAPISTATUS || !Mode) return
+	if(!SSAPISTATUS) return
 	try {
 		Top(client)
 	} catch(err) {
@@ -181,7 +181,7 @@ setInterval(() => {
 
 setInterval(async () => {
 	if(lastchecked < new Date() - ms("1h")) await CheckSSAPIStatus()
-	if(!SSAPISTATUS || !Mode) return
+	if(!SSAPISTATUS) return
 	try {
 		UpdateUsers(client)
 	} catch(err) {
@@ -381,35 +381,35 @@ async function Verificacion(member, msg) {
 	}
 }
 function maintenance() {
-	const redisclient = redis.createClient(redisuri, {
-		tls: {
-			rejectUnauthorized: false
-		}
-	})
-	redisclient.get("mode", (err, reply) => {
-		if(err) return errorhandle(client, err)
-		if(reply == "true") {
-			Mode = false 
-			client.user.setPresence({
-				status: "idle",
-				activity: {
-					name: "Maintenance",
-					type: "PLAYING"
-				}
-			})
-			redisclient.set("mode", "false")
-			return redisclient.quit()
-		}
-		Mode = true 
-		client.user.setPresence({
-			status: "online",
-			activity: {
-				name: "Beat Saber",
-				type: "PLAYING"
-			}
-		})
-		redisclient.set("mode", "true")
-		return redisclient.quit()
-	})
+	//const redisclient = redis.createClient(redisuri, {
+	//	tls: {
+	//		rejectUnauthorized: false
+	//	}
+	//})
+	//redisclient.get("mode", (err, reply) => {
+	//	if(err) return errorhandle(client, err)
+	//	if(reply == "true") {
+	//		Mode = false 
+	//		client.user.setPresence({
+	//			status: "idle",
+	//			activity: {
+	//				name: "Maintenance",
+	//				type: "PLAYING"
+	//			}
+	//		})
+	//		redisclient.set("mode", "false")
+	//		return redisclient.quit()
+	//	}
+	//	Mode = true 
+	//	client.user.setPresence({
+	//		status: "online",
+	//		activity: {
+	//			name: "Beat Saber",
+	//			type: "PLAYING"
+	//		}
+	//	})
+	//	redisclient.set("mode", "true")
+	//	return redisclient.quit()
+	//})
 }
 
