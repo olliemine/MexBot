@@ -1,6 +1,5 @@
 const Discord = require("discord.js")
-//const { token, redisuri } = require("./config.json")
-const redisuri = process.env.REDISURL
+const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -13,11 +12,10 @@ const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info");
-client.login(process.env.TOKEN)
+client.login(token)
 const UpdateUsers = require("./UpdateUsers");
 const Top = require("./Top")
-const redis = require("redis")
-let Mode;
+let Mode = true;
 let lastchecked = new Date()
 let SSAPISTATUS = true
 module.exports = maintenance
@@ -48,23 +46,6 @@ function Refresh(id, pfp) {
 
 
 client.once("ready", async() => {
-	//const redisclient = await redis.createClient(redisuri, {
-	//	tls: {
-	//		rejectUnauthorized: false
-	//	}
-	//})	
-	//redisclient.once("ready", () => {
-	//	console.log("Connected to Redis")
-	//	redisclient.get("mode", (err, reply) => {
-	//		if(err) return errorhandle(client, err)
-	//		if(reply == "true") return Mode = true
-	//		Mode = false
-	//	})
-	//	redisclient.quit()
-	//})
-	//redisclient.on("error", (err) => {
-	//	errorhandle(client, err, "Credentials probably invalid")
-	//})
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
