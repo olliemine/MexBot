@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-const { token } = require("./config.json")
+//const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const client = new Discord.Client
 client.commands = new Discord.Collection();
@@ -12,7 +12,7 @@ const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info");
-client.login(token)
+client.login(process.env.TOKEN)
 const UpdateUsers = require("./UpdateUsers");
 const Top = require("./Top")
 let Mode = true;
