@@ -6,8 +6,8 @@ module.exports = {
 	name : "desync",
 	description: "pong",
 	api: false,
+	admin: true,
 	async execute(message, DiscordClient, args) {
-		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		if(args.length != 1) return message.channel.send("Tienes que mencionar a un usuario")
 		let user = await message.guild.members.fetch(args[0])
 		if(!user) return message.channel.send("Ese usuario es invalido, porfavor pon su id que me da weba programar")

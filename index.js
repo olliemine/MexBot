@@ -92,6 +92,7 @@ client.on("message", async (message) => {
 	const DiscordClient = client;
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
 	const command = client.commands.get(commandName) || client.aliases.get(commandName)
+	if(command.admin && !message.member.permissions.has("ADMINISTRATOR")) return
 	if(command.api) {
 		if(lastchecked < new Date() - ms("3h")) await CheckSSAPIStatus()
 		if(!SSAPISTATUS) return message.channel.send("Cant execute command (API_OFFLINE)")

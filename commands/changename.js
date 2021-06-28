@@ -7,6 +7,7 @@ module.exports = {
 	description: "Te cambia el nombre",
 	aliases: ["ch"],
 	api: true,
+	admin: false,
 	async execute(message, DiscordClient, args) {
 		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id })

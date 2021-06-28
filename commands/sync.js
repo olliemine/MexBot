@@ -7,8 +7,8 @@ module.exports = {
 	name : "sync",
 	description: "Sincroniza a alguien con una cuenta de beatsaber, no funciona si no eres admin",
 	api: true,
+	admin: true,
 	async execute(message, DiscordClient, args) {
-		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		if(args.length != 2) return message.channel.send("Tienes que mencionar a un usuario y a un jugador de beatsaber")
 		let user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
 		if(!user) return message.channel.send("Ese usuario es invalido")

@@ -10,6 +10,7 @@ module.exports = {
 	description: "Te da la informacion de un jugador",
 	aliases: ["get"],
 	api: true,
+	admin: false,
 	async execute(message, DiscordClient, args) {
 		let extra_playerinfo
 		await mongo()

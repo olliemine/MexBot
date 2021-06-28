@@ -4,9 +4,9 @@ const Top = require("../Top")
 module.exports = {
 	name: "forcetop",
 	description: "pepega",
-	api: true, 
+	api: true,
+	admin: true,
 	async execute(message, DiscordClient) {
-		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		message.channel.startTyping();
 		const time = new Date()
 		try {

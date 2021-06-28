@@ -6,8 +6,8 @@ module.exports = {
 	name : "achangename",
 	description: "Te cambia el nombre",
 	api: true,
+	admin: true,
 	async execute(message, DiscordClient, args) {
-		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
 		if(!user) return message.channel.send("Tienes que mencionar a un usuario smh")
 		await mongo()

@@ -9,8 +9,8 @@ module.exports = {
 	name: "forceupdate",
 	description: "Aea",
 	api: true,
+	admin: true,
 	async execute(message, DiscordClient, args) {
-		if(!message.member.roles.cache.find(r => r.id === "822553320551874650")) return
 		message.channel.startTyping();
 		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
