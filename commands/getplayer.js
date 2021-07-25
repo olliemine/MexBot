@@ -55,6 +55,7 @@ module.exports = {
 					Pinlist++
 					if(GetPP(entry.pp, entry.weight) > 1) continue
 					placement = ((Page - 1)*8) + Pinlist
+					break
 				}
 				if(placement == 0) placement = Page*8
 				placement--
