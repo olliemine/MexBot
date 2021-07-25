@@ -8,14 +8,17 @@ module.exports = {
 	aliases: ["ch"],
 	api: true,
 	admin: false,
+	dm: true,
 	async execute(message, DiscordClient, args) {
 		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id })
+		const server = await DiscordClient.guilds.fetch("822514160154706010")
+		const member = await server.members.fetch(message.author.id)
 		if(!user) {
 			if(!Array.isArray(args) || !args.length) return message.channel.send("Necesitas poner un nombre")
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send("El nombre es muy largo, porfavor elige un nombre mas pequeño")			
-			message.member.setNickname(new_name)
+			member.setNickname(new_name)
 			return message.channel.send(`Succesfully changed name to ${new_name}`)
 		} else {
 			fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`)
@@ -37,7 +40,7 @@ module.exports = {
 						name: body.playerInfo.playerName
 					})
 	
-					message.member.setNickname(`${backtext}${body.playerInfo.playerName}`)
+					member.setNickname(`${backtext}${body.playerInfo.playerName}`)
 					return message.channel.send(`Succesfully changed name to ${body.playerInfo.playerName}`)
 				} else {
 					const new_name = args.join(" ")
@@ -54,7 +57,7 @@ module.exports = {
 						name: new_name
 					})
 					
-					message.member.setNickname(full_new_name)
+					member.setNickname(full_new_name)
 					return message.channel.send(`Succesfully changed name to ${new_name}`)
 				}
 			}).catch(() => {

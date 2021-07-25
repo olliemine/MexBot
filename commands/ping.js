@@ -6,6 +6,7 @@ module.exports = {
 	description: "pong",
 	api: false,
 	admin: false,
+	dm: true,
 	async execute(message, DiscordClient) {
 		const botms = Date.now() - message.createdTimestamp
 		const discordms = DiscordClient.ws.ping

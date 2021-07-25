@@ -5,6 +5,7 @@ module.exports = {
 	description: "help",
 	api: false,
 	admin: false,
+	dm: true,
 	execute(message) {
 		const embed = new MessageEmbed()
 		.setColor("#4C9CF6")

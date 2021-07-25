@@ -15,7 +15,6 @@ const infohandle = require("./info");
 client.login(process.env.TOKEN)
 const UpdateUsers = require("./UpdateUsers");
 const Top = require("./Top")
-let Mode = true;
 let lastchecked = new Date()
 let SSAPISTATUS = true
 module.exports = maintenance
@@ -58,22 +57,15 @@ client.once("ready", async() => {
 	console.log(`Prefix ${prefix}
 Running version: ${version}
 Ready POG`)
-	if(Mode) {
-		return client.user.setPresence({
+	return client.user.setPresence({
 			status: "online",
 			activity: {
-				name: "Beat Saber",
-				type: "PLAYING"
-			}
-		})
-	}
-	client.user.setPresence({
-		status: "idle",
-		activity: {
-			name: "Maintenance",
+			name: "Beat Saber",
 			type: "PLAYING"
 		}
 	})
+	
+
 	
 	//const guld = client.guilds.cache.get("822514160154706010");
 	//const membre = guld.members.cache.get("138842995029049344");
@@ -83,10 +75,9 @@ Ready POG`)
 	
 
 client.on("message", async (message) => {
-	if(message.author.bot || message.guild === null) return
+	if(message.author.bot) return
 	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
 	if(!message.content.startsWith(prefix)) return
-	if(!Mode && message.author.id !== "645068064144097347") return message.channel.send("Bot esta siendo reparado y no puede executar el comando")
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
 	const DiscordClient = client;
@@ -97,6 +88,7 @@ client.on("message", async (message) => {
 		if(lastchecked < new Date() - ms("3h")) await CheckSSAPIStatus()
 		if(!SSAPISTATUS) return message.channel.send("Cant execute command (API_OFFLINE)")
 	}
+	if(message.guild === null && !command.dm) return message.channel.send("No se puede executar este comando en dm")
 	try{
 		command.execute(message, DiscordClient, args);
 	}catch(error) {

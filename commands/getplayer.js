@@ -4,6 +4,7 @@ const UserSchema = require("../models/UserSchema")
 const mongo = require("../mongo")
 const UserCacheSchema = require("../models/UserCacheSchema")
 const errorhandle = require("../error")
+const ms = require("ms")
 
 module.exports = {
 	name: "getplayer",
@@ -11,6 +12,7 @@ module.exports = {
 	aliases: ["get"],
 	api: true,
 	admin: false,
+	dm: true,
 	async execute(message, DiscordClient, args) {
 		let extra_playerinfo
 		await mongo()
@@ -28,6 +30,52 @@ module.exports = {
 			cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
 			if(cacheduser) return GetPlayerDataID(cacheduser.id)
 			GetPlayerDataName(args.join("%20"))
+		}
+		function getOneConvertedPP(id, embed, msg) {
+			let specific = false
+			function ChangeEmbed(text) {
+				let newembed = embed
+				newembed.fields[3].value = text
+				msg.edit(newembed)
+			}
+			function GetPP(pp, weight) {
+				return Number((pp*weight).toFixed(2))
+			}
+			function Wait(Page) {
+				console.log("waiting 25s")
+				setTimeout(() => {
+					return CheckPages(Page)
+				}, ms("25s"))
+			}
+			function CheckPage(Page, list) {
+				if(GetPP(list[0].pp, list[0].weight) < 1) return CheckPages(Page - 1)
+				let placement = 0
+				let Pinlist = 0
+				for(let entry of list) {
+					Pinlist++
+					if(GetPP(entry.pp, entry.weight) > 1) continue
+					placement = ((Page - 1)*8) + Pinlist
+				}
+				if(placement == 0) placement = Page*8
+				placement--
+				let rawpp = 1 / (0.965**placement)
+				return ChangeEmbed(`1pp = ${rawpp.toFixed(2)} Raw pp~`)
+			}
+			function CheckPages(Page) {
+				fetch(`https://new.scoresaber.com/api/player/${id}/scores/top/${Page.toString()}`)
+				.then(async (res) => {
+					if(res.status == 404) return CheckPages(Page - 1)
+					if(res.status == 429) return Wait(Page)
+					if(res.status != 200 && res.status != 404 && res.status != 429) return ChangeEmbed("UnexpectedResponseFromServer " + res.status)
+					const body = await res.json()
+					if(specific) return CheckPage(Page, body.scores)
+					if(GetPP(body.scores[body.scores.length - 1].pp, body.scores[body.scores.length - 1].weight) > 1) return CheckPages(Page + 3)
+					specific = true
+					return CheckPage(Page, body.scores)
+				})
+
+			}
+			CheckPages(1)
 		}
 		function Addplus(number) {
 			if(number > 0) return "+"
@@ -63,7 +111,11 @@ Week difference: ${Addplus(history[history.length - 7] - body.playerInfo.rank)}$
 Country rank: #${body.playerInfo.countryRank}`)
 				.addField("RANKED", `Average Accuracy: ${body.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
-				message.channel.send(embed)
+				.addField("PP Calculation", "Loading...")
+				.setFooter("Disclamer: El PP Calculation puede ser que este incorecto")
+				message.channel.send(embed).then(msg => {
+					return getOneConvertedPP(Id, embed, msg)
+				})
 			}).catch((err) => {
 				message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
 				errorhandle(DiscordClient, err)
@@ -98,6 +150,8 @@ Week difference: ${Addplus(player.difference)}${player.difference}`, false)
 Country rank: #${extra_playerinfo.playerInfo.countryRank}`, false)
 			.addField("RANKED", `Average Accuracy: ${extra_playerinfo.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${extra_playerinfo.scoreStats.rankedPlayCount}`)
+			.addField("PP Calculation", "Loading...")
+			.setFooter("Disclamer: El PP Calculation puede ser que este incorecto")
 			if(Date.now() - message.createdTimestamp >= 1000*5) {
 				const user = {
 					name: args.join(" ").toLowerCase(),
@@ -109,7 +163,9 @@ Ranked playcount: ${extra_playerinfo.scoreStats.rankedPlayCount}`)
 					errorhandle(DiscordClient, err)
 				}
 			}
-			message.channel.send(embed)
+			message.channel.send(embed).then(msg => {
+				return getOneConvertedPP(player.playerId, embed, msg)
+			})
 		}).catch((err) => {
 			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
 			errorhandle(DiscordClient, err)

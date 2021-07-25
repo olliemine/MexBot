@@ -6,6 +6,7 @@ module.exports = {
 	description: "pepega",
 	api: true,
 	admin: true,
+	dm: false,
 	async execute(message, DiscordClient) {
 		message.channel.startTyping();
 		const time = new Date()

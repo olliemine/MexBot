@@ -7,6 +7,7 @@ module.exports = {
 	description: "Te cambia el nombre",
 	api: true,
 	admin: true,
+	dm: false,
 	async execute(message, DiscordClient, args) {
 		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
 		if(!user) return message.channel.send("Tienes que mencionar a un usuario smh")

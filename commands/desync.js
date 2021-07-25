@@ -7,6 +7,7 @@ module.exports = {
 	description: "pong",
 	api: false,
 	admin: true,
+	dm: false,
 	async execute(message, DiscordClient, args) {
 		if(args.length != 1) return message.channel.send("Tienes que mencionar a un usuario")
 		let user = await message.guild.members.fetch(args[0])

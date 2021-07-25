@@ -8,6 +8,7 @@ module.exports = {
 	description: "Sincroniza a alguien con una cuenta de beatsaber, no funciona si no eres admin",
 	api: true,
 	admin: true,
+	dm: false,
 	async execute(message, DiscordClient, args) {
 		if(args.length != 2) return message.channel.send("Tienes que mencionar a un usuario y a un jugador de beatsaber")
 		let user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
