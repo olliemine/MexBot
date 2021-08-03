@@ -1,5 +1,5 @@
-const errorhandle = require("../error");
-const Top = require("../Top")
+const errorhandle = require("../functions/error");
+const Top = require("../functions/Top")
 
 module.exports = {
 	name: "forcetop",

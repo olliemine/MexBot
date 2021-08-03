@@ -1,12 +1,11 @@
 const fetch = require("node-fetch")
-const mongo = require("./mongo")
+const mongo = require("../mongo")
 const puppeteer = require("puppeteer")
 const errorhandle = require("./error")
-const UsersLevelCacheSchema = require("./models/UsersLevelCacheSchema")
-const LevelSchema = require("./models/LevelSchema")
-const UserSchema = require("./models/UserSchema")
+const UsersLevelCacheSchema = require("../models/UsersLevelCacheSchema")
+const LevelSchema = require("../models/LevelSchema")
+const UserSchema = require("../models/UserSchema")
 const ms = require("ms")
-const infohandle = require("./info")
 
 module.exports = async (DiscordClient) => {
 		const Totaltime = new Date()

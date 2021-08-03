@@ -1,9 +1,10 @@
-const mongo = require("./mongo")
-const UserSchema = require("./models/UserSchema")
+const mongo = require("../mongo")
+const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
 const puppeteer = require("puppeteer")
 const errorhandle = require("./error")
 const infohandle = require("./info")
+const CheckRoles = require("./CheckRoles")
 //const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
@@ -61,25 +62,6 @@ module.exports = async (Client) => {
 		return
 	})
 	
-	
-	function CheckRoles(number, discorduser) {
-		if(number <= 10) {//Top 10?
-			if(!discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.add(ranks[0])//Checkar si tiene role y si no dar role
-			if(number <= 3) {//Es top 3?
-				if(!discorduser.roles.cache.find(r => r.id === ranks[number].id)) {//Tiene el role?
-					discorduser.roles.add(ranks[number])
-					for (let index = 1; index <= 3; index++) {
-						if(index == number) continue
-						if(discorduser.roles.cache.find(r => r.id === ranks[index].id)) discorduser.roles.remove(ranks[index])
-					}
-				}
-			} else if(discorduser.roles.cache.find(r => r.id === ranks[1].id) || discorduser.roles.cache.find(r => r.id === ranks[2].id) || discorduser.roles.cache.find(r => r.id === ranks[3].id)) { //Quitar roles y return
-				for (let index = 1; index <= 3; index++) {
-					discorduser.roles.remove(ranks[index])
-				}
-			}
-		} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
-	}
 	function EmojiArrow(unumber, dnumber) {
 		if(unumber < dnumber) return "⬆️"
 		return "⬇️"
@@ -94,7 +76,7 @@ module.exports = async (Client) => {
 						if(row[1] == user.realname) {
 							ifLooped = true
 							const discorduser = await server.members.fetch(user.discord)
-							CheckRoles(row[0], discorduser)
+							CheckRoles(row[0], discorduser, ranks)
 							try {
 								await discorduser.setNickname(`#${row[0]} | ${user.name}`)
 								infohandle(Client, "Temp", `Set ${discorduser.user.username} to "#${row[0]} | ${user.name}"`)
@@ -133,7 +115,7 @@ module.exports = async (Client) => {
 					if(user.realname != body.playerInfo.playerName) await UpdateName(user.discord, body.playerInfo.playerName)
 					if(user.lastrank == body.playerInfo.countryRank) return
 					const discorduser = await server.members.fetch(user.discord)
-					CheckRoles(body.playerInfo.countryRank, discorduser)
+					CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
 					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 					await UserSchema.findOneAndUpdate({
 						discord: user.discord

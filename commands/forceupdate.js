@@ -1,9 +1,10 @@
-const UpdateUsers = require("../UpdateUsers")
-const errorhandle = require("../error")
+const UpdateUsers = require("../functions/UpdateUsers")
+const errorhandle = require("../functions/error")
 const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
-const infohandle = require("../info")
+const infohandle = require("../functions/info")
+const CheckRoles = require("../functions/CheckRoles")
 
 module.exports = {
 	name: "forceupdate",
@@ -30,24 +31,6 @@ module.exports = {
 			})
 			infohandle(DiscordClient, "Update User", `${user1.name} is now inactive`)
 		}
-		function CheckRoles(number, discorduser) {
-			if(number <= 10) {//Top 10?
-				if(!discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.add(ranks[0])//Checkar si tiene role y si no dar role
-				if(number <= 3) {//Es top 3?
-					if(!discorduser.roles.cache.find(r => r.id === ranks[number].id)) {//Tiene el role?
-						discorduser.roles.add(ranks[number])
-						for (let index = 1; index <= 3; index++) {
-							if(index == number) continue
-							if(discorduser.roles.cache.find(r => r.id === ranks[index].id)) discorduser.roles.remove(ranks[index])
-						}
-					}
-				} else if(discorduser.roles.cache.find(r => r.id === ranks[1].id) || discorduser.roles.cache.find(r => r.id === ranks[2].id) || discorduser.roles.cache.find(r => r.id === ranks[3].id)) { //Quitar roles y return
-					for (let index = 1; index <= 3; index++) {
-						discorduser.roles.remove(ranks[index])
-					}
-				}
-			} else if(discorduser.roles.cache.find(r => r.id === ranks[0].id)) discorduser.roles.remove(ranks[0]) //Quitar role y return
-		}
 		async function UpdateUser(id) {
 			await mongo()
 			const userinfo = await UserSchema.findOne({ discord: id, active: true, lastrank: {$ne: null} })
@@ -62,7 +45,7 @@ module.exports = {
 							if(body.error) return errorhandle(DiscordClient, new Error("Couldnt get user " + user1.name))
 							if(body.playerInfo.inactive == 1) return InactiveAccount(user1)
 							const discorduser = await server.members.fetch(user1.discord)
-							CheckRoles(body.playerInfo.countryRank, discorduser)
+							CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
 							usersupdated.push(`${user1.realname} to ${body.playerInfo.countryRank}`)
 							discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)
 							await UserSchema.findOneAndUpdate({

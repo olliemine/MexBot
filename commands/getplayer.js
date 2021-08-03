@@ -3,7 +3,7 @@ const { MessageEmbed } = require("discord.js");
 const UserSchema = require("../models/UserSchema")
 const mongo = require("../mongo")
 const UserCacheSchema = require("../models/UserCacheSchema")
-const errorhandle = require("../error")
+const errorhandle = require("../functions/error")
 const ms = require("ms")
 
 module.exports = {

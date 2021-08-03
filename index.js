@@ -10,11 +10,11 @@ const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
 const ms = require("ms")
-const errorhandle = require("./error")
-const infohandle = require("./info");
+const errorhandle = require("./functions/error")
+const infohandle = require("./functions/info");
 client.login(process.env.TOKEN)
-const UpdateUsers = require("./UpdateUsers");
-const Top = require("./Top")
+const UpdateUsers = require("./functions/UpdateUsers");
+const Top = require("./functions/Top")
 let lastchecked = new Date()
 let SSAPISTATUS = true
 module.exports = maintenance
@@ -82,8 +82,12 @@ client.on("message", async (message) => {
 	const commandName = args.shift().toLowerCase();
 	const DiscordClient = client;
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
-	const command = client.commands.get(commandName) || client.aliases.get(commandName)
-	if(command.admin && !message.member.permissions.has("ADMINISTRATOR")) return
+	const command = client.commands.get(commandName) || client.aliases.get(commandName) 
+	if(command.admin) {
+		const server = await client.guilds.fetch("822514160154706010")
+		const member = await server.members.fetch(message.author.id)
+		if(!member.permissions.has("ADMINISTRATOR")) return
+	}
 	if(command.api) {
 		if(lastchecked < new Date() - ms("3h")) await CheckSSAPIStatus()
 		if(!SSAPISTATUS) return message.channel.send("Cant execute command (API_OFFLINE)")

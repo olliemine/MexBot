@@ -1,7 +1,7 @@
 const fetch = require("node-fetch")
 const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
-const errorhandle = require("../error")
+const errorhandle = require("../functions/error")
 
 module.exports = {
 	name : "sync",
