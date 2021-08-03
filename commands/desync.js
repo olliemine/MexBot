@@ -30,7 +30,7 @@ module.exports = {
 			errorhandle(DiscordClient, err)
 			return message.channel.send("Unexpected Error")
 		}
-		const ranks = ["822582078784012298" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]
+		const ranks = ["822553633098170449", "822582078784012298" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]
 		ranks.forEach((rank) => {
 			if(user.roles.cache.find(r => r.id === rank)) user.roles.remove(message.guild.roles.cache.get(rank))
 		})
