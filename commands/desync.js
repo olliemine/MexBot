@@ -10,8 +10,8 @@ module.exports = {
 	dm: false,
 	async execute(message, DiscordClient, args) {
 		if(args.length != 1) return message.channel.send("Tienes que mencionar a un usuario")
-		let user = await message.guild.members.fetch(args[0])
-		if(!user) return message.channel.send("Ese usuario es invalido, porfavor pon su id que me da weba programar")
+		let user = await message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
+		if(!user) return message.channel.send("Ese usuario es invalido")
 		await mongo()
 		try {
 			exists = await UserSchema.countDocuments({ discord: user.id })
@@ -30,7 +30,9 @@ module.exports = {
 			errorhandle(DiscordClient, err)
 			return message.channel.send("Unexpected Error")
 		}
-		user.roles.remove(message.guild.roles.cache.get("822582078784012298"))
-		user.roles.remove(message.guild.roles.cache.get("822553633098170449"))
+		const ranks = ["822582078784012298" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]
+		ranks.forEach((rank) => {
+			if(user.roles.cache.find(r => r.id === rank)) user.roles.remove(message.guild.roles.cache.get(rank))
+		})
 	},
 };
