@@ -2,7 +2,7 @@ const fetch = require("node-fetch")
 const UserSchema = require("../models/UserSchema")
 const mongo = require("../mongo")
 const infohandle = require("../functions/info")
-const UpdateUsers = require("../UpdateUsers")
+const UpdateUsers = require("../functions/UpdateUsers")
 const CheckRoles = require("../functions/CheckRoles")
 
 module.exports = {
