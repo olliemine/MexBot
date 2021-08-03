@@ -15,6 +15,7 @@ const infohandle = require("./functions/info");
 client.login(process.env.TOKEN)
 const UpdateUsers = require("./functions/UpdateUsers");
 const Top = require("./functions/Top")
+const CheckRoles = require("./functions/CheckRoles")
 let lastchecked = new Date()
 let SSAPISTATUS = true
 module.exports = maintenance
@@ -237,8 +238,9 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"realname": body.playerInfo.playerName
 				}
 				member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
-
-
+				const server = await client.guilds.fetch("822514160154706010")
+				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+				CheckRoles(body.playerInfo.countryRank, member, ranks)
 			}
 			try {
 				await new UserSchema(user).save()
