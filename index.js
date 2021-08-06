@@ -19,7 +19,6 @@ client.login(process.env.TOKEN)
 let RecentlyExecuted = []
 let lastchecked = new Date()
 let SSAPISTATUS = true
-module.exports = maintenance
 
 async function CheckSSAPIStatus() {
 	lastchecked = new Date()
