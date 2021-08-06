@@ -1,21 +1,22 @@
 const Discord = require("discord.js")
 //const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
-const client = new Discord.Client
-client.commands = new Discord.Collection();
-client.aliases = new Discord.Collection();
-const fs = require("fs");
-const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
-const ms = require("ms")
 const errorhandle = require("./functions/error")
 const infohandle = require("./functions/info");
-client.login(process.env.TOKEN)
 const UpdateUsers = require("./functions/UpdateUsers");
 const Top = require("./functions/Top")
 const CheckRoles = require("./functions/CheckRoles")
+const fs = require("fs");
+const ms = require("ms")
+const client = new Discord.Client
+client.commands = new Discord.Collection();
+client.aliases = new Discord.Collection();
+const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
+client.login(process.env.TOKEN)
+let RecentlyExecuted = []
 let lastchecked = new Date()
 let SSAPISTATUS = true
 module.exports = maintenance
@@ -84,6 +85,10 @@ client.on("message", async (message) => {
 	const DiscordClient = client;
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
 	const command = client.commands.get(commandName) || client.aliases.get(commandName) 
+	const CooldownString = `${message.author.id}-${commandName}`
+	if(command.cooldown > 0 && RecentlyExecuted.includes(CooldownString)) {
+		 return message.channel.send("Porfavor espera un poco para usar el bot otra vez.")
+	}
 	if(command.admin) {
 		const server = await client.guilds.fetch("822514160154706010")
 		const member = await server.members.fetch(message.author.id)
@@ -94,6 +99,15 @@ client.on("message", async (message) => {
 		if(!SSAPISTATUS) return message.channel.send("Cant execute command (API_OFFLINE)")
 	}
 	if(message.guild === null && !command.dm) return message.channel.send("No se puede executar este comando en dm")
+	if(command.cooldown > 0) {
+		RecentlyExecuted.push(CooldownString)
+		
+		setTimeout(() => {
+			RecentlyExecuted = RecentlyExecuted.filter((text) => {
+				return text != CooldownString
+			})
+		}, 1000 * command.cooldown)
+	}
 	try{
 		command.execute(message, DiscordClient, args);
 	}catch(error) {
@@ -293,36 +307,3 @@ async function Verificacion(member, msg) {
 		})
 	}
 }
-function maintenance() {
-	//const redisclient = redis.createClient(redisuri, {
-	//	tls: {
-	//		rejectUnauthorized: false
-	//	}
-	//})
-	//redisclient.get("mode", (err, reply) => {
-	//	if(err) return errorhandle(client, err)
-	//	if(reply == "true") {
-	//		Mode = false 
-	//		client.user.setPresence({
-	//			status: "idle",
-	//			activity: {
-	//				name: "Maintenance",
-	//				type: "PLAYING"
-	//			}
-	//		})
-	//		redisclient.set("mode", "false")
-	//		return redisclient.quit()
-	//	}
-	//	Mode = true 
-	//	client.user.setPresence({
-	//		status: "online",
-	//		activity: {
-	//			name: "Beat Saber",
-	//			type: "PLAYING"
-	//		}
-	//	})
-	//	redisclient.set("mode", "true")
-	//	return redisclient.quit()
-	//})
-}
-

@@ -6,6 +6,7 @@ module.exports = {
 	api: false,
 	admin: false,
 	dm: true,
+	cooldown: -1,
 	execute(message) {
 		const embed = new MessageEmbed()
 		.setColor("#4C9CF6")

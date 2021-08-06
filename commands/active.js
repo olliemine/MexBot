@@ -11,6 +11,7 @@ module.exports = {
 	api: true,
 	admin: false,
 	dm: true,
+	cooldown: 5,
 	async execute(message, DiscordClient) {
 		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id, active: false, lastrank: {$ne: null} })

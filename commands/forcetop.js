@@ -7,6 +7,7 @@ module.exports = {
 	api: true,
 	admin: true,
 	dm: false,
+	cooldown: 15,
 	async execute(message, DiscordClient) {
 		message.channel.startTyping();
 		const time = new Date()

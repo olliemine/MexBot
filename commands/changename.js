@@ -9,6 +9,7 @@ module.exports = {
 	api: true,
 	admin: false,
 	dm: true,
+	cooldown: 2,
 	async execute(message, DiscordClient, args) {
 		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id })

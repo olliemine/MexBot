@@ -12,6 +12,7 @@ module.exports = {
 	api: true,
 	admin: true,
 	dm: false,
+	cooldown: 2,
 	async execute(message, DiscordClient, args) {
 		message.channel.startTyping();
 		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))

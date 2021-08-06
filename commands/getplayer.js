@@ -13,6 +13,7 @@ module.exports = {
 	api: true,
 	admin: false,
 	dm: true,
+	cooldown: 5,
 	async execute(message, DiscordClient, args) {
 		let extra_playerinfo
 		await mongo()
