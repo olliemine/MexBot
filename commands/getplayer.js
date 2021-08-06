@@ -13,7 +13,7 @@ module.exports = {
 	api: true,
 	admin: false,
 	dm: true,
-	cooldown: 5,
+	cooldown: 4,
 	async execute(message, DiscordClient, args) {
 		let extra_playerinfo
 		await mongo()
@@ -79,6 +79,11 @@ module.exports = {
 			}
 			CheckPages(1)
 		}
+		function numberWithCommas(x) {//https://stackoverflow.com/a/2901298
+			var parts = x.toString().split(".");
+			parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+			return parts.join(".");
+		}
 		function Addplus(number) {
 			if(number > 0) return "+"
 			return ""
@@ -107,7 +112,7 @@ module.exports = {
 				.setURL(`https://scoresaber.com/u/${body.playerInfo.playerId}`)
 				.setThumbnail(`https://new.scoresaber.com${body.playerInfo.avatar}`)
 				.setFooter(lateFooter())
-				.addField("PP", `${body.playerInfo.pp}pp
+				.addField("PP", `${numberWithCommas(body.playerInfo.pp.toFixed(1))}pp
 Week difference: ${Addplus(history[history.length - 7] - body.playerInfo.rank)}${history[history.length - 7] - body.playerInfo.rank}`)
 				.addField("RANK", `Rank: #${body.playerInfo.rank}
 Country rank: #${body.playerInfo.countryRank}`)
@@ -146,7 +151,7 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 			.setURL(`https://scoresaber.com/u/${player.playerId}`)
 			.setThumbnail(`https://new.scoresaber.com${player.avatar}`)
 			.setFooter(lateFooter())
-			.addField("PP", `${player.pp}pp
+			.addField("PP", `${numberWithCommas(player.pp.toFixed(1))}pp
 Week difference: ${Addplus(player.difference)}${player.difference}`, false)
 			.addField("RANK", `Rank: #${player.rank}
 Country rank: #${extra_playerinfo.playerInfo.countryRank}`, false)
