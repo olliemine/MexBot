@@ -18,15 +18,14 @@ module.exports = (rank, discorduser, ranks) => {
         return
     }
     
-    if(rank >= 10) {
+    if(rank > 10) {
         if(Check(ranks[0])) Remove(ranks[0])
         return
     }
     // Is 10
     if(!Check(ranks[0])) Add(ranks[0])
-    if(rank >= 3) {
-        if(Check(ranks[1]) || Check(ranks[2]) || Check(ranks[3])) CheckAndRemove()
-        return
+    if(rank > 3) {
+        return CheckAndRemove()
     }
     //Is 3
     if(!Check(ranks[rank])) {
