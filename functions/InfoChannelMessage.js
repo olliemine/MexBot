@@ -1,7 +1,7 @@
 const { MessageEmbed } = require("discord.js")
 const UserSchema = require("../models/UserSchema")
 
-module.exports = (Client, usersupdatedraw) => {
+module.exports = async (Client, usersupdatedraw) => {
     const channel = Client.channels.cache.get("822668740519788594")
     //Check if its important
 	let important = false
