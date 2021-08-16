@@ -66,6 +66,7 @@ module.exports = async (Client) => {
 		await fetch(`https://new.scoresaber.com/api/players/by-name/${row[1]}`)
 		.then(res => res.json())
 		.then(async (body) => {
+			if(body.players[0].country != "MX") return infohandle(Client, ":(", "Add " + row[1] + " manually as there is different persons with this name ae")
 			const user = {
 				"discord": null,
 				"beatsaber": body.players[0].playerId,
@@ -86,6 +87,7 @@ module.exports = async (Client) => {
 		if(user.lastrank == 0) return
 		const ifis = info[user.lastrank - 1][1] == user.realname ? true : false //For some weird reason i cant put this directly in the if statement, weird	
 		if(!ifis) searchusers.push(user)
+		//console.log(`${user.realname} IS ${ifis} ${info[user.lastrank - 1][1]}`)
 		return
 	})
 	
@@ -108,6 +110,11 @@ module.exports = async (Client) => {
 								"lastrank": user.lastrank,
 								"newrank": row[0]
 							})
+							await UserSchema.findOneAndUpdate({
+								beatsaber: user.beatsaber
+							}, {
+								lastrank: row[0]
+							})
 							if(!user.active) return
 							const discorduser = await server.members.fetch(user.discord)
 							CheckRoles(row[0], discorduser, ranks)
@@ -116,11 +123,6 @@ module.exports = async (Client) => {
 							} catch(err) {
 								errorhandle(Client, err)
 							}
-							await UserSchema.findOneAndUpdate({
-								discord: user.discord
-							}, {
-								lastrank: row[0]
-							})
 						}
 					})
 					if(!ifLooped) otherusers.push(user)
@@ -144,6 +146,7 @@ module.exports = async (Client) => {
 				await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 					if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
 					if(body.playerInfo.inactive == 1 && user.active) return InactiveAccount(user)
+					if(body.playerInfo.countryRank > 50 && !user.discord) return UserSchema.findOneAndDelete({ beatsaber: user.beatsaber })
 					if(user.realname != body.playerInfo.playerName) await UpdateName(user.discord, body.playerInfo.playerName)
 					if(user.lastrank == body.playerInfo.countryRank) return
 					await UserSchema.findOneAndUpdate({
