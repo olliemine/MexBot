@@ -39,7 +39,7 @@ module.exports = async (Client, usersupdatedraw) => {
 		if(user.lastrank <= 20 && user.newrank > 20) finalmessage = finalmessage + `* ${user.user} is now longer top 20\n`
 		if(user.lastrank <= 10 && user.newrank > 10) finalmessage = finalmessage + `* ${user.user} is no longer top 10 :(\n`
 		if(user.lastrank <= 5 && user.newrank > 5) finalmessage = finalmessage + `* ${user.user} is no longer top 5 truly sad\n`
-		if(user.lastrank == 1 && user.newrank > 1) finalmessage = finalmessage + `* ${user.user} is no longer top 1! jaja bad at game\n`
+		if(user.lastrank == 1 && user.newrank > 1) finalmessage = finalmessage + `* ${user.user} is no longer top 1! haha bad at game\n`
 	})
 	finalmessage = finalmessage + "```"
 	const embed = new MessageEmbed()

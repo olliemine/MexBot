@@ -10,7 +10,7 @@ const InfoChannelMessage = require("./InfoChannelMessage")
 module.exports = async (Client) => {
 	
 	//Gets puppeteer to get all top 50 players
-	let users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 } })
+	let users = await UserSchema.find({lastrank: {$ne: null}, lastrank: { $lte: 50 } })
 	const browser = await puppeteer.launch({
 		args: ['--no-sandbox']
 	})
@@ -37,7 +37,6 @@ module.exports = async (Client) => {
 		browser.close()
 	}
 	let searchusers = []
-	let usersupdatedconv = []
 	let usersupdatedraw = []
 	const server = await Client.guilds.fetch("822514160154706010")
 	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
@@ -53,7 +52,6 @@ module.exports = async (Client) => {
 		ranks.forEach((rank) => {
 			discorduser.roles.remove(rank)
 		})
-		usersupdatedconv.push(`${user.name} is now inactive`)
 	}
 	let ifnew = false
 	info.forEach(async (row) => {
@@ -77,14 +75,15 @@ module.exports = async (Client) => {
 				"realname": row[1],
 				"lastmap": null
 			}
+			await new UserSchema(user).save()
 		})
 		.catch(err => {
-			errorhandle(Client, err, "you are dumb olliemine")
+			errorhandle(Client, err, "you are dumb")
 		})
 	})
-	if(ifnew) users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 }})
+	if(ifnew) users = await UserSchema.find({ lastrank: {$ne: null}, lastrank: { $lte: 50 }})
 	users.forEach(async (user) => {
-		if(user.lastrank == 0) return InactiveAccount(user)
+		if(user.lastrank == 0) return
 		const ifis = info[user.lastrank - 1][1] == user.realname ? true : false //For some weird reason i cant put this directly in the if statement, weird	
 		if(!ifis) searchusers.push(user)
 		return
@@ -94,15 +93,22 @@ module.exports = async (Client) => {
 		if(unumber < dnumber) return "⬆️"
 		return "⬇️"
 	}
-	let otherusers = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
-	function UpdateTop50Users() {
-		return new Promise((resolve, reject) => {
+	let otherusers = await UserSchema.find({ lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
+	async function UpdateTop50Users() {
+		return new Promise(async (resolve, reject) => {
 			if(searchusers.length) {
-				searchusers.forEach((user) => {
+				for await(let user of searchusers) {
 					let ifLooped = false	
 					info.forEach(async (row) => {
 						if(row[1] == user.realname) {
 							ifLooped = true
+							usersupdatedraw.push({
+								"user": user.realname,
+								"update":  user.lastrank - row[0], 
+								"lastrank": user.lastrank,
+								"newrank": row[0]
+							})
+							if(!user.active) return
 							const discorduser = await server.members.fetch(user.discord)
 							CheckRoles(row[0], discorduser, ranks)
 							try {
@@ -110,13 +116,6 @@ module.exports = async (Client) => {
 							} catch(err) {
 								errorhandle(Client, err)
 							}
-							usersupdatedconv.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
-							usersupdatedraw.push({
-								"user": user.realname,
-								"update":  user.lastrank - row[0], 
-								"lastrank": user.lastrank,
-								"newrank": row[0]
-							})
 							await UserSchema.findOneAndUpdate({
 								discord: user.discord
 							}, {
@@ -125,7 +124,7 @@ module.exports = async (Client) => {
 						}
 					})
 					if(!ifLooped) otherusers.push(user)
-				})
+				}
 			}
 			resolve()
 		})
@@ -144,17 +143,18 @@ module.exports = async (Client) => {
 				counter++
 				await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 					if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
-					if(body.playerInfo.inactive == 1) return InactiveAccount(user)
+					if(body.playerInfo.inactive == 1 && user.active) return InactiveAccount(user)
 					if(user.realname != body.playerInfo.playerName) await UpdateName(user.discord, body.playerInfo.playerName)
 					if(user.lastrank == body.playerInfo.countryRank) return
-					const discorduser = await server.members.fetch(user.discord)
-					CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
-					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 					await UserSchema.findOneAndUpdate({
-						discord: user.discord
+						beatsaber: user.beatsaber
 					}, {
 						lastrank: body.playerInfo.countryRank
 					})
+					if(!user.active) return 
+					const discorduser = await server.members.fetch(user.discord)
+					CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
+					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 				}).catch((err) => {
 					reject(err)
 				})
@@ -167,8 +167,7 @@ module.exports = async (Client) => {
 	await UpdateOtherUsers().then().catch((err) => {
 		errorhandle(Client, err, "Couldnt fetch Others, API probably down")
 	})
-	if(usersupdatedconv.length) {
-		infohandle(Client, "Updated Users", `Updated users ${usersupdatedconv.join(", ")}`)
+	if(usersupdatedraw.length) {
 		InfoChannelMessage(Client, usersupdatedraw)
 	}
 }

@@ -5,7 +5,6 @@ const ms = require("ms")
 
 module.exports = async (DiscordClient) => {
 		const players = await UserSchema.find({ realname: {$ne: null} })
-		console.log(players)
 		const topchannel = DiscordClient.channels.cache.get("846148391365115964")
 		function UpdateUser(userid) {
 			return new Promise((resolve, reject) => {
@@ -92,11 +91,11 @@ module.exports = async (DiscordClient) => {
 		function UpdatePlayers() {
 			return new Promise(async (resolve, reject) => {
 				for await (const user of players) {
-					//console.log(`Checking ${user.realname}`)
+					// compareconsole.log(`Checking ${user.realname}`)
 					await UpdateUser(user).then((response) => {
-						//console.log(`Updated user ${userid.name} in ${response/1000}s`)
+						//console.log(`Updated user ${user.realname} in ${response/1000}s`)
 					}, () => {
-						//console.log(`${userid.name} had no new plays`)
+						//console.log(`${user.realname} had no new plays`)
 					})
 				}
 				resolve()
