@@ -1,7 +1,7 @@
 const fetch = require("node-fetch")
-const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
 const errorhandle = require("../functions/error")
+const CheckRoles = require("../functions/CheckRoles")
 
 module.exports = {
 	name : "sync",
@@ -18,75 +18,84 @@ module.exports = {
 		fetch(`https://new.scoresaber.com/api/player/${args[1]}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) return message.channel.send("Invalid Id")
-			if(body.playerInfo.inactive == 1) return message.channel.send("Account is inactive") 
-			await mongo()
+			function getName(name, prefix) {
+				fullname = `${prefix} | ${name}`
+				let username
+				if(fullname.length > 32) {
+					message.channel.send("Name is too long")
+					username = "!changename"
+				} else {
+					username = name
+				}
+				return username
+			}
+			if(body.error) return message.channel.send("Error " + body.error)
 			try {
-				exists = await UserSchema.countDocuments({ discord: user.id })
-				if(exists != 0) {
-					return message.channel.send("El men ya tiene una cuenta (`!desync` para borrarla)")
+				exists = await UserSchema.findOne({ beatsaber: body.playerInfo.playerId })
+				if(exists) {
+					if(!exists.discord) {
+						const username = getName(body.playerId.playerName, `#${body.playerInfo.countryRank}`)
+						await UserSchema.findOneAndUpdate({
+							beatsaber: body.playerInfo.playerId
+						}, {
+							discord: user.id,
+							active: true,
+							name: username
+						})
+						user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
+						user.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+						const server = await DiscordClient.guilds.fetch("822514160154706010")
+						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+						CheckRoles(body.playerInfo.countryRank, user, ranks)
+						return message.channel.send(`Synced ${user.user.username} with ${body.playerId.playerName} successfully`)
+					}
+					return message.channel.send("Ya hay una usuario con esta cuenta.")
 				}
 			} catch(err) {
 				errorhandle(DiscordClient, err)
 				return message.channel.send("Unexpected error")
 			}
-			let fullname
-			let username
-			if(body.playerInfo.country != "MX") {
-				fullname = `${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
-				if(fullname.length > 32) {
-					user.send("Su nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-					username = "changename"
-				} else {
-					username = body.playerInfo.playerName
-				}
+			let userinfo
+			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
+			if(body.playerInfo.country != "MX") {//non mex
+				const username = getName(body.playerInfo.playerName, body.playerInfo.country)
 				user.setNickname(`${body.playerInfo.country} | ${username}`)
-				const nonuser = {
-					"discord": user.user.id,
+				userinfo = {
+					"discord": user.id,
 					"beatsaber": body.playerInfo.playerId,
 					"active": true,
 					"lastrank": null,
 					"name": username,
-					"realname": body.playerInfo.playerName
+					"realname": null,
+					"lastmap": null
 				}
-				try {
-					await new UserSchema(nonuser).save()
-					message.channel.send("Ahora " + user.user.username + " es un visitante!")
-				} catch(err) {
-					errorhandle(DiscordClient, err)
-					return message.channel.send("Unexpected Error")
+				user.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+			} else { //mex
+				const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
+				user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
+				userinfo = {
+					"discord": user.id,
+					"beatsaber": body.playerInfo.playerId,
+					"active": true,
+					"lastrank": body.playerInfo.countryRank,
+					"name": username,
+					"realname": body.playerInfo.playerName,
+					"lastmap": null
 				}
-				return user.roles.add(message.guild.roles.cache.get("822582078784012298"))
+				user.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+				const server = await DiscordClient.guilds.fetch("822514160154706010")
+				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+				CheckRoles(body.playerInfo.countryRank, user, ranks)
 			}
-
-			fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
-			if(fullname.length > 32) {
-				user.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-				username = "changename"
-			} else {
-				username = body.playerInfo.playerName
-			}
-			
-			user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
-			const obj = {
-				"discord": user.user.id,
-				"beatsaber": body.playerInfo.playerId,
-				"active": true,
-				"lastrank": body.playerInfo.countryRank,
-				"name": username,
-				"realname": body.playerInfo.playerName
-			}
-
 			try {
-				await new UserSchema(obj).save()
-				message.channel.send("Ahora " + user.user.username + " esta verificado!")
+				await new UserSchema(userinfo).save()
+				message.channel.send(`Synced ${user.user.username} with ${body.playerId.playerName} successfully`)
 			} catch(err) {
-				errorhandle(client, err)
+				errorhandle(DiscordClient, err)
 				return message.channel.send("Unexpected Error")
 			}
-			user.roles.add(message.guild.roles.cache.get("822553633098170449"))
-		}).catch(() => {
-			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
+		}).catch((err) => {
+			errorhandle(DiscordClient, err, "either i am dumb or scoresaber is dumb")
 		})
 	},
 };

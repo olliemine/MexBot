@@ -1,17 +1,16 @@
-const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
 const puppeteer = require("puppeteer")
 const errorhandle = require("./error")
 const infohandle = require("./info")
 const CheckRoles = require("./CheckRoles")
+const InfoChannelMessage = require("./InfoChannelMessage")
 //const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
 	
 	//Gets puppeteer to get all top 50 players
-	await mongo()
-	const users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 } })
+	let users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 } })
 	const browser = await puppeteer.launch({
 		args: ['--no-sandbox']
 	})
@@ -38,7 +37,8 @@ module.exports = async (Client) => {
 		browser.close()
 	}
 	let searchusers = []
-	let usersupdated = []
+	let usersupdatedconv = []
+	let usersupdatedraw = []
 	const server = await Client.guilds.fetch("822514160154706010")
 	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 	async function InactiveAccount(user) {
@@ -53,8 +53,36 @@ module.exports = async (Client) => {
 		ranks.forEach((rank) => {
 			discorduser.roles.remove(rank)
 		})
-		usersupdated.push(`${user.name} is now inactive`)
+		usersupdatedconv.push(`${user.name} is now inactive`)
 	}
+	let ifnew = false
+	info.forEach(async (row) => {
+		let exists = false
+		for(let entity of users) {
+			if(row[1] != entity.realname) continue
+			exists = true
+			break
+		}
+		if(exists) return
+		ifnew = true
+		await fetch(`https://new.scoresaber.com/api/players/by-name/${row[1]}`)
+		.then(res => res.json())
+		.then(async (body) => {
+			const user = {
+				"discord": null,
+				"beatsaber": body.players[0].playerId,
+				"active": false,
+				"lastrank": row[0],
+				"name": null,
+				"realname": row[1],
+				"lastmap": null
+			}
+		})
+		.catch(err => {
+			errorhandle(Client, err, "you are dumb olliemine")
+		})
+	})
+	if(ifnew) users = await UserSchema.find({ active: true, lastrank: {$ne: null}, lastrank: { $lte: 50 }})
 	users.forEach(async (user) => {
 		if(user.lastrank == 0) return InactiveAccount(user)
 		const ifis = info[user.lastrank - 1][1] == user.realname ? true : false //For some weird reason i cant put this directly in the if statement, weird	
@@ -79,11 +107,16 @@ module.exports = async (Client) => {
 							CheckRoles(row[0], discorduser, ranks)
 							try {
 								await discorduser.setNickname(`#${row[0]} | ${user.name}`)
-								infohandle(Client, "Temp", `Set ${discorduser.user.username} to "#${row[0]} | ${user.name}"`)
 							} catch(err) {
 								errorhandle(Client, err)
 							}
-							usersupdated.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
+							usersupdatedconv.push(`${user.realname} to ${row[0]} from ${user.lastrank} ${EmojiArrow(row[0], user.lastrank)}`)
+							usersupdatedraw.push({
+								"user": user.realname,
+								"update":  user.lastrank - row[0], 
+								"lastrank": user.lastrank,
+								"newrank": row[0]
+							})
 							await UserSchema.findOneAndUpdate({
 								discord: user.discord
 							}, {
@@ -134,34 +167,8 @@ module.exports = async (Client) => {
 	await UpdateOtherUsers().then().catch((err) => {
 		errorhandle(Client, err, "Couldnt fetch Others, API probably down")
 	})
-	if(usersupdated.length) infohandle(Client, "Updated Users", `Updated users ${usersupdated.join(", ")}`)
-	//let leaderboardobject = []
-	//info.forEach((row) => {
-	//	leaderboardobject.push({
-	//		"playername": row[1],
-	//		"pp": row[2]
-	//	})
-	//})
-	//const leaderboard = {
-	//	"date": Date.now(),
-	//	"leaderboard": leaderboardobject
-	//}
-	//function Compare(leaderboard1, leaderboard2) {
-	//	let comparison = true
-	//	let count = 0
-	//	leaderboard1.forEach((user) => {
-	//		count++
-	//		if(user.playername != leaderboard2[count - 1].playername) comparison = false
-	//	})
-	//	return comparison
-	//}
-	//const anotherleaderboard = await MXleaderboard.find().sort({ date: -1 }).limit(1)
-	//try {
-	//	if(!Compare(leaderboard.leaderboard, anotherleaderboard[0].leaderboard)) {
-	//		await new MXleaderboard(leaderboard).save()
-	//		infohandle(Client, "Saved", "Saved mx leaderboard, this is a temporary info handler.")
-	//	}
-	//} catch(err) {
-	//	errorhandle(Client, err)
-	//}
+	if(usersupdatedconv.length) {
+		infohandle(Client, "Updated Users", `Updated users ${usersupdatedconv.join(", ")}`)
+		InfoChannelMessage(Client, usersupdatedraw)
+	}
 }

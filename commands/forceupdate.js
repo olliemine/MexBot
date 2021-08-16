@@ -1,10 +1,10 @@
 const UpdateUsers = require("../functions/UpdateUsers")
 const errorhandle = require("../functions/error")
-const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
 const infohandle = require("../functions/info")
 const CheckRoles = require("../functions/CheckRoles")
+const InfoChannelMessage = require("../functions/InfoChannelMessage")
 
 module.exports = {
 	name: "forceupdate",
@@ -18,6 +18,7 @@ module.exports = {
 		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
 		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+		let usersupdated = []
 		async function InactiveAccount(user1) {
 			const discorduser = await server.members.fetch(user1.discord)
 			discorduser.send("Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!")
@@ -33,7 +34,6 @@ module.exports = {
 			infohandle(DiscordClient, "Update User", `${user1.name} is now inactive`)
 		}
 		async function UpdateUser(id) {
-			await mongo()
 			const userinfo = await UserSchema.findOne({ discord: id, active: true, lastrank: {$ne: null} })
 			if(!userinfo) return message.channel.send("El men no tiene cuenta Pepengagn")
 			let usersupdated = []
@@ -48,7 +48,13 @@ module.exports = {
 							const discorduser = await server.members.fetch(user1.discord)
 							CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
 							usersupdated.push(`${user1.realname} to ${body.playerInfo.countryRank}`)
-							discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)
+							discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)						
+							usersupdated.push({
+								"user": user1.realname,
+								"update":  user1.lastrank - body.playerInfo.countryRank, 
+								"lastrank": user1.lastrank,
+								"newrank": body.playerInfo.countryRank
+							})
 							await UserSchema.findOneAndUpdate({
 								discord: user1.discord
 							}, {
@@ -56,6 +62,7 @@ module.exports = {
 							})
 							const member = await UserSchema.findOne({ active: true, lastrank: body.playerInfo.countryRank, discord: {$ne: user1.discord } })
 							if(member) return FetchUsers(member)
+							InfoChannelMessage(DiscordClient, usersupdated)
 							resolve()
 						}).catch((err) => {
 							return errorhandle(DiscordClient, err)

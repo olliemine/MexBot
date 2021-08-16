@@ -81,7 +81,6 @@ client.on("message", async (message) => {
 	if(!message.content.startsWith(prefix)) return
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
-	const DiscordClient = client;
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
 	const command = client.commands.get(commandName) || client.aliases.get(commandName) 
 	const CooldownString = `${message.author.id}-${commandName}`
@@ -108,7 +107,7 @@ client.on("message", async (message) => {
 		}, 1000 * command.cooldown)
 	}
 	try{
-		command.execute(message, DiscordClient, args);
+		command.execute(message, client, args);
 	}catch(error) {
 		errorhandle(client, error)
 		message.reply("There was a unexpected error.");
@@ -180,7 +179,7 @@ setInterval(async () => {
 		errorhandle(client, err)
 	}
 	
-}, (1000*60)*30)//30m
+}, (1000*60)*15)//15m
 
 function SendAndDelete(content, msg) {
 	msg.delete()
@@ -194,15 +193,43 @@ function VerifictionviaID(ID, msg, member, link = true) {
 	fetch(`https://new.scoresaber.com/api/player/${ID}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
+			function getName(name, prefix) {
+				fullname = `${prefix} | ${name}`
+				let username
+				if(fullname.length > 32) {
+					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					username = "!changename"
+				} else {
+					username = name
+				}
+				return username
+			}
 			if(body.error) {
 				if(link == false) return VerifictionviaID(ID.slice(0, -14), msg, member)
 				infohandle(client, "Verification", `User ${member.user.username} failed verification with ${msg.content}`)
-				return SendAndDelete("Invalid ID", msg)
+				return SendAndDelete("Invalid ID ", msg)
 			}
-			await mongo()
 			try {
-				exists = await UserSchema.countDocuments({ beatsaber: body.playerInfo.playerId })
-				if(exists != 0) {
+				exists = await UserSchema.findOne({ beatsaber: body.playerInfo.playerId })
+				if(exists) {
+					if(!exists.discord) {
+						Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
+						const username = getName(body.playerId.playerName, `#${body.playerInfo.countryRank}`)
+						await UserSchema.findOneAndUpdate({
+							beatsaber: body.playerInfo.playerId
+						}, {
+							discord: member.id,
+							active: true,
+							name: username
+						})
+						member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
+						member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+						const server = await client.guilds.fetch("822514160154706010")
+						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+						CheckRoles(body.playerInfo.countryRank, member, ranks)
+						SendAndDelete("Ahora estas verificado!", msg)
+						return infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully (the account had already existed)`)
+					}
 					infohandle(client, "Verification", `User ${member.user.username} tried to login to ${body.playerInfo.playerName} which has already been taken`)
 					return SendAndDelete("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```", msg)
 				}
@@ -210,19 +237,10 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				errorhandle(client, err)
 				return SendAndDelete("Unexpected error", msg)
 			}
-			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
-			let fullname
-			let username
 			let user
-			//Easier to read, i think
+			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
 			if(body.playerInfo.country != "MX") {//non mex
-				fullname = `${body.playerInfo.country} | ${body.playerInfo.playerName}`
-				if(fullname.length > 32) {
-					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-					username = "changename"
-				} else {
-					username = body.playerInfo.playerName
-				}
+				const username = getName(body.playerInfo.playerName, body.playerInfo.country)
 				member.setNickname(`${body.playerInfo.country} | ${username}`)
 				user = {
 					"discord": member.id,
@@ -230,17 +248,12 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"active": true,
 					"lastrank": null,
 					"name": username,
-					"realname": null
+					"realname": null,
+					"lastmap": null
 				}
 				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			} else { //mex
-				fullname = `#${body.playerInfo.countryRank} | ${body.playerInfo.playerName}`
-				if(fullname.length > 32) {
-					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
-					username = "changename"
-				} else {
-					username = body.playerInfo.playerName
-				}
+				const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
 				member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
 				user = {
 					"discord": member.id,
@@ -248,7 +261,8 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"active": true,
 					"lastrank": body.playerInfo.countryRank,
 					"name": username,
-					"realname": body.playerInfo.playerName
+					"realname": body.playerInfo.playerName,
+					"lastmap": null
 				}
 				member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
 				const server = await client.guilds.fetch("822514160154706010")

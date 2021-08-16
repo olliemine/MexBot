@@ -1,4 +1,3 @@
-const mongo = require("../mongo")
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
 
@@ -11,7 +10,6 @@ module.exports = {
 	dm: true,
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
-		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id })
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
 		const member = await server.members.fetch(message.author.id)

@@ -1,6 +1,5 @@
 const fetch = require("node-fetch")
 const UserSchema = require("../models/UserSchema")
-const mongo = require("../mongo")
 const infohandle = require("../functions/info")
 const UpdateUsers = require("../functions/UpdateUsers")
 const CheckRoles = require("../functions/CheckRoles")
@@ -13,7 +12,6 @@ module.exports = {
 	dm: true,
 	cooldown: 5,
 	async execute(message, DiscordClient) {
-		await mongo()
 		const user = await UserSchema.findOne({ discord: message.author.id, active: false, lastrank: {$ne: null} })
 		if(!user) return message.channel.send("Tu cuenta ya esta activada")
 		const server = await DiscordClient.guilds.fetch("822514160154706010")

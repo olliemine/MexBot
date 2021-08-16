@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 const { MessageEmbed } = require("discord.js");
 const UserSchema = require("../models/UserSchema")
-const mongo = require("../mongo")
 const UserCacheSchema = require("../models/UserCacheSchema")
 const errorhandle = require("../functions/error")
 const ms = require("ms")
@@ -16,7 +15,6 @@ module.exports = {
 	cooldown: 4,
 	async execute(message, DiscordClient, args) {
 		let extra_playerinfo
-		await mongo()
 		if (!Array.isArray(args) || !args.length) {
 			try {
 				user = await UserSchema.findOne({ discord: message.author.id })
