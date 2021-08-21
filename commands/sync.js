@@ -34,7 +34,7 @@ module.exports = {
 				exists = await UserSchema.findOne({ beatsaber: body.playerInfo.playerId })
 				if(exists) {
 					if(!exists.discord) {
-						const username = getName(body.playerId.playerName, `#${body.playerInfo.countryRank}`)
+						const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
 						await UserSchema.findOneAndUpdate({
 							beatsaber: body.playerInfo.playerId
 						}, {
@@ -43,7 +43,7 @@ module.exports = {
 							name: username
 						})
 						user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
-						user.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+						user.roles.add(message.guild.roles.cache.get("822553633098170449"))
 						const server = await DiscordClient.guilds.fetch("822514160154706010")
 						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 						CheckRoles(body.playerInfo.countryRank, user, ranks)
@@ -56,7 +56,6 @@ module.exports = {
 				return message.channel.send("Unexpected error")
 			}
 			let userinfo
-			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
 			if(body.playerInfo.country != "MX") {//non mex
 				const username = getName(body.playerInfo.playerName, body.playerInfo.country)
 				user.setNickname(`${body.playerInfo.country} | ${username}`)
@@ -69,7 +68,7 @@ module.exports = {
 					"realname": null,
 					"lastmap": null
 				}
-				user.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+				user.roles.add(message.guild.roles.cache.get("822582078784012298"))
 			} else { //mex
 				const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
 				user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
@@ -82,7 +81,7 @@ module.exports = {
 					"realname": body.playerInfo.playerName,
 					"lastmap": null
 				}
-				user.roles.add(msg.guild.roles.cache.get("822553633098170449"))
+				user.roles.add(message.guild.roles.cache.get("822553633098170449"))
 				const server = await DiscordClient.guilds.fetch("822514160154706010")
 				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 				CheckRoles(body.playerInfo.countryRank, user, ranks)

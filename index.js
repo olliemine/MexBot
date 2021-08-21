@@ -214,7 +214,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				if(exists) {
 					if(!exists.discord) {
 						Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
-						const username = getName(body.playerId.playerName, `#${body.playerInfo.countryRank}`)
+						const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
 						await UserSchema.findOneAndUpdate({
 							beatsaber: body.playerInfo.playerId
 						}, {
