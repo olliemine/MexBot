@@ -11,7 +11,7 @@ const Top = require("./functions/Top")
 const CheckRoles = require("./functions/CheckRoles")
 const fs = require("fs");
 const ms = require("ms")
-const client = new Discord.Client
+const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS"], partials: ["CHANNEL"]})
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
@@ -58,12 +58,12 @@ client.once("ready", async() => {
 	console.log(`Prefix ${prefix}
 Running version: ${version}
 Ready POG`)
-	return client.user.setPresence({
+	client.user.setPresence({
 			status: "online",
-			activity: {
+			activities: [{
 			name: "Beat Saber",
 			type: "PLAYING"
-		}
+		}]
 	})
 	
 
@@ -75,7 +75,7 @@ Ready POG`)
 })
 	
 
-client.on("message", async (message) => {
+client.on("messageCreate", async (message) => {
 	if(message.author.bot) return
 	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
 	if(!message.content.startsWith(prefix)) return
@@ -85,7 +85,7 @@ client.on("message", async (message) => {
 	const command = client.commands.get(commandName) || client.aliases.get(commandName) 
 	const CooldownString = `${message.author.id}-${commandName}`
 	if(command.cooldown > 0 && RecentlyExecuted.includes(CooldownString)) {
-		 return message.channel.send("Porfavor espera un poco para usar el bot otra vez.")
+		 return message.channel.send({ content: "Porfavor espera un poco para usar el bot otra vez."})
 	}
 	if(command.admin) {
 		const server = await client.guilds.fetch("822514160154706010")
@@ -94,9 +94,9 @@ client.on("message", async (message) => {
 	}
 	if(command.api) {
 		if(lastchecked < new Date() - ms("3h")) await CheckSSAPIStatus()
-		if(!SSAPISTATUS) return message.channel.send("Cant execute command (API_OFFLINE)")
+		if(!SSAPISTATUS) return message.channel.send({ content: "Cant execute command (API_OFFLINE)"})
 	}
-	if(message.guild === null && !command.dm) return message.channel.send("No se puede executar este comando en dm")
+	if(message.guild === null && !command.dm) return message.channel.send({ content: "No se puede executar este comando en dm" })
 	if(command.cooldown > 0) {
 		RecentlyExecuted.push(CooldownString)
 		
@@ -110,11 +110,10 @@ client.on("message", async (message) => {
 		command.execute(message, client, args);
 	}catch(error) {
 		errorhandle(client, error)
-		message.reply("There was a unexpected error.");
+		message.channel.send({ content: "There was a unexpected error."});
 	}
 })
 client.on("guildMemberRemove", async (member) => {
-	await mongo()
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
 		await UserSchema.findOneAndUpdate({
@@ -125,7 +124,6 @@ client.on("guildMemberRemove", async (member) => {
 	}
 })
 client.on("guildMemberAdd", async (member) => {
-	await mongo()
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
 		const user = await UserSchema.findOne({ discord: member.id })
@@ -181,12 +179,12 @@ setInterval(async () => {
 	
 }, (1000*60)*15)//15m
 
-function SendAndDelete(content, msg) {
+function SendAndDelete(msgcontent, msg) {
 	msg.delete()
-	msg.reply(content).then(mesagege => {
+	msg.channel.send({ content: msgcontent }).then(message => {
 		setTimeout(() => {
-			mesagege.delete()
-		}, ms("5s"))
+			message.delete()
+		}, ms("4s"))
 	})
 }
 function VerifictionviaID(ID, msg, member, link = true) {
@@ -197,7 +195,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				fullname = `${prefix} | ${name}`
 				let username
 				if(fullname.length > 32) {
-					member.send("Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`")
+					member.send({ content: "Tu nombre es muy largo! porfavor cambia tu nombre con `!changename [Nuevo nombre]`"})
 					username = "!changename"
 				} else {
 					username = name
@@ -296,7 +294,7 @@ async function Verificacion(member, msg) {
 	if(!ohno) {
 		member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor, API is offline, later use ${msg.content}`)
-		member.send("Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan")
+		member.send({ content: "Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan"})
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
 	if(+msg.content) {//ID?

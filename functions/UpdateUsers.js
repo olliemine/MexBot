@@ -42,7 +42,7 @@ module.exports = async (Client) => {
 	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 	async function InactiveAccount(user) {
 		const discorduser = await server.members.fetch(user.discord)
-		discorduser.send("Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!")
+		discorduser.send({content: "Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!"})
 		discorduser.setNickname(`IA | ${user.name}`)
 		await UserSchema.findOneAndUpdate({
 			discord: user.discord
@@ -91,10 +91,6 @@ module.exports = async (Client) => {
 		return
 	})
 	
-	function EmojiArrow(unumber, dnumber) {
-		if(unumber < dnumber) return "⬆️"
-		return "⬇️"
-	}
 	let otherusers = await UserSchema.find({ lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
 	async function UpdateTop50Users() {
 		return new Promise(async (resolve, reject) => {

@@ -5,6 +5,6 @@ module.exports = {
 	description: "a",
 	cooldown: -1,
 	execute(message, DiscordClient) {
-		message.channel.send("aea")
+		message.channel.send({content: "aea"})
 	}
 }

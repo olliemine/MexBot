@@ -19,11 +19,11 @@ module.exports = {
 			try {
 				user = await UserSchema.findOne({ discord: message.author.id })
 				if(user) return GetPlayerDataID(user.beatsaber)
-				message.channel.send("Tienes que mencionar a un usuario!")
+				message.channel.send({ content: "Tienes que mencionar a un usuario!"})
 
 			} catch(error) {
 				errorhandle(DiscordClient, error)
-				message.channel.send("Unexpected Error")
+				message.channel.send({ content: "Unexpected Error"})
 			}
 		} else {
 			cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
@@ -35,7 +35,7 @@ module.exports = {
 			function ChangeEmbed(text) {
 				let newembed = embed
 				newembed.fields[3].value = text
-				msg.edit(newembed)
+				msg.edit({ embeds: [newembed]})
 			}
 			function GetPP(pp, weight) {
 				return Number((pp*weight).toFixed(2))
@@ -101,7 +101,7 @@ module.exports = {
 					.setDescription(body.error.message)
 					.setColor("#F83939")
 					.setFooter(lateFooter())
-					return message.channel.send(embed)
+					return message.channel.send({ embeds: [embed]})
 				}
 				const history = body.playerInfo.history.split(",")
 				const embed = new MessageEmbed()
@@ -118,16 +118,16 @@ Country rank: #${body.playerInfo.countryRank}`)
 Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 				.addField("PP Calculation", "Loading...")
 				.setFooter("Disclamer: El PP Calculation puede ser que este incorecto")
-				message.channel.send(embed).then(msg => {
+				message.channel.send({ embeds: [embed]}).then(msg => {
 					return getOneConvertedPP(Id, embed, msg)
 				})
 			}).catch((err) => {
-				message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
+				message.channel.send({ content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
 				errorhandle(DiscordClient, err)
 			})
 		}
 		function GetPlayerDataName(name) {
-			if(name.length <= 3 || name.length > 32) return message.channel.send("Invalid Name length")
+			if(name.length <= 3 || name.length > 32) return message.channel.send({content: "Invalid Name length"})
 			const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${name}`)
 			fetch(NAMEURL)
 			.then(res => res.json())
@@ -139,7 +139,7 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 				.setDescription(info.error.message)
 				.setColor("#F83939")
 				.setFooter(lateFooter())
-				return message.channel.send(embed)
+				return message.channel.send({embeds: [embed]})
 			}
 			const player = info.players[0]
 			await fetch(`https://new.scoresaber.com/api/player/${player.playerId}/full`).then(res => res.json()).then(body => extra_playerinfo = body)
@@ -148,7 +148,6 @@ Ranked playcount: ${body.scoreStats.rankedPlayCount}`)
 			.setTitle(player.playerName + ` :flag_${player.country.toLowerCase()}:`)
 			.setURL(`https://scoresaber.com/u/${player.playerId}`)
 			.setThumbnail(`https://new.scoresaber.com${player.avatar}`)
-			.setFooter(lateFooter())
 			.addField("PP", `${numberWithCommas(player.pp.toFixed(1))}pp
 Week difference: ${Addplus(player.difference)}${player.difference}`, false)
 			.addField("RANK", `Rank: #${player.rank}
@@ -168,11 +167,11 @@ Ranked playcount: ${extra_playerinfo.scoreStats.rankedPlayCount}`)
 					errorhandle(DiscordClient, err)
 				}
 			}
-			message.channel.send(embed).then(msg => {
+			message.channel.send({embeds: [embed]}).then(msg => {
 				return getOneConvertedPP(player.playerId, embed, msg)
 			})
 		}).catch((err) => {
-			message.channel.send("Parece que hay un error con scoresaber, porfavor intenta despues")
+			message.channel.send({content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
 			errorhandle(DiscordClient, err)
 		})
 		}

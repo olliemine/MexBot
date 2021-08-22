@@ -15,8 +15,8 @@ module.exports = {
 			await Top(DiscordClient)
 		} catch(err) {
 			errorhandle(DiscordClient, err)
-		}
+		} 
 		message.channel.stopTyping();
-		message.channel.send(`Executed successfully, ${new Date() - time}`)
+		message.channel.send({content: `Executed successfully, ${new Date() - time}`})
 	}
 }

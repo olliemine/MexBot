@@ -45,5 +45,5 @@ module.exports = async (Client, usersupdatedraw) => {
 	const embed = new MessageEmbed()
 	.setColor("#412FF4")
 	.setDescription(finalmessage)
-	channel.send(embed)
+	channel.send({embeds: [embed]})
 }

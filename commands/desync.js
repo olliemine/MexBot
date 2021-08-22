@@ -9,9 +9,9 @@ module.exports = {
 	dm: false,
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
-		if(args.length != 1) return message.channel.send("Tienes que mencionar a un usuario")
+		if(args.length != 1) return message.channel.send({content: "Tienes que mencionar a un usuario"})
 		let user = await message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
-		if(!user) return message.channel.send("Ese usuario es invalido")
+		if(!user) return message.channel.send({content: "Ese usuario es invalido"})
 		function RemoveRoles() {
 			const ranks = ["822553633098170449", "822582078784012298" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]
 			ranks.forEach((rank) => {
@@ -20,7 +20,7 @@ module.exports = {
 		}
 		try {
 			exists = await UserSchema.findOne({ discord: user.id })
-			if(!exists) return message.channel.send("El men no tiene una cuenta (`!sync` para añadir una)")
+			if(!exists) return message.channel.send({content: "El men no tiene una cuenta (`!sync` para añadir una)"})
 			if(exists.lastrank <= 50) {
 				RemoveRoles()
 				await UserSchema.findOneAndUpdate({
@@ -30,19 +30,19 @@ module.exports = {
 					active: false,
 					name: null
 				})
-				return message.channel.send("Ahora " + user.user.username + " no tiene cuenta")
+				return message.channel.send({content: "Ahora " + user.user.username + " no tiene cuenta"})
 			}
 		} catch(err) {
 			errorhandle(DiscordClient, err)
-			return message.channel.send("Unexpected error")
+			return message.channel.send({content: "Unexpected error"})
 		}
 		user.setNickname("")
 		try {
 			await UserSchema.findOneAndDelete({ discord: user.id })
-			message.channel.send("Ahora " + user.user.username + " no tiene cuenta")
+			message.channel.send({content: "Ahora " + user.user.username + " no tiene cuenta"})
 		} catch(err) {
 			errorhandle(DiscordClient, err)
-			return message.channel.send("Unexpected Error")
+			return message.channel.send({content: "Unexpected error"})
 		}
 		RemoveRoles()
 	},

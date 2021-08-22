@@ -7,5 +7,5 @@ module.exports = (Client, error, description = "") => {
 
 ${description}
 >:(`)
-	Client.channels.cache.get("833067043351167046").send(embed);
+	Client.channels.cache.get("833067043351167046").send({embeds: [embed]});
 }

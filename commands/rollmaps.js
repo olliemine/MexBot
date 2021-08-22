@@ -137,6 +137,7 @@ module.exports = {
 	dm: false,
 	cooldown: -1,
 	async execute(message, DiscordClient, args) {
+		return message.channel.send({ content: "Discontinued" })
 		if(!args[0]) return message.channel.send("You need to include the number of round this is")
 		if(args[0] != "1" && args[0] != "2" && args[0] != "3" && args[0] != "4") return message.channel.send("Invalid round")
 		message.delete()

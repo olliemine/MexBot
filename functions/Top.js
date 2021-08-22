@@ -36,7 +36,7 @@ module.exports = async (DiscordClient) => {
 							})
 							if(!userid.lastmap) continue
 							const previousname = map.TopPlayerName
-							topchannel.send(`${userid.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${userid.beatsaber}`)
+							topchannel.send({ content: `${userid.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${userid.beatsaber}`})
 							continue
 						}
 						const newmap = {

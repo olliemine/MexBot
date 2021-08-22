@@ -11,10 +11,10 @@ module.exports = {
 	dm: false,
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
-		if(args.length != 2) return message.channel.send("Tienes que mencionar a un usuario y a un jugador de beatsaber")
+		if(args.length != 2) return message.channel.send({ content: "Tienes que mencionar a un usuario y a un jugador de beatsaber"})
 		let user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
-		if(!user) return message.channel.send("Ese usuario es invalido")
-		if(!+args[1]) return message.channel.send("Sorry me da flojera implementar un beatsaber name looker porfavor usa el id Pepega")
+		if(!user) return message.channel.send({ content: "Ese usuario es invalido"})
+		if(!+args[1]) return message.channel.send({ content: "Sorry me da flojera implementar un beatsaber name looker porfavor usa el id Pepega"})
 		fetch(`https://new.scoresaber.com/api/player/${args[1]}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
@@ -22,14 +22,14 @@ module.exports = {
 				fullname = `${prefix} | ${name}`
 				let username
 				if(fullname.length > 32) {
-					message.channel.send("Name is too long")
+					message.channel.send({ content: "Name is too long"})
 					username = "!changename"
 				} else {
 					username = name
 				}
 				return username
 			}
-			if(body.error) return message.channel.send("Error " + body.error)
+			if(body.error) return message.channel.send({ content: `Error ${body.error}`})
 			try {
 				exists = await UserSchema.findOne({ beatsaber: body.playerInfo.playerId })
 				if(exists) {
@@ -47,13 +47,13 @@ module.exports = {
 						const server = await DiscordClient.guilds.fetch("822514160154706010")
 						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 						CheckRoles(body.playerInfo.countryRank, user, ranks)
-						return message.channel.send(`Synced ${user.user.username} with ${body.playerId.playerName} successfully`)
+						return message.channel.send({ content: `Synced ${user.user.username} with ${body.playerId.playerName} successfully`})
 					}
-					return message.channel.send("Ya hay una usuario con esta cuenta.")
+					return message.channel.send({ content: "Ya hay una usuario con esta cuenta."})
 				}
 			} catch(err) {
 				errorhandle(DiscordClient, err)
-				return message.channel.send("Unexpected error")
+				return message.channel.send({ content: "Unexpected error"})
 			}
 			let userinfo
 			if(body.playerInfo.country != "MX") {//non mex
@@ -88,10 +88,10 @@ module.exports = {
 			}
 			try {
 				await new UserSchema(userinfo).save()
-				message.channel.send(`Synced ${user.user.username} with ${body.playerId.playerName} successfully`)
+				message.channel.send({ content: `Synced ${user.user.username} with ${body.playerId.playerName} successfully`})
 			} catch(err) {
 				errorhandle(DiscordClient, err)
-				return message.channel.send("Unexpected Error")
+				return message.channel.send({ content: "Unexpected Error"})
 			}
 		}).catch((err) => {
 			errorhandle(DiscordClient, err, "either i am dumb or scoresaber is dumb")

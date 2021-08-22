@@ -32,6 +32,6 @@ Bot Latency: ${botms}ms
 Discord API Latency: ${discordms}ms
 Scoresaber Latency: ${await scoresaberms()}
 Scoresaber API Latency: ${await scoresaberapims()}`)
-		message.channel.send("🏓Pong!", embed);
+		message.channel.send({ content: "🏓Pong!", embeds: [embed]});
 	},
 };

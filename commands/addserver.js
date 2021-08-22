@@ -18,6 +18,6 @@ module.exports = {
         .setThumbnail(inviteinf.guild.iconURL())
         .setColor(color)
         .setDescription(`LINK: ${discordlink}`)
-        channel.send(embed)
+        channel.send({embeds: [embed]})
 	},
 }
