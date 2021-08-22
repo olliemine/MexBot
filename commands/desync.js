@@ -10,7 +10,8 @@ module.exports = {
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
 		if(args.length != 1) return message.channel.send({content: "Tienes que mencionar a un usuario"})
-		let user = await message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
+		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+		if(user) user = await message.guild.members.fetch(user.id)
 		if(!user) return message.channel.send({content: "Ese usuario es invalido"})
 		function RemoveRoles() {
 			const ranks = ["822553633098170449", "822582078784012298" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]

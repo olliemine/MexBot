@@ -9,7 +9,8 @@ module.exports = {
 	dm: false,
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
-		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
+		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+		if(user) user = await message.guild.members.fetch(user.id)
 		if(!user) return message.channel.send({content: "Tienes que mencionar a un usuario smh"})
 		const UserInfo = await UserSchema.findOne({
 			discord: user.id
@@ -22,7 +23,7 @@ module.exports = {
 			return message.channel.send({content: `Nombre cambiado a ${newname}`})
 		} 
 		args.shift()
-		const newname = args.join(" ")
+		const newname = args.join("")
 		await fetch(`https://new.scoresaber.com/api/player/${UserInfo.beatsaber}/full`)
 		.then(res => res.json())
 		.then(async (body) => {

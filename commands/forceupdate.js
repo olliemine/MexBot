@@ -14,8 +14,8 @@ module.exports = {
 	dm: false,
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
-		message.channel.startTyping();
-		const user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
+		message.channel.sendTyping()
+		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
 		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 		async function InactiveAccount(user1) {
@@ -47,7 +47,7 @@ module.exports = {
 							const discorduser = await server.members.fetch(user1.discord)
 							CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
 							discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)						
-							usersupdated.push({
+							if(user1.lastrank - body.playerInfo.countryRank != 0) usersupdated.push({
 								"user": user1.realname,
 								"update":  user1.lastrank - body.playerInfo.countryRank, 
 								"lastrank": user1.lastrank,
@@ -60,7 +60,7 @@ module.exports = {
 							})
 							const member = await UserSchema.findOne({ active: true, lastrank: body.playerInfo.countryRank, discord: {$ne: user1.discord } })
 							if(member) return FetchUsers(member)
-							InfoChannelMessage(DiscordClient, usersupdated)
+							if(usersupdated.length) InfoChannelMessage(DiscordClient, usersupdated)
 							resolve()
 						}).catch((err) => {
 							return errorhandle(DiscordClient, err)
@@ -70,9 +70,8 @@ module.exports = {
 				})
 			}
 			await FetchUser(userinfo)
-			message.channel.stopTyping();
 			message.channel.send({content: "Updated " + userinfo.name})
-			return infohandle(DiscordClient, "Updated Users", `Updated Users ${usersupdated.join(", ")}`)
+			return infohandle(DiscordClient, "Updated Users", `Updated Users`)
 			
 		}
 		if(user) return UpdateUser(user.id)
@@ -82,6 +81,5 @@ module.exports = {
 			errorhandle(DiscordClient, err)
 		}
 		message.channel.send({content: `Succesfully updated users! took ${Date.now() - message.createdTimestamp}ms to execute!`})
-		message.channel.stopTyping();
 	}
 }

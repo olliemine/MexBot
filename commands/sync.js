@@ -12,7 +12,8 @@ module.exports = {
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
 		if(args.length != 2) return message.channel.send({ content: "Tienes que mencionar a un usuario y a un jugador de beatsaber"})
-		let user = message.guild.member(message.mentions.users.first() || DiscordClient.users.cache.get(args[0]))
+		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+		if(user) user = await message.guild.members.fetch(user.id)
 		if(!user) return message.channel.send({ content: "Ese usuario es invalido"})
 		if(!+args[1]) return message.channel.send({ content: "Sorry me da flojera implementar un beatsaber name looker porfavor usa el id Pepega"})
 		fetch(`https://new.scoresaber.com/api/player/${args[1]}/full`)
@@ -29,7 +30,7 @@ module.exports = {
 				}
 				return username
 			}
-			if(body.error) return message.channel.send({ content: `Error ${body.error}`})
+			if(body.error) return message.channel.send({ content: `Error ${body.error.toString()}`})
 			try {
 				exists = await UserSchema.findOne({ beatsaber: body.playerInfo.playerId })
 				if(exists) {
