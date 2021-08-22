@@ -17,5 +17,8 @@
     "nodemon": "^2.0.7",
     "puppeteer": "^9.0.0",
     "redis": "^3.1.2"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
