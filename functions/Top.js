@@ -2,6 +2,7 @@ const fetch = require("node-fetch")
 const LevelSchema = require("../models/LevelSchema")
 const UserSchema = require("../models/UserSchema")
 const ms = require("ms")
+const errorhandle = require("./error")
 
 module.exports = async (DiscordClient) => {
 		const players = await UserSchema.find({ realname: {$ne: null} })
@@ -69,6 +70,7 @@ module.exports = async (DiscordClient) => {
 						//console.log(Page)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) return StoreMaps()
+						if(res.status != 200) return errorhandle(DiscordClient, new Error(`${res.status} | ${res.statusText}`))
 						const body = await res.json()
 						if(Page == 1 && body.scores[0].scoreId == userid.lastmap) return reject()
 						if(Page == 1) firstmap = body.scores[0].scoreId
