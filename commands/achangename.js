@@ -1,5 +1,6 @@
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
+const { Util } = require("discord.js")
 
 module.exports = {
 	name : "achangename",
@@ -15,12 +16,15 @@ module.exports = {
 		const UserInfo = await UserSchema.findOne({
 			discord: user.id
 		})
+		function NoMentionText(text) {
+			return Util.removeMentions(text)
+		}
 		if(!UserInfo) {
 			args.shift()
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre ta muy grande smh"})
 			user.setNickname(new_name)
-			return message.channel.send({content: `Nombre cambiado a ${newname}`})
+			return message.channel.send({content: NoMentionText(`Nombre cambiado a ${newname}`)})
 		} 
 		args.shift()
 		const newname = args.join("")
@@ -42,7 +46,7 @@ module.exports = {
 				name: newname
 			})
 			user.setNickname(fullname)
-			message.channel.send({content: `Nombre cambiado a ${newname}`})
+			message.channel.send({content: NoMentionText(`Nombre cambiado a ${newname}`)})
 		}).catch(() => {
 			message.channel.send({content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
 		})

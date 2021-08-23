@@ -1,5 +1,6 @@
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
+const { Util } = require("discord.js")
 
 module.exports = {
 	name : "changename",
@@ -13,17 +14,20 @@ module.exports = {
 		const user = await UserSchema.findOne({ discord: message.author.id })
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
 		const member = await server.members.fetch(message.author.id)
+		function NoMentionText(text) {
+			return Util.removeMentions(text)
+		}
 		if(!user) {
 			if(!Array.isArray(args) || !args.length) return message.channel.send({content: "Necesitas poner un nombre"})
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})			
 			member.setNickname(new_name)
-			return message.channel.send({content: `Succesfully changed name to ${new_name}`})
+			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${new_name}`)})
 		} else {
 			fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`)
 			.then(res => res.json())
 			.then(async (body) => {
-				if(body.error) return message.channel.send({content: "Unexpected error " + body.error})
+				if(body.error) return message.channel.send({content: "Unexpected error " + body.error.message})
 				let backtext
 				if(!Array.isArray(args) || !args.length) {
 					if(user.lastrank === null) {
@@ -40,7 +44,7 @@ module.exports = {
 					})
 	
 					member.setNickname(`${backtext}${body.playerInfo.playerName}`)
-					return message.channel.send({ content: `Succesfully changed name to ${body.playerInfo.playerName}`})
+					return message.channel.send({ content: NoMentionText(`Succesfully changed name to ${body.playerInfo.playerName}`)})
 				} else {
 					const new_name = args.join(" ")
 					if(user.lastrank === null) {
@@ -57,7 +61,7 @@ module.exports = {
 					})
 					
 					member.setNickname(full_new_name)
-					return message.channel.send({content: `Succesfully changed name to ${new_name}`})
+					return message.channel.send({content: NoMentionText(`Succesfully changed name to ${new_name}`)})
 				}
 			}).catch(() => {
 				message.channel.send({content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
