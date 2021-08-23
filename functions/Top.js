@@ -70,7 +70,10 @@ module.exports = async (DiscordClient) => {
 						//console.log(Page)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) return StoreMaps()
-						if(res.status != 200) return errorhandle(DiscordClient, new Error(`${res.status} | ${res.statusText}`))
+						if(res.status == 520) {
+							errorhandle(DiscordClient, new Error(`${res.status} | ${res.statusText}`))
+							return GetMap(Page)
+						}
 						const body = await res.json()
 						if(Page == 1 && body.scores[0].scoreId == userid.lastmap) return reject()
 						if(Page == 1) firstmap = body.scores[0].scoreId
