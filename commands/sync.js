@@ -48,7 +48,7 @@ module.exports = {
 						const server = await DiscordClient.guilds.fetch("822514160154706010")
 						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 						CheckRoles(body.playerInfo.countryRank, user, ranks)
-						return message.channel.send({ content: `Synced ${user.user.username} with ${body.playerId.playerName} successfully`})
+						return message.channel.send({ content: `Synced ${user.user.username} with ${body.playerInfo.playerName} successfully`})
 					}
 					return message.channel.send({ content: "Ya hay una usuario con esta cuenta."})
 				}
@@ -89,7 +89,7 @@ module.exports = {
 			}
 			try {
 				await new UserSchema(userinfo).save()
-				message.channel.send({ content: `Synced ${user.user.username} with ${body.playerId.playerName} successfully`})
+				message.channel.send({ content: `Synced ${user.user.username} with ${body.playerInfo.playerName} successfully`})
 			} catch(err) {
 				errorhandle(DiscordClient, err)
 				return message.channel.send({ content: "Unexpected Error"})
