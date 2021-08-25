@@ -20,6 +20,7 @@ module.exports = {
 			message.channel.send({ content: "Tienes que mencionar a un usuario!"})
 		} else {
 			const user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+			let userschema
 			if(user) userschema = await UserSchema.findOne({ discord: user.id })
 			if(userschema) return GetPlayerDataID(userschema.beatsaber)
 			cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
