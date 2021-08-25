@@ -15,16 +15,13 @@ module.exports = {
 	cooldown: 4,
 	async execute(message, DiscordClient, args) {
 		if (!Array.isArray(args) || !args.length) {
-			try {
-				user = await UserSchema.findOne({ discord: message.author.id })
-				if(user) return GetPlayerDataID(user.beatsaber)
-				message.channel.send({ content: "Tienes que mencionar a un usuario!"})
-
-			} catch(error) {
-				errorhandle(DiscordClient, error)
-				message.channel.send({ content: "Unexpected Error"})
-			}
+			user = await UserSchema.findOne({ discord: message.author.id })
+			if(user) return GetPlayerDataID(user.beatsaber)
+			message.channel.send({ content: "Tienes que mencionar a un usuario!"})
 		} else {
+			const user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+			if(user) userschema = await UserSchema.findOne({ discord: user.id })
+			if(userschema) return GetPlayerDataID(userschema.beatsaber)
 			cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
 			if(cacheduser) return GetPlayerDataID(cacheduser.id)
 			GetPlayerDataName(args.join("%20"))
