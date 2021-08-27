@@ -9,7 +9,6 @@ module.exports = {
 	name: "getplayer",
 	description: "Te da la informacion de un jugador",
 	aliases: ["get"],
-	api: true,
 	admin: false,
 	dm: true,
 	cooldown: 4,

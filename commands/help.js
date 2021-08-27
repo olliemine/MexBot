@@ -3,7 +3,6 @@ const { MessageEmbed } = require("discord.js")
 module.exports = {
 	name : "help",
 	description: "help",
-	api: false,
 	admin: false,
 	dm: true,
 	cooldown: -1,

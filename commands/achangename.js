@@ -5,7 +5,6 @@ const { Util } = require("discord.js")
 module.exports = {
 	name : "achangename",
 	description: "Te cambia el nombre",
-	api: true,
 	admin: true,
 	dm: false,
 	cooldown: 1,

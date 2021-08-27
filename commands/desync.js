@@ -4,7 +4,6 @@ const errorhandle = require("../functions/error")
 module.exports = {
 	name : "desync",
 	description: "pong",
-	api: false,
 	admin: true,
 	dm: false,
 	cooldown: 1,

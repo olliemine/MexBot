@@ -9,7 +9,6 @@ const InfoChannelMessage = require("../functions/InfoChannelMessage")
 module.exports = {
 	name: "forceupdate",
 	description: "Aea",
-	api: true,
 	admin: true,
 	dm: false,
 	cooldown: 2,

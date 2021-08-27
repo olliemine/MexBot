@@ -17,17 +17,7 @@ client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 client.login(process.env.TOKEN)
 let RecentlyExecuted = []
-let lastchecked = new Date()
-let SSAPISTATUS = true
 
-async function CheckSSAPIStatus() {
-	lastchecked = new Date()
-	SSAPISTATUS = await fetch("https://new.scoresaber.com/api").then((response) => {
-		if(response.status != 200) return false
-		return true
-	})
-	return SSAPISTATUS
-}
 
 function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
@@ -92,10 +82,6 @@ client.on("messageCreate", async (message) => {
 		const member = await server.members.fetch(message.author.id)
 		if(!member.permissions.has("ADMINISTRATOR")) return
 	}
-	if(command.api) {
-		if(lastchecked < new Date() - ms("3h")) await CheckSSAPIStatus()
-		if(!SSAPISTATUS) return message.channel.send({ content: "Cant execute command (API_OFFLINE)"})
-	}
 	if(message.guild === null && !command.dm) return message.channel.send({ content: "No se puede executar este comando en dm" })
 	if(command.cooldown > 0) {
 		RecentlyExecuted.push(CooldownString)
@@ -127,11 +113,6 @@ client.on("guildMemberAdd", async (member) => {
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
 		const user = await UserSchema.findOne({ discord: member.id })
-		if(LastCheckedSSStatus < new Date() - ms("1h")) await CheckSSAPIStatus()
-		if(!SSAPISTATUS) {
-			member.roles.add("822582078784012298")
-			return infohandle(client, "API DOWN", "User " + member.user.username + " Couldnt verified because of API errors, " + user.beatsaber)
-		}
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.playerInfo.country == "MX") {
 				member.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
@@ -160,7 +141,6 @@ for(const file of commandFiles) {
 	}
 }
 setInterval(() => {
-	if(!SSAPISTATUS) return
 	try {
 		Top(client)
 	} catch(err) {
@@ -169,8 +149,6 @@ setInterval(() => {
 }, (1000*60)*6)//6m
 
 setInterval(async () => {
-	if(lastchecked < new Date() - ms("1h")) await CheckSSAPIStatus()
-	if(!SSAPISTATUS) return
 	try {
 		UpdateUsers(client)
 	} catch(err) {
@@ -288,7 +266,7 @@ async function Verificacion(member, msg) {
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
 	const ohno = await fetch("https://new.scoresaber.com/api").then(response => {
-		if(response.status != 200) return false
+		if(response.status == 404) return false
 		return true
 	})
 	if(!ohno) {

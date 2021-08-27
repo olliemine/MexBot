@@ -3,7 +3,6 @@ const { MessageEmbed } = require("discord.js")
 module.exports = {
 	name : "addserver",
 	description: "yes",
-	api: false,
 	admin: true,
 	dm: true,
 	cooldown: -1,

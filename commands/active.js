@@ -7,7 +7,6 @@ const CheckRoles = require("../functions/CheckRoles")
 module.exports = {
 	name : "active",
 	description: "active",
-	api: true,
 	admin: false,
 	dm: true,
 	cooldown: 5,

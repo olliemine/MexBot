@@ -6,9 +6,8 @@ const CheckRoles = require("../functions/CheckRoles")
 module.exports = {
 	name : "sync",
 	description: "Sincroniza a alguien con una cuenta de beatsaber, no funciona si no eres admin",
-	api: true,
 	admin: true,
-	dm: false,
+	dm: true,
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
 		if(args.length != 2) return message.channel.send({ content: "Tienes que mencionar a un usuario y a un jugador de beatsaber"})

@@ -6,7 +6,6 @@ module.exports = {
 	name : "changename",
 	description: "Te cambia el nombre",
 	aliases: ["ch"],
-	api: true,
 	admin: false,
 	dm: true,
 	cooldown: 2,

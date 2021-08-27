@@ -4,7 +4,6 @@ const Top = require("../functions/Top")
 module.exports = {
 	name: "forcetop",
 	description: "pepega",
-	api: true,
 	admin: true,
 	dm: false,
 	cooldown: 15,

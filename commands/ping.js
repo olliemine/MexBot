@@ -4,7 +4,6 @@ const { MessageEmbed } = require("discord.js")
 module.exports = {
 	name : "ping",
 	description: "pong",
-	api: false,
 	admin: false,
 	dm: true,
 	cooldown: 1,
