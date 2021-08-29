@@ -41,6 +41,7 @@ module.exports = async (Client) => {
 	const server = await Client.guilds.fetch("822514160154706010")
 	const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
 	async function InactiveAccount(user) {
+		if(usersupdatedraw.length) usersupdatedraw = []
 		const discorduser = await server.members.fetch(user.discord)
 		discorduser.send({content: "Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!"})
 		discorduser.setNickname(`IA | ${user.name}`)
