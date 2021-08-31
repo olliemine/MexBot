@@ -18,34 +18,32 @@ module.exports = {
 		function NoMentionText(text) {
 			return Util.removeMentions(text)
 		}
+		function GetBacktext(body) {
+			if(UserInfo.lastrank === null) return `${body.playerInfo.country} | `
+			if(UserInfo.active == false) return `IA | ` 
+			return `#${body.playerInfo.countryRank} | `
+		}
+		args.shift()
 		if(!UserInfo) {
-			args.shift()
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre ta muy grande smh"})
 			user.setNickname(new_name)
 			return message.channel.send({content: NoMentionText(`Nombre cambiado a ${newname}`)})
 		} 
-		args.shift()
-		const newname = args.join("")
 		await fetch(`https://new.scoresaber.com/api/player/${UserInfo.beatsaber}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) return message.channel.send("Unexpected error")
-			let backtext
-			if(UserInfo.lastrank === null) {
-				backtext = `${body.playerInfo.country} | `
-			} else if(UserInfo.active == false) backtext = `IA | `
-			else backtext = `#${body.playerInfo.countryRank} | `
-
-			const fullname = `${backtext}${newname}`
+			const backtext = GetBacktext(body)
+			const fronttext = args.length ? args.join(" ") : body.playerInfo.playerName
+			const fullname = `${backtext}${fronttext}`
 			if(fullname.length > 32) return message.channel.send({content: "El nombre ta muy grande smh"})
 			await UserSchema.findOneAndUpdate({
 				discord: user.id
 			}, {
-				name: newname
+				name: fronttext
 			})
 			user.setNickname(fullname)
-			message.channel.send({content: NoMentionText(`Nombre cambiado a ${newname}`)})
+			message.channel.send({content: NoMentionText(`Nombre cambiado a ${fronttext}`)})
 		}).catch(() => {
 			message.channel.send({content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
 		})
