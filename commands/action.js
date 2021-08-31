@@ -8,7 +8,7 @@ module.exports = {
 	admin: true,
 	dm: true,
 	cooldown: -1,
-    execute(message, DiscordClient) {
+    async execute(message, DiscordClient) {
         if(message.author.id != "733489965568360539") return message.channel.send({content: "no"})
         const server = await DiscordClient.guilds.fetch("822514160154706010")
 		let user = DiscordClient.users.cache.get("733489965568360539")
