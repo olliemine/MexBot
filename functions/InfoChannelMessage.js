@@ -3,7 +3,6 @@ const UserSchema = require("../models/UserSchema")
 
 module.exports = async (Client, usersupdatedraw) => {
     if(!usersupdatedraw.length) return
-	const channel = Client.channels.cache.get("876801984886362132")
     //Check if its important
 	let important = false
 	for await(let user of usersupdatedraw) {
@@ -46,5 +45,6 @@ module.exports = async (Client, usersupdatedraw) => {
 	const embed = new MessageEmbed()
 	.setColor("#412FF4")
 	.setDescription(finalmessage)
+	const channel = await Client.channels.cache.get("876801984886362132")
 	channel.send({embeds: [embed]})
 }

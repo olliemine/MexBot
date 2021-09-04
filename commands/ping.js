@@ -20,7 +20,7 @@ module.exports = {
 		const scoresaberapims = () => {
 			const timer = new Date()
 			return fetch("https://new.scoresaber.com/api").then((json) => {
-				if(json.status != 200) return "Offline"
+				if(json.status != 200 && json.status != 429) return "Offline"
 				return new Date() - timer + "ms"
 			})
 		}

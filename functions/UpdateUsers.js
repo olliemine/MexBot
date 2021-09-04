@@ -56,12 +56,7 @@ module.exports = async (Client) => {
 	}
 	let ifnew = false
 	info.forEach(async (row) => {
-		let exists = false
-		for(let entity of users) {
-			if(row[1] != entity.realname) continue
-			exists = true
-			break
-		}
+		const exists = users.some(user => row[1] === user.realname)
 		if(exists) return
 		ifnew = true
 		await fetch(`https://new.scoresaber.com/api/players/by-name/${row[1]}`)
@@ -72,7 +67,7 @@ module.exports = async (Client) => {
 				"discord": null,
 				"beatsaber": body.players[0].playerId,
 				"active": false,
-				"lastrank": row[0],
+				"lastrank": 50,
 				"name": null,
 				"realname": row[1],
 				"lastmap": null
