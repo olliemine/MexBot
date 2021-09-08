@@ -26,6 +26,7 @@ module.exports = async (Client, usersupdatedraw) => {
 	const negativeusers = usersupdatedraw.filter((user) => {
 		return user.update < 0
 	})
+	if(!positiveusers || !negativeusers) return
 	if(positiveusers) positiveusers.forEach((user) => {
 		finalmessage = finalmessage + `+ ${user.user} ${user.update}\n`
 		if(user.lastrank > 20 && user.newrank <= 20) finalmessage = finalmessage + `* ${user.user} is now top 20\n`
@@ -33,7 +34,7 @@ module.exports = async (Client, usersupdatedraw) => {
 		if(user.lastrank > 5 && user.newrank <= 5) finalmessage = finalmessage + `* ${user.user} is now top 5!!!\n`
 		if(user.lastrank > 1 && user.newrank == 1) finalmessage = finalmessage + `* ${user.user} is now top 1!!!!!!! holysht ggs\n`
 	})
-	if(positiveusers && negativeusers) finalmessage = finalmessage + "\n\n"
+	finalmessage = finalmessage + "\n\n"
 	if(negativeusers) negativeusers.forEach((user) => {
 		finalmessage = finalmessage + `- ${user.user} ${user.update}\n`
 		if(user.lastrank <= 20 && user.newrank > 20) finalmessage = finalmessage + `* ${user.user} is now longer top 20\n`
