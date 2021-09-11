@@ -117,6 +117,9 @@ client.on("guildMemberAdd", async (member) => {
 			if(body.playerInfo.country == "MX") {
 				member.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 				member.roles.add("822553633098170449")
+				const server = await client.guilds.fetch("822514160154706010")
+				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+				CheckRoles(body.playerInfo.countryRank, member, ranks)
 			} else {
 				member.setNickname(`${body.playerInfo.country} | ${user.name}`)
 				member.roles.add("822582078784012298")
@@ -225,7 +228,8 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"lastrank": null,
 					"name": username,
 					"realname": null,
-					"lastmap": null
+					"lastmap": null,
+					"snipe": null
 				}
 				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
 			} else { //mex
@@ -238,7 +242,8 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"lastrank": body.playerInfo.countryRank,
 					"name": username,
 					"realname": body.playerInfo.playerName,
-					"lastmap": null
+					"lastmap": null,
+					"snipe": false
 				}
 				member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
 				const server = await client.guilds.fetch("822514160154706010")

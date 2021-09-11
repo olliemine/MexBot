@@ -28,7 +28,7 @@ module.exports = {
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre ta muy grande smh"})
 			user.setNickname(new_name)
-			return message.channel.send({content: NoMentionText(`Nombre cambiado a ${newname}`)})
+			return message.channel.send({content: NoMentionText(`Nombre cambiado a ${new_name}`)})
 		} 
 		await fetch(`https://new.scoresaber.com/api/player/${UserInfo.beatsaber}/full`)
 		.then(res => res.json())

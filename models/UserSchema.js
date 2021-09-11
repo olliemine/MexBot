@@ -7,7 +7,8 @@ const UserSchema = new mongoose.Schema({
 	"lastrank": Number,
 	"name": String,
 	"realname": String,
-	"lastmap": String
+	"lastmap": String,
+	"snipe": Boolean
 })
 
 module.exports = mongoose.model("users", UserSchema)

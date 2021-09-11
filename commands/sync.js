@@ -66,7 +66,8 @@ module.exports = {
 					"lastrank": null,
 					"name": username,
 					"realname": null,
-					"lastmap": null
+					"lastmap": null,
+					"snipe": null
 				}
 				user.roles.add(message.guild.roles.cache.get("822582078784012298"))
 			} else { //mex
@@ -79,7 +80,8 @@ module.exports = {
 					"lastrank": body.playerInfo.countryRank,
 					"name": username,
 					"realname": body.playerInfo.playerName,
-					"lastmap": null
+					"lastmap": null,
+					"snipe": false
 				}
 				user.roles.add(message.guild.roles.cache.get("822553633098170449"))
 				const server = await DiscordClient.guilds.fetch("822514160154706010")
