@@ -38,7 +38,7 @@ module.exports = async (DiscordClient) => {
 							if(!userid.lastmap) continue
 							let previousname = map.TopPlayerName
 							const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
-							if(previoususer.snipe) previousname = `<@${previoususer}>`
+							if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
 							topchannel.send({ content: `${userid.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${userid.beatsaber}`})
 							continue
 						}
