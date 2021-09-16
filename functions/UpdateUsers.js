@@ -58,11 +58,13 @@ module.exports = async (Client) => {
 	info.forEach(async (row) => {
 		const exists = users.some(user => row[1] === user.realname)
 		if(exists) return
-		ifnew = true
 		await fetch(`https://new.scoresaber.com/api/players/by-name/${row[1]}`)
 		.then(res => res.json())
 		.then(async (body) => {
 			if(body.players[0].country != "MX") return infohandle(Client, ":(", "Add " + row[1] + " manually as there is different persons with this name ae")
+			const exists = users.some(user => body.players[0].playerId === user.beatsaber)//This if someone changed their name 
+			if(exists) return
+			ifnew = true
 			const user = {
 				"discord": null,
 				"beatsaber": body.players[0].playerId,
