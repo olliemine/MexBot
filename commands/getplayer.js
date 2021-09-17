@@ -4,6 +4,7 @@ const UserSchema = require("../models/UserSchema")
 const UserCacheSchema = require("../models/UserCacheSchema")
 const errorhandle = require("../functions/error")
 const ms = require("ms")
+const LevelSchema = require("../models/LevelSchema")
 
 module.exports = {
 	name: "getplayer",
@@ -89,8 +90,13 @@ module.exports = {
 			.setColor("#F83939")
 			return message.channel.send({ embeds: [embed]})
 		}
-		function BuildEmbed(data) {
+		async function BuildEmbed(data) {
 			const history = data.playerInfo.history.split(",")
+			const top1ScoreCount = async () => {
+				a = await LevelSchema.countDocuments({ TopPlayer: data.playerInfo.playerId})
+				if(a == 0) return ""
+				return `\nTop 1 Count: ${a} 🇲🇽`
+			}
 			const embed = new MessageEmbed()
 			.setColor("#4C9CF6")
 			.setTitle(data.playerInfo.playerName + ` :flag_${data.playerInfo.country.toLowerCase()}:`)
@@ -101,7 +107,7 @@ Week difference: ${Addplus(history[history.length - 7] - data.playerInfo.rank)}$
 			.addField("RANK", `Rank: #${numberWithCommas(data.playerInfo.rank)}
 Country rank: #${numberWithCommas(data.playerInfo.countryRank)}`)
 			.addField("RANKED", `Average Accuracy: ${data.scoreStats.averageRankedAccuracy.toFixed(2)}%
-Ranked playcount: ${data.scoreStats.rankedPlayCount}`)
+Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 			.addField("PP Calculation", "Loading...")
 			message.channel.send({ embeds: [embed]}).then(msg => {
 				return getOneConvertedPP(data.playerInfo.playerId, embed, msg)
