@@ -5,6 +5,7 @@ const errorhandle = require("./error")
 const infohandle = require("./info")
 const CheckRoles = require("./CheckRoles")
 const InfoChannelMessage = require("./InfoChannelMessage")
+const LevelSchema = require("../models/LevelSchema")
 //const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
@@ -125,9 +126,14 @@ module.exports = async (Client) => {
 			resolve()
 		})
 	}
-	async function UpdateName(id, newname) {
+	async function UpdateName(discord, beatsaber, newname) {
+		await LevelSchema.updateMany({ 
+			TopPlayer: beatsaber
+		}, {
+			TopPlayerName: newname
+		})
 		return await UserSchema.findOneAndUpdate({
-			discord: id
+			discord: discord
 		}, {
 			realname: newname
 		})
@@ -141,7 +147,7 @@ module.exports = async (Client) => {
 					if(body.error) return errorhandle(client, new Error("Couldnt get user " + user.name))
 					if(body.playerInfo.inactive == 1 && user.active) return InactiveAccount(user)
 					if(body.playerInfo.countryRank > 50 && !user.discord) return UserSchema.findOneAndDelete({ beatsaber: user.beatsaber })
-					if(user.realname != body.playerInfo.playerName) await UpdateName(user.discord, body.playerInfo.playerName)
+					if(user.realname != body.playerInfo.playerName) await UpdateName(user.discord, body.playerInfo.playerId, body.playerInfo.playerName)
 					if(user.lastrank == body.playerInfo.countryRank) return
 					await UserSchema.findOneAndUpdate({
 						beatsaber: user.beatsaber

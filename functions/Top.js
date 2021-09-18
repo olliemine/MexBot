@@ -5,61 +5,16 @@ const ms = require("ms")
 const errorhandle = require("./error")
 
 module.exports = async (DiscordClient) => {
-		const players = await UserSchema.find({ realname: {$ne: null} })
+		console.time("get players")
+		let players = await UserSchema.find({ realname: {$ne: null}, lastrank: {$ne: 0} })
+		console.timeEnd("get players")
+
 		const topchannel = DiscordClient.channels.cache.get("846148391365115964")
 		function UpdateUser(userid) {
 			return new Promise((resolve, reject) => {
 				let newscores = []
-				let passed = true
-				const Time = new Date()
+				let passed = false
 				let firstmap
-				async function StoreMaps() {
-					//console.log(`New from ${userid.name}`)
-					for await(const score of newscores) {
-						const map = await LevelSchema.findOne({ "LevelID": score.map })
-						if(map) {
-							if(score.score <= map.TopScore) continue
-							if(userid.beatsaber == map.TopPlayer) {
-								await LevelSchema.updateOne({
-									"LevelID": score.map
-								}, {
-									"TopScore": score.score
-								})
-								continue
-							}
-							//console.log(`Better score ${score.score} better than ${map.TopScore}`)
-							await LevelSchema.updateOne({
-								"LevelID": score.map
-							}, {
-								"TopScore": score.score,
-								"TopPlayer": userid.beatsaber,
-								"TopPlayerName": userid.realname
-							})
-							if(!userid.lastmap) continue
-							let previousname = map.TopPlayerName
-							const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
-							if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
-							topchannel.send({ content: `${userid.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${userid.beatsaber}`})
-							continue
-						}
-						const newmap = {
-							"LevelID": score.map,
-							"TopPlayer": userid.beatsaber,
-							"TopScore": score.score,
-							"TopPlayerName": userid.realname
-						}
-						await new LevelSchema(newmap).save()
-						//console.log(`New map ${score.map}`)
-						continue
-					}
-					await UserSchema.updateOne({
-						"beatsaber": userid.beatsaber
-					}, {
-						"lastmap": firstmap
-					})
-					newscores = null
-					resolve(new Date() - Time)
-				}
 				function Timeout(Page) {
 					console.log("waiting 25 sec")
 					setTimeout(() => {
@@ -69,42 +24,134 @@ module.exports = async (DiscordClient) => {
 				function GetMap(Page) {
 					fetch(`https://new.scoresaber.com/api/player/${userid.beatsaber}/scores/recent/${Page.toString()}`)
 					.then(async (res) => {
-						//console.log(Page)
+						console.log(Page)
 						if(res.status == 429) return Timeout(Page)
-						if(res.status == 404) return StoreMaps()
+						if(res.status == 404) {
+							StoreMaps(newscores, userid, firstmap)
+							resolve()
+						}
 						if(res.status == 520) return GetMap(Page)
 						const body = await res.json()
-						if(Page == 1 && body.scores[0].scoreId == userid.lastmap) return reject()
 						if(Page == 1) firstmap = body.scores[0].scoreId
-						body.scores.forEach(score => {
-							if(score.scoreId == userid.lastmap || !passed) {
-								passed = false
+						for(const score of body.scores) {
+							if(score.scoreId == user.lastmap) {
+								passed = true
+								break
 							}
 							newscores.push({
 								"map": score.leaderboardId,
 								"score": score.score
 							})
-						})
-						if(passed) return GetMap(Page + 1)
-						return StoreMaps()
+						}
+						if(!passed) return GetMap(Page + 1)
+						StoreMaps(newscores, userid, firstmap)
+						resolve()
 					})
 				}
 				GetMap(1)			
 			})
 		}
+		async function StoreMaps(newscores, user, firstmap) {
+			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
+			console.log(`New from ${user.realname}`)
+			for await(const score of newscores) {
+				const map = await LevelSchema.findOne({ "LevelID": score.map })
+				if(map) {
+					if(score.score <= map.TopScore) continue
+					if(user.beatsaber == map.TopPlayer) {
+						await LevelSchema.updateOne({
+							"LevelID": score.map
+						}, {
+							"TopScore": score.score
+						})
+						continue
+					}
+					console.log(`Better score ${score.score} better than ${map.TopScore}`)
+					await LevelSchema.updateOne({
+						"LevelID": score.map
+					}, {
+						"TopScore": score.score,
+						"TopPlayer": user.beatsaber,
+						"TopPlayerName": user.realname
+					})
+					if(!user.lastmap) continue
+					let previousname = map.TopPlayerName
+					const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
+					if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
+					topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
+					continue
+				}
+				const newmap = {
+					"LevelID": score.map,
+					"TopPlayer": user.beatsaber,
+					"TopScore": score.score,
+					"TopPlayerName": user.realname
+				}
+				await new LevelSchema(newmap).save()
+				console.log(`New map ${score.map}`)
+				continue
+			}
+			await UserSchema.updateOne({
+				"beatsaber": user.beatsaber
+			}, {
+				"lastmap": firstmap
+			})
+			newscores = null
+		}
+		function GetFirstMap(beatsaber) {
+			return fetch(`https://new.scoresaber.com/api/player/${beatsaber}/scores/recent/1`)
+			.then((res) => {
+				return res
+			})
+		}
+		console.time("store players")
 		function UpdatePlayers() {
 			return new Promise(async (resolve, reject) => {
-				for await (const user of players) {
-					// compareconsole.log(`Checking ${user.realname}`)
-					await UpdateUser(user).then((response) => {
-						//console.log(`Updated user ${user.realname} in ${response/1000}s`)
-					}, () => {
-						//console.log(`${user.realname} had no new plays`)
-					})
+				console.time("get all users")
+				let promises = []
+				players.forEach(user => {
+					promises.push(GetFirstMap(user.beatsaber));
+				})
+				const full = await Promise.all(promises)
+				console.timeEnd("get all users")
+				let playerCounter = 0
+				let checkAgain = []
+				for await (const data of full) {
+					const user = players[playerCounter]
+					playerCounter++
+					if(data.status != 200) {
+						checkAgain.push(user)
+						console.log("ohuh")
+						continue
+					}
+					const body = await data.json()
+					if(body.scores[0].scoreId == user.lastmap) continue
+					const firstmap = body.scores[0].scoreId
+					let newscores = []
+					let passed = false
+					for(const score of body.scores) {
+						if(score.scoreId == user.lastmap) {
+							passed = true
+							break
+						}
+						newscores.push({
+							"map": score.leaderboardId,
+							"score": score.score
+						})
+					}
+					if(!passed) return checkAgain.push(user)
+					return StoreMaps(newscores, user, firstmap)
+				}
+				for await (const user of checkAgain) {
+					console.time("get player")
+					await UpdateUser(user)
+					console.timeEnd("get player")
 				}
 				resolve()
 			})
 		}
 		await UpdatePlayers()
+		console.timeEnd("store players")
+
 		return
 };
