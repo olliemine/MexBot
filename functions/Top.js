@@ -5,9 +5,7 @@ const ms = require("ms")
 const errorhandle = require("./error")
 
 module.exports = async (DiscordClient) => {
-		console.time("get players")
 		let players = await UserSchema.find({ realname: {$ne: null}, lastrank: {$ne: 0} })
-		console.timeEnd("get players")
 
 		const topchannel = DiscordClient.channels.cache.get("846148391365115964")
 		function UpdateUser(userid) {
@@ -24,7 +22,7 @@ module.exports = async (DiscordClient) => {
 				function GetMap(Page) {
 					fetch(`https://new.scoresaber.com/api/player/${userid.beatsaber}/scores/recent/${Page.toString()}`)
 					.then(async (res) => {
-						console.log(Page)
+						//console.log(Page)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) {
 							StoreMaps(newscores, userid, firstmap)
@@ -53,7 +51,7 @@ module.exports = async (DiscordClient) => {
 		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
-			console.log(`New from ${user.realname}`)
+			//console.log(`New from ${user.realname}`)
 			for await(const score of newscores) {
 				const map = await LevelSchema.findOne({ "LevelID": score.map })
 				if(map) {
@@ -66,7 +64,7 @@ module.exports = async (DiscordClient) => {
 						})
 						continue
 					}
-					console.log(`Better score ${score.score} better than ${map.TopScore}`)
+					//console.log(`Better score ${score.score} better than ${map.TopScore}`)
 					await LevelSchema.updateOne({
 						"LevelID": score.map
 					}, {
@@ -88,7 +86,7 @@ module.exports = async (DiscordClient) => {
 					"TopPlayerName": user.realname
 				}
 				await new LevelSchema(newmap).save()
-				console.log(`New map ${score.map}`)
+				//console.log(`New map ${score.map}`)
 				continue
 			}
 			await UserSchema.updateOne({
@@ -104,16 +102,13 @@ module.exports = async (DiscordClient) => {
 				return res
 			})
 		}
-		console.time("store players")
 		function UpdatePlayers() {
 			return new Promise(async (resolve, reject) => {
-				console.time("get all users")
 				let promises = []
 				players.forEach(user => {
 					promises.push(GetFirstMap(user.beatsaber));
 				})
 				const full = await Promise.all(promises)
-				console.timeEnd("get all users")
 				let playerCounter = 0
 				let checkAgain = []
 				for await (const data of full) {
@@ -121,7 +116,6 @@ module.exports = async (DiscordClient) => {
 					playerCounter++
 					if(data.status != 200) {
 						checkAgain.push(user)
-						console.log("ohuh")
 						continue
 					}
 					const body = await data.json()
@@ -143,15 +137,12 @@ module.exports = async (DiscordClient) => {
 					return StoreMaps(newscores, user, firstmap)
 				}
 				for await (const user of checkAgain) {
-					console.time("get player")
 					await UpdateUser(user)
-					console.timeEnd("get player")
 				}
 				resolve()
 			})
 		}
 		await UpdatePlayers()
-		console.timeEnd("store players")
 
 		return
 };
