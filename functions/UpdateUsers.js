@@ -59,6 +59,7 @@ module.exports = async (Client) => {
 	info.forEach(async (row) => {
 		const exists = users.some(user => row[1] === user.realname)
 		if(exists) return
+		if(row[1].length <= 3) return infohandle(Client, ">:(", ` ${row[1]} needs to be added manually rage!!`)
 		await fetch(`https://new.scoresaber.com/api/players/by-name/${row[1]}`)
 		.then(res => res.json())
 		.then(async (body) => {
