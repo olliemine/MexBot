@@ -22,28 +22,31 @@ module.exports = async (DiscordClient) => {
 				function GetMap(Page) {
 					fetch(`https://new.scoresaber.com/api/player/${userid.beatsaber}/scores/recent/${Page.toString()}`)
 					.then(async (res) => {
-						//console.log(Page)
+						console.log(Page + " " + userid.realname)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) {
 							StoreMaps(newscores, userid, firstmap)
 							resolve()
+							return
 						}
 						if(res.status == 520) return GetMap(Page)
 						const body = await res.json()
 						if(Page == 1) firstmap = body.scores[0].scoreId
-						for(const score of body.scores) {
-							if(score.scoreId == user.lastmap) {
+						body.scores.forEach(score => {
+							if(passed) return
+							if(score.scoreId == userid.lastmap) {
 								passed = true
-								break
+								return
 							}
 							newscores.push({
 								"map": score.leaderboardId,
 								"score": score.score
 							})
-						}
+						})
 						if(!passed) return GetMap(Page + 1)
-						StoreMaps(newscores, userid, firstmap)
+						await StoreMaps(newscores, userid, firstmap)
 						resolve()
+						return
 					})
 				}
 				GetMap(1)			
@@ -51,50 +54,53 @@ module.exports = async (DiscordClient) => {
 		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
-			//console.log(`New from ${user.realname}`)
-			for await(const score of newscores) {
-				const map = await LevelSchema.findOne({ "LevelID": score.map })
-				if(map) {
-					if(score.score <= map.TopScore) continue
-					if(user.beatsaber == map.TopPlayer) {
+			return new Promise(async (resolve, reject) => {
+				//console.log(`New from ${user.realname}`)
+				for await(const score of newscores) {
+					const map = await LevelSchema.findOne({ "LevelID": score.map })
+					if(map) {
+						if(score.score <= map.TopScore) continue
+						if(user.beatsaber == map.TopPlayer) {
+							await LevelSchema.updateOne({
+								"LevelID": score.map
+							}, {
+								"TopScore": score.score
+							})
+							continue
+						}
+						//console.log(`Better score ${score.score} better than ${map.TopScore}`)
 						await LevelSchema.updateOne({
 							"LevelID": score.map
 						}, {
-							"TopScore": score.score
+							"TopScore": score.score,
+							"TopPlayer": user.beatsaber,
+							"TopPlayerName": user.realname
 						})
+						if(!user.lastmap) continue
+						let previousname = map.TopPlayerName
+						const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
+						if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
+						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
 						continue
 					}
-					//console.log(`Better score ${score.score} better than ${map.TopScore}`)
-					await LevelSchema.updateOne({
-						"LevelID": score.map
-					}, {
-						"TopScore": score.score,
+					const newmap = {
+						"LevelID": score.map,
 						"TopPlayer": user.beatsaber,
+						"TopScore": score.score,
 						"TopPlayerName": user.realname
-					})
-					if(!user.lastmap) continue
-					let previousname = map.TopPlayerName
-					const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
-					if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
-					topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
+					}
+					await new LevelSchema(newmap).save()
+					//console.log(`New map ${score.map}`)
 					continue
 				}
-				const newmap = {
-					"LevelID": score.map,
-					"TopPlayer": user.beatsaber,
-					"TopScore": score.score,
-					"TopPlayerName": user.realname
-				}
-				await new LevelSchema(newmap).save()
-				//console.log(`New map ${score.map}`)
-				continue
-			}
-			await UserSchema.updateOne({
-				"beatsaber": user.beatsaber
-			}, {
-				"lastmap": firstmap
+				await UserSchema.updateOne({
+					"beatsaber": user.beatsaber
+				}, {
+					"lastmap": firstmap
+				})
+				newscores = null
+				resolve()
 			})
-			newscores = null
 		}
 		function GetFirstMap(beatsaber) {
 			return fetch(`https://new.scoresaber.com/api/player/${beatsaber}/scores/recent/1`)
@@ -133,16 +139,21 @@ module.exports = async (DiscordClient) => {
 							"score": score.score
 						})
 					}
-					if(!passed) return checkAgain.push(user)
-					return StoreMaps(newscores, user, firstmap)
+					if(!passed) {
+						checkAgain.push(user) 
+						continue
+					}
+					await StoreMaps(newscores, user, firstmap)
+					continue
 				}
 				for await (const user of checkAgain) {
-					await UpdateUser(user)
+					await UpdateUser(user).then(() => {
+					
+					})
 				}
 				resolve()
 			})
 		}
 		await UpdatePlayers()
-
 		return
 };
