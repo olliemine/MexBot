@@ -61,7 +61,7 @@ module.exports = async (DiscordClient) => {
 					const map = await LevelSchema.findOne({ "LevelID": score.map })
 					if(map) {
 						if(score.score <= map.TopScore) {
-							infohandle(DiscordClient, "Temp" ,`Worse score in ${map.LevelID} becus ${score.score} higher than ${map.TopScore}`)
+							infohandle(DiscordClient, "Temp" ,`Worse score in ${map.LevelID} becus ${score.score} lower than ${map.TopScore}`)
 							continue
 						}
 						if(user.beatsaber == map.TopPlayer) {
