@@ -88,7 +88,7 @@ module.exports = async (DiscordClient) => {
 						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
 						continue
 					}
-					infohandle(DiscordClient, "Temp" ,`New Map ${score.map0} ${user.beatsaber} ${score.score} ${user.realname}`)
+					infohandle(DiscordClient, "Temp" ,`New Map ${score.map} ${user.beatsaber} ${score.score} ${user.realname}`)
 					const newmap = {
 						"LevelID": score.map,
 						"TopPlayer": user.beatsaber,
