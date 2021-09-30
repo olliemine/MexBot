@@ -19,6 +19,13 @@ module.exports = async (Client) => {
 	await page.goto("https://scoresaber.com/global?country=mx", { waitUntil: "networkidle0" })
 	let info
 	try {  //https://stackoverflow.com/a/60733311/14550193
+		rawlinks = await page.evaluate(() => {
+			const rows = document.querySelectorAll('table tr');
+			return Array.from(rows, row => {
+				const columns = row.querySelectorAll('td a');
+				return Array.from(columns, column => column.href);
+			});
+		})
 		info = await page.evaluate(() => {
 			const rows = document.querySelectorAll('table tr');
 			return Array.from(rows, row => {
@@ -27,11 +34,21 @@ module.exports = async (Client) => {
 			});
 		})
 		info.shift()
+		rawlinks.shift()
+		links = []
+		rawlinks.forEach((row) => {
+			links.push(row[0].substring(25))
+		})
+		counter = 0
 		info.forEach((row) => {
 			row[1] = row[1].substring(1)
 			row.shift()
 			row[1] = row[1].substring(1)
+			row.splice(2, 2)
+			row.push(links[counter])
+			counter++
 		})
+		console.log(info)
 	} catch(err) {
 		errorhandle(Client, err)
 	} finally {
@@ -57,30 +74,21 @@ module.exports = async (Client) => {
 	}
 	let ifnew = false
 	info.forEach(async (row) => {
-		const exists = users.some(user => row[1] === user.realname)
+		let exists = users.some(user => row[1] === user.realname)
 		if(exists) return
-		if(row[1].length <= 3) return infohandle(Client, ">:(", ` ${row[1]} needs to be added manually rage!!`)
-		await fetch(`https://new.scoresaber.com/api/players/by-name/${row[1]}`)
-		.then(res => res.json())
-		.then(async (body) => {
-			if(body.players[0].country != "MX") return infohandle(Client, ":(", "Add " + row[1] + " manually as there is different persons with this name ae")
-			const exists = users.some(user => body.players[0].playerId === user.beatsaber)//This if someone changed their name 
-			if(exists) return
-			ifnew = true
-			const user = {
-				"discord": null,
-				"beatsaber": body.players[0].playerId,
-				"active": false,
-				"lastrank": 50,
-				"name": null,
-				"realname": row[1],
-				"lastmap": null
-			}
-			await new UserSchema(user).save()
-		})
-		.catch(err => {
-			errorhandle(Client, err, "you are dumb")
-		})
+		exists = users.some(user => row[2] === user.beatsaber)//This if someone changed their name 
+		if(exists) return
+		ifnew = true
+		const user = {
+			"discord": null,
+			"beatsaber": row[2],
+			"active": false,
+			"lastrank": 50,
+			"name": null,
+			"realname": row[1],
+			"lastmap": null
+		}
+		await new UserSchema(user).save()
 	})
 	if(ifnew) users = await UserSchema.find({ lastrank: {$ne: null}, lastrank: { $lte: 50 }})
 	users.forEach(async (user) => {
@@ -94,37 +102,34 @@ module.exports = async (Client) => {
 	let otherusers = await UserSchema.find({ lastrank: {$ne: null}, lastrank: { $gte: 51 }  })
 	async function UpdateTop50Users() {
 		return new Promise(async (resolve, reject) => {
-			if(searchusers.length) {
-				for await(let user of searchusers) {
-					let ifLooped = false	
-					info.forEach(async (row) => {
-						if(row[1] == user.realname) {
-							ifLooped = true
-							usersupdatedraw.push({
-								"user": user.realname,
-								"update":  user.lastrank - row[0], 
-								"lastrank": user.lastrank,
-								"newrank": row[0]
-							})
-							await UserSchema.findOneAndUpdate({
-								beatsaber: user.beatsaber
-							}, {
-								lastrank: row[0]
-							})
-							if(!user.active) return
-							const discorduser = await server.members.fetch(user.discord)
-							CheckRoles(row[0], discorduser, ranks)
-							try {
-								await discorduser.setNickname(`#${row[0]} | ${user.name}`)
-							} catch(err) {
-								errorhandle(Client, err)
-							}
-						}
+			if(!searchusers.length) return resolve()
+			for await(let user of searchusers) {
+				let ifLooped = false	
+				info.forEach(async (row) => {
+					if(row[1] != user.realname) return
+					ifLooped = true
+					usersupdatedraw.push({
+						"user": user.realname,
+						"update":  user.lastrank - row[0], 
+						"lastrank": user.lastrank,
+						"newrank": row[0]
 					})
-					if(!ifLooped) otherusers.push(user)
-				}
+					await UserSchema.findOneAndUpdate({
+						beatsaber: user.beatsaber
+					}, {
+						lastrank: row[0]
+					})
+					if(!user.active) return
+					const discorduser = await server.members.fetch(user.discord)
+					CheckRoles(row[0], discorduser, ranks)
+					try {
+						await discorduser.setNickname(`#${row[0]} | ${user.name}`)
+					} catch(err) {
+						errorhandle(Client, err)
+					}
+				})
+				if(!ifLooped) otherusers.push(user)
 			}
-			resolve()
 		})
 	}
 	async function UpdateName(discord, beatsaber, newname) {
