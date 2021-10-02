@@ -48,7 +48,6 @@ module.exports = async (Client) => {
 			row.push(links[counter])
 			counter++
 		})
-		console.log(info)
 	} catch(err) {
 		errorhandle(Client, err)
 	} finally {
@@ -130,6 +129,7 @@ module.exports = async (Client) => {
 				})
 				if(!ifLooped) otherusers.push(user)
 			}
+			resolve()
 		})
 	}
 	async function UpdateName(discord, beatsaber, newname) {
