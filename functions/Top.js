@@ -60,10 +60,7 @@ module.exports = async (DiscordClient) => {
 				for await(const score of newscores) {
 					const map = await LevelSchema.findOne({ "LevelID": score.map })
 					if(map) {
-						if(score.score <= map.TopScore) {
-							infohandle(DiscordClient, "Temp" ,`Worse score in ${map.LevelID} becus ${score.score} lower than ${map.TopScore}`)
-							continue
-						}
+						if(score.score <= map.TopScore) continue
 						if(user.beatsaber == map.TopPlayer) {
 							await LevelSchema.updateOne({
 								"LevelID": score.map
@@ -72,7 +69,6 @@ module.exports = async (DiscordClient) => {
 							})
 							continue
 						}
-						infohandle(DiscordClient,"Temp" , `Better score in ${map.LevelID} becus ${score.score} higher than ${map.TopScore}`)
 						//console.log(`Better score ${score.score} better than ${map.TopScore}`)
 						await LevelSchema.updateOne({
 							"LevelID": score.map
@@ -88,7 +84,6 @@ module.exports = async (DiscordClient) => {
 						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
 						continue
 					}
-					infohandle(DiscordClient, "Temp" ,`New Map ${score.map} ${user.beatsaber} ${score.score} ${user.realname}`)
 					const newmap = {
 						"LevelID": score.map,
 						"TopPlayer": user.beatsaber,
