@@ -121,6 +121,7 @@ module.exports = async (Client) => {
 					if(!user.active) return
 					const discorduser = await server.members.fetch(user.discord)
 					CheckRoles(row[0], discorduser, ranks)
+					if(Client.user.roles.highest.position <= discorduser.roles.highest.position) return infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${row[0]} manually`)
 					try {
 						await discorduser.setNickname(`#${row[0]} | ${user.name}`)
 					} catch(err) {
@@ -163,6 +164,7 @@ module.exports = async (Client) => {
 					if(!user.active) return 
 					const discorduser = await server.members.fetch(user.discord)
 					CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
+					if(Client.user.roles.highest.position <= discorduser.roles.highest.position) return infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${row[0]} manually`)
 					discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
 				}).catch((err) => {
 					reject(err)

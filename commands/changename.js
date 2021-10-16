@@ -13,6 +13,7 @@ module.exports = {
 		const user = await UserSchema.findOne({ discord: message.author.id })
 		const server = await DiscordClient.guilds.fetch("822514160154706010")
 		const member = await server.members.fetch(message.author.id)
+		if(DiscordClient.user.roles.highest.position <= member.roles.highest.position) return message.channel.send({content: "No se puede cambiar el nombre porque tiene role mayor."})
 		function NoMentionText(text) {
 			return Util.removeMentions(text)
 		}
