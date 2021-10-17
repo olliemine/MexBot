@@ -45,7 +45,6 @@ module.exports = {
 							if(body.playerInfo.inactive == 1) return InactiveAccount(user1)
 							const discorduser = await server.members.fetch(user1.discord)
 							CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
-							discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)						
 							if(user1.lastrank - body.playerInfo.countryRank != 0) usersupdated.push({
 								"user": user1.realname,
 								"update":  user1.lastrank - body.playerInfo.countryRank, 
@@ -57,7 +56,9 @@ module.exports = {
 							}, {
 								lastrank: body.playerInfo.countryRank
 							})
-							const member = await UserSchema.findOne({ active: true, lastrank: body.playerInfo.countryRank, discord: {$ne: user1.discord } })
+							const member = await UserSchema.findOne({ active: true, lastrank: user1.lastrank })
+							if(discorduser.roles.highest.position < server.members.resolve(Client.user)) discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)
+							else infohandle(DiscordClient, "change" `Change ${discorduser.displayName} to ${body.playerInfo.countryRank}`)					
 							if(member) return FetchUsers(member)
 							if(usersupdated.length) InfoChannelMessage(DiscordClient, usersupdated)
 							resolve()
