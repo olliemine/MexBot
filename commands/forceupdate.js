@@ -10,7 +10,7 @@ module.exports = {
 	name: "forceupdate",
 	description: "Aea",
 	admin: true,
-	dm: false,
+	dm: true,
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
 		message.channel.sendTyping()

@@ -23,7 +23,6 @@ module.exports = async (DiscordClient) => {
 				function GetMap(Page) {
 					fetch(`https://new.scoresaber.com/api/player/${userid.beatsaber}/scores/recent/${Page.toString()}`)
 					.then(async (res) => {
-						console.log(Page + " " + userid.realname)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) {
 							StoreMaps(newscores, userid, firstmap)

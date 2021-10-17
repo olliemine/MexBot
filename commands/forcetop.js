@@ -5,7 +5,7 @@ module.exports = {
 	name: "forcetop",
 	description: "pepega",
 	admin: true,
-	dm: false,
+	dm: true,
 	cooldown: 15,
 	async execute(message, DiscordClient) {
 		message.channel.sendTyping()

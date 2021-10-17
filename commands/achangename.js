@@ -12,7 +12,7 @@ module.exports = {
 		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 		if(user) user = await message.guild.members.fetch(user.id)
 		if(!user) return message.channel.send({content: "Tienes que mencionar a un usuario smh"})
-		if(DiscordClient.user.roles.highest.position <= user.roles.highest.position) return message.channel.send({content: "Cant change name because role higher than bot."})
+		if(user.roles.highest.position > message.guild.members.resolve(Client.user)) return message.channel.send({content: "Cant change name because role higher than bot."})
 		const UserInfo = await UserSchema.findOne({
 			discord: user.id
 		})
