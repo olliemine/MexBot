@@ -39,9 +39,9 @@ module.exports = {
 				return new Promise((resolve, reject) => {
 					async function FetchUsers(user1) {
 						await fetch(`https://new.scoresaber.com/api/player/${user1.beatsaber}/full`)
-						.then(res => res.json())
-						.then(async (body) => {
-							if(body.error) return errorhandle(DiscordClient, new Error("Couldnt get user " + user1.name))
+						.then(async (res) => {
+							if(res.status !== 200) return message.channel.send({content: "Couldnt fetch user please try again"})
+							const body = await res.json()
 							if(body.playerInfo.inactive == 1) return InactiveAccount(user1)
 							const discorduser = await server.members.fetch(user1.discord)
 							CheckRoles(body.playerInfo.countryRank, discorduser, ranks)
@@ -56,7 +56,7 @@ module.exports = {
 							}, {
 								lastrank: body.playerInfo.countryRank
 							})
-							const member = await UserSchema.findOne({ active: true, lastrank: user1.lastrank })
+							const member = await UserSchema.findOne({ active: true, lastrank: user1.lastrank, discord: {$ne: user1.discord}})
 							if(discorduser.roles.highest.position < server.members.resolve(DiscordClient.user)) discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)
 							else infohandle(DiscordClient, "change" `Change ${discorduser.displayName} to ${body.playerInfo.countryRank}`)					
 							if(member) return FetchUsers(member)
