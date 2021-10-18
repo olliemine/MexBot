@@ -57,7 +57,7 @@ module.exports = {
 								lastrank: body.playerInfo.countryRank
 							})
 							const member = await UserSchema.findOne({ active: true, lastrank: user1.lastrank })
-							if(discorduser.roles.highest.position < server.members.resolve(Client.user)) discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)
+							if(discorduser.roles.highest.position < server.members.resolve(DiscordClient.user)) discorduser.setNickname(`#${body.playerInfo.countryRank} | ${user1.name}`)
 							else infohandle(DiscordClient, "change" `Change ${discorduser.displayName} to ${body.playerInfo.countryRank}`)					
 							if(member) return FetchUsers(member)
 							if(usersupdated.length) InfoChannelMessage(DiscordClient, usersupdated)
