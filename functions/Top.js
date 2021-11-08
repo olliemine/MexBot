@@ -8,7 +8,7 @@ const infohandle = require("./info")
 module.exports = async (DiscordClient) => {
 		let players = await UserSchema.find({ realname: {$ne: null}, lastrank: {$ne: 0} })
 
-		const topchannel = DiscordClient.channels.cache.get("846148391365115964")
+		const topchannel = DiscordClient.channels.cache.get("905874757583503379")
 		function UpdateUser(userid) {
 			return new Promise((resolve, reject) => {
 				let newscores = []

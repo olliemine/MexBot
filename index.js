@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-//const { token } = require("./config.json")
+const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -15,7 +15,7 @@ const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_R
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-client.login(process.env.TOKEN)
+client.login(token)
 let RecentlyExecuted = []
 
 
@@ -58,7 +58,7 @@ Ready POG`)
 	
 
 	
-	//const guld = client.guilds.cache.get("822514160154706010");
+	//const guld = client.guilds.cache.get("905874757331857448");
 	//const membre = guld.members.cache.get("138842995029049344");
 	//
 	//console.log(membre.user.presence.activities[1].state);
@@ -67,7 +67,7 @@ Ready POG`)
 
 client.on("messageCreate", async (message) => {
 	if(message.author.bot) return
-	if(message.channel.id === "822554316728303686") return Verificacion(message.member, message)
+	if(message.channel.id === "905874757357043756") return Verificacion(message.member, message)
 	if(!message.content.startsWith(prefix)) return
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
@@ -75,10 +75,10 @@ client.on("messageCreate", async (message) => {
 	const command = client.commands.get(commandName) || client.aliases.get(commandName) 
 	const CooldownString = `${message.author.id}-${commandName}`
 	if(command.cooldown > 0 && RecentlyExecuted.includes(CooldownString)) {
-		 return message.channel.send({ content: "Porfavor espera un poco para usar el bot otra vez."})
+		return message.channel.send({ content: "Porfavor espera un poco para usar el bot otra vez."})
 	}
 	if(command.admin) {
-		const server = await client.guilds.fetch("822514160154706010")
+		const server = await client.guilds.fetch("905874757331857448")
 		const member = await server.members.fetch(message.author.id)
 		if(!member.permissions.has("ADMINISTRATOR")) return
 	}
@@ -116,13 +116,13 @@ client.on("guildMemberAdd", async (member) => {
 		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
 			if(body.playerInfo.country == "MX") {
 				member.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
-				member.roles.add("822553633098170449")
-				const server = await client.guilds.fetch("822514160154706010")
-				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+				member.roles.add("905874757331857453")
+				const server = await client.guilds.fetch("905874757331857448")
+				const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
 				CheckRoles(body.playerInfo.countryRank, member, ranks)
 			} else {
 				member.setNickname(`${body.playerInfo.country} | ${user.name}`)
-				member.roles.add("822582078784012298")
+				member.roles.add("905874757331857452")
 			}
 			await UserSchema.findOneAndUpdate({
 				discord: member.id
@@ -202,9 +202,9 @@ function VerifictionviaID(ID, msg, member, link = true) {
 							name: username
 						})
 						member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
-						member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
-						const server = await client.guilds.fetch("822514160154706010")
-						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+						member.roles.add(msg.guild.roles.cache.get("905874757331857453"))
+						const server = await client.guilds.fetch("905874757331857448")
+						const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
 						CheckRoles(body.playerInfo.countryRank, member, ranks)
 						SendAndDelete("Ahora estas verificado!", msg)
 						return infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully (the account had already existed)`)
@@ -231,7 +231,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"lastmap": null,
 					"snipe": null
 				}
-				member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+				member.roles.add(msg.guild.roles.cache.get("905874757331857452"))
 			} else { //mex
 				const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
 				member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
@@ -245,9 +245,9 @@ function VerifictionviaID(ID, msg, member, link = true) {
 					"lastmap": null,
 					"snipe": false
 				}
-				member.roles.add(msg.guild.roles.cache.get("822553633098170449"))
-				const server = await client.guilds.fetch("822514160154706010")
-				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+				member.roles.add(msg.guild.roles.cache.get("905874757331857453"))
+				const server = await client.guilds.fetch("905874757331857448")
+				const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
 				CheckRoles(body.playerInfo.countryRank, member, ranks)
 			}
 			try {
@@ -266,7 +266,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 
 async function Verificacion(member, msg) {
 	if(msg.content.toLowerCase() === "visitante") {
-		member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+		member.roles.add(msg.guild.roles.cache.get("905874757331857452"))
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
@@ -275,7 +275,7 @@ async function Verificacion(member, msg) {
 		return true
 	})
 	if(!ohno) {
-		member.roles.add(msg.guild.roles.cache.get("822582078784012298"))
+		member.roles.add(msg.guild.roles.cache.get("905874757331857452"))
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor, API is offline, later use ${msg.content}`)
 		member.send({ content: "Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan"})
 		return SendAndDelete("Gracias por visitar!", msg)

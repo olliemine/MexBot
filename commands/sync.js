@@ -43,9 +43,9 @@ module.exports = {
 							name: username
 						})
 						user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
-						user.roles.add(message.guild.roles.cache.get("822553633098170449"))
-						const server = await DiscordClient.guilds.fetch("822514160154706010")
-						const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+						user.roles.add(message.guild.roles.cache.get("905874757331857453"))
+						const server = await DiscordClient.guilds.fetch("905874757331857448")
+						const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
 						CheckRoles(body.playerInfo.countryRank, user, ranks)
 						return message.channel.send({ content: `Synced ${user.user.username} with ${body.playerInfo.playerName} successfully`})
 					}
@@ -69,7 +69,7 @@ module.exports = {
 					"lastmap": null,
 					"snipe": null
 				}
-				user.roles.add(message.guild.roles.cache.get("822582078784012298"))
+				user.roles.add(message.guild.roles.cache.get("905874757331857452"))
 			} else { //mex
 				const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
 				user.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
@@ -83,9 +83,9 @@ module.exports = {
 					"lastmap": null,
 					"snipe": false
 				}
-				user.roles.add(message.guild.roles.cache.get("822553633098170449"))
-				const server = await DiscordClient.guilds.fetch("822514160154706010")
-				const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+				user.roles.add(message.guild.roles.cache.get("905874757331857453"))
+				const server = await DiscordClient.guilds.fetch("905874757331857448")
+				const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
 				CheckRoles(body.playerInfo.countryRank, user, ranks)
 			}
 			try {

@@ -13,7 +13,7 @@ module.exports = {
 		if(user) user = await message.guild.members.fetch(user.id)
 		if(!user) return message.channel.send({content: "Ese usuario es invalido"})
 		function RemoveRoles() {
-			const ranks = ["822553633098170449", "822582078784012298" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]
+			const ranks = ["905874757331857453", "905874757331857452" ,"823061333020246037", "823061825154580491", "824786196077084693", "824786280616689715"]
 			ranks.forEach((rank) => {
 				if(user.roles.cache.find(r => r.id === rank)) user.roles.remove(message.guild.roles.cache.get(rank))
 			})

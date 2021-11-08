@@ -4,5 +4,5 @@ module.exports = (Client, title, description) => {
 	.setColor("#95CAFF")
 	.setTitle(title)
 	.setDescription(description)
-	Client.channels.cache.get("833210096376741888").send({ embeds: [embed]});
+	Client.channels.cache.get("905874757583503371").send({ embeds: [embed]});
 }

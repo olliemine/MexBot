@@ -15,8 +15,8 @@ module.exports = {
 	async execute(message, DiscordClient, args) {
 		message.channel.sendTyping()
 		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
-		const server = await DiscordClient.guilds.fetch("822514160154706010")
-		const ranks = [server.roles.cache.get("823061333020246037"), server.roles.cache.get("823061825154580491"), server.roles.cache.get("824786196077084693"), server.roles.cache.get("824786280616689715")]
+		const server = await DiscordClient.guilds.fetch("905874757331857448")
+		const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
 		async function InactiveAccount(user1) {
 			const discorduser = await server.members.fetch(user1.discord)
 			discorduser.send({content: "Hey! tu cuenta ahora esta inactiva, porfavor has `!active` cuando este reactivada!"})

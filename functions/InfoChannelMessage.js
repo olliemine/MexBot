@@ -42,6 +42,6 @@ module.exports = async (Client, usersupdatedraw) => {
 	const embed = new MessageEmbed()
 	.setColor("#412FF4")
 	.setDescription(finalmessage)
-	const channel = await Client.channels.cache.get("876801984886362132")
+	const channel = await Client.channels.cache.get("905874757889712218")
 	channel.send({embeds: [embed]})
 }
