@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-const { token } = require("./config.json")
+//const { token } = require("./config.json")
 const { version, prefix } = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -15,7 +15,7 @@ const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_R
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-client.login(token)
+client.login(process.env.TOKEN)
 let RecentlyExecuted = []
 
 
