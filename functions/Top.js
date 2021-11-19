@@ -20,20 +20,20 @@ module.exports = async (DiscordClient) => {
 						GetMap(Page)
 					}, ms("25s"))
 				}
-				debug += userid + " advanced_look "
+				//debug +=  "advanced_look "
 				function GetMap(Page) {
 					fetch(`https://new.scoresaber.com/api/player/${userid.beatsaber}/scores/recent/${Page.toString()}`)
 					.then(async (res) => {
 						console.log(Page)
 						if(res.status == 429) return Timeout(Page)
 						if(res.status == 404) {
-							StoreMaps(newscores, userid, firstmap)
+							await StoreMaps(newscores, userid, firstmap).then(() => {})
 							resolve()
 							return
 						}
 						if(res.status == 520) return GetMap(Page)
 						const body = await res.json()
-						debug += Page + " "
+						//debug += Page + " "
 						if(Page == 1) firstmap = body.scores[0].scoreId
 						body.scores.forEach(score => {
 							if(passed) return
@@ -43,46 +43,88 @@ module.exports = async (DiscordClient) => {
 							}
 							newscores.push({
 								"map": score.leaderboardId,
-								"score": score.score
+								"score": score.score,
+								"hash": score.songHash,
+								"diff": score.difficultyRaw,
+								"date": score.timeSet
 							})
 						})
 						if(!passed) return GetMap(Page + 1)
 						debug += "finished_maps "
-						await StoreMaps(newscores, userid, firstmap)
-						resolve()
-						return
+						await StoreMaps(newscores, userid, firstmap).then(() =>{
+							resolve()
+							return
+						})
 					})
 				}
 				GetMap(1)			
 			})
 		}
+		function GetLeaderboard(score, user, map) {
+			let Leaderboard = map.Leaderboard.filter(value => value.PlayerID != user.beatsaber)
+			Leaderboard.push({
+				"PlayerID": user.beatsaber,
+				"PlayerName": user.realname,
+				"Score": score.score,
+				"Country": user.country,
+				"Date": score.date
+			})
+			Leaderboard = Leaderboard.sort((a, b) => {
+				return b.Score - a.Score
+			})
+			return Leaderboard
+		}
+		function GetPlayerCount(user, map) {
+			const userscore = map.Leaderboard.find(value => value.PlayerID == user.beatsaber)
+			if(!userscore) return map.PlayerCount += 1
+			return map.PlayerCount
+		}
+		function TransformDiff(diff) {
+			let temparray = diff.split("_")
+			temparray.shift()
+			temparray[1] = temparray[1].substring(4)
+			return [temparray[1], temparray[0]]
+		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 			return new Promise(async (resolve, reject) => {
-				//console.log(`New from ${user.realname}`)
+				console.log(`New from ${user.realname}`)
 				for await(const score of newscores) {
 					const map = await LevelSchema.findOne({ "LevelID": score.map })
 					if(map) {
+						const Leaderboard = GetLeaderboard(score, user, map)
+						const PlayerCount = GetPlayerCount(user, map)
+						console.log(PlayerCount)
 						if(score.score <= map.TopScore) {
-							debug += `${score.score} worse than ${map.TopScore} ${score.map} ${map.LevelID} `
+							await LevelSchema.updateOne({
+								"LevelID": score.map
+							}, {
+								"PlayerCount": PlayerCount,
+								"Leaderboard": Leaderboard
+							})
+							//debug += `${score.score} worse than ${map.TopScore} ${score.map} ${map.LevelID} `
+							console.log(`Score ${score.score} not better than ${map.TopScore}`)
 							continue
 						}
 						if(user.beatsaber == map.TopPlayer) {
 							await LevelSchema.updateOne({
 								"LevelID": score.map
 							}, {
-								"TopScore": score.score
+								"TopScore": score.score,
+								"Leaderboard": Leaderboard
 							})
-							debug += `upgraded ${score.map} `
+							//debug += `upgraded ${score.map} `
 							continue
 						}
-						//console.log(`Better score ${score.score} better than ${map.TopScore}`)
+						console.log(`Better score ${score.score} better than ${map.TopScore}`)
 						await LevelSchema.updateOne({
 							"LevelID": score.map
 						}, {
 							"TopScore": score.score,
 							"TopPlayer": user.beatsaber,
-							"TopPlayerName": user.realname
+							"TopPlayerName": user.realname,
+							"PlayerCount": PlayerCount,
+							"Leaderboard": Leaderboard
 						})
 						debug += `${score.score} better than ${map.TopScore} ${map.LevelID} `
 						if(!user.lastmap) continue
@@ -92,17 +134,29 @@ module.exports = async (DiscordClient) => {
 						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
 						continue
 					}
+					const Diff = TransformDiff(score.diff)
 					const newmap = {
 						"LevelID": score.map,
 						"TopPlayer": user.beatsaber,
 						"TopScore": score.score,
-						"TopPlayerName": user.realname
+						"TopPlayerName": user.realname,
+						"Hash": score.hash,
+						"Diff": Diff,
+						"PlayerCount": 1,
+						"Leaderboard": [{
+							"PlayerID": user.beatsaber,
+							"PlayerName": user.realname,
+							"Score": score.score,
+							"Country": user.country,
+							"Date": score.date
+						}]
 					}
-					debug += `new_map ${score.map}`
+					//debug += `new_map ${score.map}`
 					await new LevelSchema(newmap).save()
-					//console.log(`New map ${score.map}`)
+					console.log(`New map ${score.map}`)
 					continue
 				}
+				console.log("finished")
 				await UserSchema.updateOne({
 					"beatsaber": user.beatsaber
 				}, {
@@ -179,7 +233,10 @@ module.exports = async (DiscordClient) => {
 						}
 						newscores.push({
 							"map": score.leaderboardId,
-							"score": score.score
+							"score": score.score,
+							"hash": score.songHash,
+							"diff": score.difficultyRaw,
+							"date": score.timeSet
 						})
 					}
 					debug += "new_scores "
@@ -193,7 +250,6 @@ module.exports = async (DiscordClient) => {
 				}
 				for await (const user of checkAgain) {
 					await UpdateUser(user).then(() => {
-					
 					})
 				}
 				resolve()

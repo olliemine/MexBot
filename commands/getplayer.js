@@ -93,7 +93,7 @@ module.exports = {
 		async function BuildEmbed(data) {
 			const history = data.playerInfo.history.split(",")
 			const top1ScoreCount = async () => {
-				a = await LevelSchema.countDocuments({ TopPlayer: data.playerInfo.playerId})
+				a = await LevelSchema.countDocuments({ TopPlayer: data.playerInfo.playerId, PlayerCount: { $gte: 2 }})
 				if(a == 0) return ""
 				return `\nTop 1 Count: ${a} 🇲🇽`
 			}
