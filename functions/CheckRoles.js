@@ -1,7 +1,9 @@
 //This is now easier to read, I am much happy :D
 
-module.exports = (rank, discorduser, ranks) => {
-    function Check(rank) {
+module.exports = async (rank, discorduser, Client) => {
+    const server = await Client.guilds.fetch("905874757331857448")
+	const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
+	function Check(rank) {
         return discorduser.roles.cache.find(r => r.id === rank.id)
     }
     function Remove(rank) {

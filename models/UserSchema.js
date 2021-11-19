@@ -1,14 +1,25 @@
 const mongoose = require("mongoose")
 
+const RequiredString = {
+	type: String,
+	required: true
+}
+const RequiredBoolean = {
+	type: Boolean,
+	required: true
+}
+
 const UserSchema = new mongoose.Schema({
 	"discord": String,
-	"beatsaber": String,
-	"active": Boolean,
-	"lastrank": Number,
+	"beatsaber": RequiredString,
+	"realname": RequiredString,
+	"country": RequiredString,
+	"bsactive": RequiredBoolean,
+	"dsactive": RequiredBoolean,
 	"name": String,
-	"realname": String,
+	"lastrank": Number,
 	"lastmap": String,
-	"snipe": Boolean
+	"snipe": Boolean,
 })
 
 module.exports = mongoose.model("users", UserSchema)

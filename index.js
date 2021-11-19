@@ -7,6 +7,7 @@ const UserSchema = require("./models/UserSchema");
 const errorhandle = require("./functions/error")
 const infohandle = require("./functions/info");
 const UpdateUsers = require("./functions/UpdateUsers");
+const UpdateIA = require("./functions/UpdateIA")
 const Top = require("./functions/Top")
 const CheckRoles = require("./functions/CheckRoles")
 const fs = require("fs");
@@ -105,31 +106,30 @@ client.on("guildMemberRemove", async (member) => {
 		await UserSchema.findOneAndUpdate({
 			discord: member.id
 		}, {
-			active: false
+			dsactive: false
 		})
 	}
 })
+function GetBacktext(user) {
+	if(!user.bsactive) return "IA"
+	if(user.country != "MX") return user.country
+	return `#${user.lastrank}`
+}
 client.on("guildMemberAdd", async (member) => {
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
 		const user = await UserSchema.findOne({ discord: member.id })
-		await fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`).then(res => res.json()).then(async (body) => {
-			if(body.playerInfo.country == "MX") {
-				member.setNickname(`#${body.playerInfo.countryRank} | ${user.name}`)
-				member.roles.add("905874757331857453")
-				const server = await client.guilds.fetch("905874757331857448")
-				const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
-				CheckRoles(body.playerInfo.countryRank, member, ranks)
-			} else {
-				member.setNickname(`${body.playerInfo.country} | ${user.name}`)
-				member.roles.add("905874757331857452")
-			}
-			await UserSchema.findOneAndUpdate({
-				discord: member.id
-			}, {
-				active: true
-			})
-			
+		const backtext = GetBacktext(user)
+		member.setNickname(`${backtext} | ${user.name}`)
+		if(country == "MX") {
+			member.roles.add("905874757331857453")
+			CheckRoles(body.playerInfo.countryRank, member, client)
+		}
+		else member.roles.add("905874757331857452")
+		await UserSchema.findOneAndUpdate({
+			discord: member.id
+		}, {
+			dsactive: true
 		})
 	}
 })
@@ -159,6 +159,14 @@ setInterval(async () => {
 	}
 	
 }, (1000*60)*15)//15m
+setInterval(async () => {
+	try {
+		UpdateIA(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+	
+}, (1000*60)*60)//1h
 
 function SendAndDelete(msgcontent, msg) {
 	msg.delete()
@@ -193,19 +201,22 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				if(exists) {
 					if(!exists.discord) {
 						Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
-						const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
+						const backtext = GetBacktext(exists)
+						const username = getName(body.playerInfo.playerName, backtext)
 						await UserSchema.findOneAndUpdate({
 							beatsaber: body.playerInfo.playerId
 						}, {
 							discord: member.id,
-							active: true,
+							dsactive: true,
 							name: username
 						})
-						member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
-						member.roles.add(msg.guild.roles.cache.get("905874757331857453"))
-						const server = await client.guilds.fetch("905874757331857448")
-						const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
-						CheckRoles(body.playerInfo.countryRank, member, ranks)
+						member.setNickname(`${backtext} | ${username}`)
+						if(exists.country == "MX") {
+							member.roles.add("905874757331857453")
+							CheckRoles(body.playerInfo.countryRank, member, client)
+						}
+						else member.roles.add("905874757331857452")
+						CheckRoles(body.playerInfo.countryRank, member, client)
 						SendAndDelete("Ahora estas verificado!", msg)
 						return infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully (the account had already existed)`)
 					}
@@ -216,40 +227,27 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				errorhandle(client, err)
 				return SendAndDelete("Unexpected error", msg)
 			}
-			let user
 			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
-			if(body.playerInfo.country != "MX") {//non mex
-				const username = getName(body.playerInfo.playerName, body.playerInfo.country)
-				member.setNickname(`${body.playerInfo.country} | ${username}`)
-				user = {
-					"discord": member.id,
-					"beatsaber": body.playerInfo.playerId,
-					"active": true,
-					"lastrank": null,
-					"name": username,
-					"realname": null,
-					"lastmap": null,
-					"snipe": null
-				}
-				member.roles.add(msg.guild.roles.cache.get("905874757331857452"))
-			} else { //mex
-				const username = getName(body.playerInfo.playerName, `#${body.playerInfo.countryRank}`)
-				member.setNickname(`#${body.playerInfo.countryRank} | ${username}`)
-				user = {
-					"discord": member.id,
-					"beatsaber": body.playerInfo.playerId,
-					"active": true,
-					"lastrank": body.playerInfo.countryRank,
-					"name": username,
-					"realname": body.playerInfo.playerName,
-					"lastmap": null,
-					"snipe": false
-				}
-				member.roles.add(msg.guild.roles.cache.get("905874757331857453"))
-				const server = await client.guilds.fetch("905874757331857448")
-				const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
-				CheckRoles(body.playerInfo.countryRank, member, ranks)
+			const backtext = body.playerInfo.inactive == 1 ? "IA" : body.playerInfo.country != "MX" ? body.playerInfo.country : `#${body.playerInfo.countryRank}`
+			const username = getName(body.playerInfo.playerName, backtext)
+			member.setNickname(`${backtext} | ${username}`)
+			let user = {
+				"discord": member.id,
+				"beatsaber": body.playerInfo.playerId,
+				"realname": body.playerInfo.playerName,
+				"country": body.playerInfo.country,
+				"bsactive": body.playerInfo.inactive == 0 ? false : true,
+				"dsactive": true,
+				"name": username,
+				"lastrank": body.playerInfo.country == "MX" ? body.playerInfo.countryRank : null,
+				"lastmap": null,
+				"snipe": false,
 			}
+			if(body.playerInfo.country == "MX") {
+				member.roles.add("905874757331857453")
+				CheckRoles(body.playerInfo.countryRank, member, client)
+			}
+			else member.roles.add("905874757331857452")
 			try {
 				await new UserSchema(user).save()
 				SendAndDelete("Ahora estas verificado!", msg)
@@ -287,12 +285,12 @@ async function Verificacion(member, msg) {
 		URLseparated = msg.content.split("/")
 		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member, false)
 	} else {//NAME?
-		if(msg.content.length <= 3 || msg.content.length > 32) return SendAndDelete("Invalid Name", msg)
+		if(msg.content.length <= 3 || msg.content.length > 32) return SendAndDelete("Nombre Invalido", msg)
 		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
 		await fetch(NAMEURL)
 		.then(res => res.json())
 		.then(async (body) => {
-			if(body.error) return SendAndDelete("Invalid Name", msg)
+			if(body.error) return SendAndDelete("Nombre Invalido", msg)
 			if(body.players[1]) return SendAndDelete("Hay varios usuarios con este nombre, porfavor utiliza el Id", msg)
 			return VerifictionviaID(body.players[0].playerId, msg, member)
 		}).catch((err) => {

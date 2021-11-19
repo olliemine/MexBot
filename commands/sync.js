@@ -10,6 +10,7 @@ module.exports = {
 	dm: true,
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
+		return message.channel.send({ content: "nooodont"})
 		if(args.length != 2) return message.channel.send({ content: "Tienes que mencionar a un usuario y a un jugador de beatsaber"})
 		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 		if(user) user = await message.guild.members.fetch(user.id)

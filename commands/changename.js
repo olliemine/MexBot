@@ -1,5 +1,4 @@
 const UserSchema = require("../models/UserSchema")
-const fetch = require("node-fetch")
 const { Util } = require("discord.js")
 
 module.exports = {
@@ -17,37 +16,32 @@ module.exports = {
 		function NoMentionText(text) {
 			return Util.removeMentions(text)
 		}
-		function GetBacktext(body) {
-			if(user.lastrank === null) return `${body.playerInfo.country} | `
-			if(user.active == false) return `IA | ` 
-			return `#${body.playerInfo.countryRank} | `
+		function GetBacktext() {
+			if(user.lastrank === null) return `${user.country} | `
+			if(user.bsactive == false) return `IA | ` 
+			return `#${user.lastrank} | `
 		}
-		if(!user) {
+		function NonUser() {
 			if(!Array.isArray(args) || !args.length) return message.channel.send({content: "Necesitas poner un nombre"})
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})			
 			member.setNickname(new_name)
 			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${new_name}`)})
-		} else {
-			fetch(`https://new.scoresaber.com/api/player/${user.beatsaber}/full`)
-			.then(res => res.json())
-			.then(async (body) => {
-				if(body.error) return message.channel.send({content: "Unexpected error " + body.error.message})
-				const backtext = GetBacktext(body)
-				const fronttext = args.length ? args.join(" ") : body.playerInfo.playerName
-				const fullname = `${backtext}${fronttext}`
-				if(fullname.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})
-				await UserSchema.findOneAndUpdate({
-					discord: message.author.id
-				}, {
-					name: fronttext
-				})
-				member.setNickname(fullname)
-				return message.channel.send({content: NoMentionText(`Succesfully changed name to ${fullname}`)})
-			}).catch(() => {
-				message.channel.send({content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
-			})
 		}
-
+		async function User() {
+			const backtext = GetBacktext(body)
+			const fronttext = args.length ? args.join(" ") : user.realname
+			const fullname = `${backtext}${fronttext}`
+			if(fullname.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})
+			await UserSchema.findOneAndUpdate({
+				discord: message.author.id
+			}, {
+				name: fronttext
+			})
+			member.setNickname(fullname)
+			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${fullname}`)})
+		}
+		if(!user) return NonUser()
+		return User()	
 	},
 };
