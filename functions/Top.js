@@ -5,10 +5,17 @@ const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info")
 
-module.exports = async (DiscordClient) => { 
+module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		let players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
 		const topchannel = DiscordClient.channels.cache.get("905874757583503379")
 		let debug = ""
+		let NewPlay = false
+		async function GetFirstMap(beatsaber, page = 1) {
+			return fetch(`https://new.scoresaber.com/api/player/${beatsaber}/scores/recent/${page}`)
+			.then((res) => {
+				return res
+			})
+		}
 		function UpdateUser(userid) {
 			return new Promise((resolve, reject) => {
 				let newscores = []
@@ -46,7 +53,9 @@ module.exports = async (DiscordClient) => {
 								"score": score.score,
 								"hash": score.songHash,
 								"diff": score.difficultyRaw,
-								"date": score.timeSet
+								"date": score.timeSet,
+								"mods": GetMods(score.mods),
+								"pp": score.pp.toFixed(1)
 							})
 						})
 						if(!passed) return GetMap(Page + 1)
@@ -67,7 +76,9 @@ module.exports = async (DiscordClient) => {
 				"PlayerName": user.realname,
 				"Score": score.score,
 				"Country": user.country,
-				"Date": score.date
+				"Date": score.date,
+				"Mods": score.mods,
+				"PP": score.pp
 			})
 			Leaderboard = Leaderboard.sort((a, b) => {
 				return b.Score - a.Score
@@ -85,10 +96,15 @@ module.exports = async (DiscordClient) => {
 			temparray[1] = temparray[1].substring(4)
 			return [temparray[1], temparray[0]]
 		}
+		function GetMods(Mods) {
+			if(!Mods) return []
+			return Mods.split(",")
+		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 			return new Promise(async (resolve, reject) => {
 				console.log(`New from ${user.realname}`)
+				let newmaps = []
 				for await(const score of newscores) {
 					const map = await LevelSchema.findOne({ "LevelID": score.map })
 					if(map) {
@@ -141,6 +157,7 @@ module.exports = async (DiscordClient) => {
 						"TopScore": score.score,
 						"TopPlayerName": user.realname,
 						"Hash": score.hash,
+						"Code": null,
 						"Diff": Diff,
 						"PlayerCount": 1,
 						"Leaderboard": [{
@@ -148,15 +165,18 @@ module.exports = async (DiscordClient) => {
 							"PlayerName": user.realname,
 							"Score": score.score,
 							"Country": user.country,
-							"Date": score.date
+							"Date": score.date,
+							"Mods": score.mods,
+							"PP": score.pp
 						}]
 					}
 					//debug += `new_map ${score.map}`
-					await new LevelSchema(newmap).save()
+					newmaps.push(newmap)
 					console.log(`New map ${score.map}`)
 					continue
 				}
 				console.log("finished")
+				await LevelSchema.insertMany(newmaps)
 				await UserSchema.updateOne({
 					"beatsaber": user.beatsaber
 				}, {
@@ -167,12 +187,7 @@ module.exports = async (DiscordClient) => {
 				resolve()
 			})
 		}
-		async function GetFirstMap(beatsaber) {
-			return fetch(`https://new.scoresaber.com/api/player/${beatsaber}/scores/recent/1`)
-			.then((res) => {
-				return res
-			})
-		}
+
 		async function GetPromises() {
 			return new Promise((resolve, reject) => {
 				let full = []
@@ -215,13 +230,14 @@ module.exports = async (DiscordClient) => {
 					const user = players[playerCounter]
 					playerCounter++
 					const body = await data.json()
-					if(!user.lastrank) {
+					if(!user.lastmap) {
 						checkAgain.push(user) 
 						debug += user.realname + " "
 						debug += "new_user end\n"
 						continue
 					}
 					if(body.scores[0].scoreId == user.lastmap) 	continue
+					NewPlay = true
 					debug += user.realname + " "
 					const firstmap = body.scores[0].scoreId
 					let newscores = []
@@ -236,7 +252,9 @@ module.exports = async (DiscordClient) => {
 							"score": score.score,
 							"hash": score.songHash,
 							"diff": score.difficultyRaw,
-							"date": score.timeSet
+							"date": score.timeSet,
+							"mods": GetMods(score.mods),
+							"pp": score.pp.toFixed(1)
 						})
 					}
 					debug += "new_scores "
@@ -256,6 +274,49 @@ module.exports = async (DiscordClient) => {
 			})
 		}
 		await UpdatePlayers()
+		function GetCodes() {
+			return new Promise((resolve, reject) => {
+				async function GetCode() {
+					let maps = await LevelSchema.find({ Code: null }).limit(50)
+					console.log(maps.length)
+					if(!maps.length) return resolve()
+					let hashes = ""
+					maps.forEach((map) => {
+						hashes += `${map.Hash},`
+					})
+					hashes = hashes.slice(0, -1)
+					console.log(`https://beatsaver.com/api/maps/hash/${hashes}`)
+					await fetch(`https://beatsaver.com/api/maps/hash/${hashes}`)
+					.then(async (res) => {
+						console.log("the")
+						if(res.status != 200) {
+							errorhandle(Client, new Error(`${res.status} ${res.statusText}`))
+							return GetCode()
+						}
+						const body = await res.json()
+						let informations = []
+						for(const key in body) {
+							informations.push(body[key].id)
+						}
+						let counter = maps.length - 1
+						for await(const map of maps) {
+							const info = informations[counter]
+							if(!info) continue
+							counter--
+							await LevelSchema.updateMany({
+								"Hash": map.Hash
+							}, {
+								"Code": info
+							})
+							console.log(`${map.Hash} ${info}`)
+						}
+						GetCode()
+					})
+				}
+				GetCode()
+			})
+		}
+		//await GetCodes()
 		if(debug.length) infohandle(DiscordClient, "debug", debug)
 		return
 };

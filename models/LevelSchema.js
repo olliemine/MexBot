@@ -6,6 +6,7 @@ const Level = new mongoose.Schema({
 	"TopScore": Number,
 	"TopPlayerName": String,
 	"Hash": String,
+	"Code": String,
 	"Diff": Array,
 	"PlayerCount": Number,
 	"Leaderboard": [{
@@ -13,7 +14,9 @@ const Level = new mongoose.Schema({
 		"PlayerName": String,
 		"Score": Number,
 		"Country": String,
-		"Date": Date
+		"Date": Date,
+		"Mods": Array,
+		"PP": Number
 	}]
 })
 
