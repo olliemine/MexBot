@@ -110,7 +110,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					if(map) {
 						const Leaderboard = GetLeaderboard(score, user, map)
 						const PlayerCount = GetPlayerCount(user, map)
-						console.log(PlayerCount)
 						if(score.score <= map.TopScore) {
 							await LevelSchema.updateOne({
 								"LevelID": score.map
@@ -207,6 +206,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						id = ids[counter]
 						counter++
 						if(data.status == 200) {
+							data.bs = id
 							full.push(data)
 							continue
 						}
@@ -224,14 +224,13 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 				await GetPromises().then((data) => {
 					full = data
 				})
-				let playerCounter = 0
 				let checkAgain = []
 				for await (const data of full) {
-					const user = players[playerCounter]
-					playerCounter++
+					const user = players.find(user => user.beatsaber == data.bs)
 					const body = await data.json()
 					if(!user.lastmap) {
-						checkAgain.push(user) 
+						checkAgain.push(user)
+						NewPlay = true
 						debug += user.realname + " "
 						debug += "new_user end\n"
 						continue
@@ -278,45 +277,44 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			return new Promise((resolve, reject) => {
 				async function GetCode() {
 					let maps = await LevelSchema.find({ Code: null }).limit(50)
-					console.log(maps.length)
 					if(!maps.length) return resolve()
 					let hashes = ""
 					maps.forEach((map) => {
 						hashes += `${map.Hash},`
 					})
 					hashes = hashes.slice(0, -1)
-					console.log(`https://beatsaver.com/api/maps/hash/${hashes}`)
 					await fetch(`https://beatsaver.com/api/maps/hash/${hashes}`)
 					.then(async (res) => {
-						console.log("the")
 						if(res.status != 200) {
 							errorhandle(Client, new Error(`${res.status} ${res.statusText}`))
 							return GetCode()
 						}
 						const body = await res.json()
-						let informations = []
-						for(const key in body) {
-							informations.push(body[key].id)
-						}
-						let counter = maps.length - 1
 						for await(const map of maps) {
-							const info = informations[counter]
-							if(!info) continue
-							counter--
+							let info = body[map.Hash.toLowerCase()]
+							console.log(`${map.Hash}`)
+							if(!info) {
+								console.log("info null")
+								info = { id: "0" }
+							}
 							await LevelSchema.updateMany({
 								"Hash": map.Hash
 							}, {
-								"Code": info
+								"Code": info.id
 							})
-							console.log(`${map.Hash} ${info}`)
+							console.log(`${info.id}`)
 						}
 						GetCode()
 					})
 				}
-				GetCode()
+				try {
+					GetCode()
+				} catch(err) {
+					console.log(err)
+				}
 			})
 		}
-		//await GetCodes()
+		if(NewPlay) await GetCodes()
 		if(debug.length) infohandle(DiscordClient, "debug", debug)
 		return
 };
