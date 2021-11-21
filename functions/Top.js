@@ -94,11 +94,57 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			let temparray = diff.split("_")
 			temparray.shift()
 			temparray[1] = temparray[1].substring(4)
-			return [temparray[1], temparray[0]]
+			return temparray
 		}
 		function GetMods(Mods) {
 			if(!Mods) return []
 			return Mods.split(",")
+		}
+		function getDiffValue(diff, mode) {
+			let num = 0
+			switch(diff) {
+				case "Easy":
+					num += 1
+					break
+				case "Normal":
+					num += 2
+					break
+				case "Hard":
+					num += 3
+					break
+				case "Expert":
+					num += 4
+					break
+				case "ExpertPlus":
+					num += 5
+					break
+				default:
+					errorhandle(DiscordClient, new Error("Invalid diff: " + diff))
+			} 
+			switch(mode) {
+				case "Lightshow":
+					num += 1
+					break
+				case "360Degree":
+					num += 2
+					break
+				case "NoArrows":
+					num += 3
+					break
+				case "OneSaber":
+					num += 4
+					break
+				case "Lawless":
+					num += 5
+					break
+				case "Standard":
+					num += 6
+					break
+				default:
+					errorhandle(DiscordClient, new Error("Invalid mode: " + mode))
+			}
+			console.log(num)
+			return num
 		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
@@ -150,6 +196,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						continue
 					}
 					const Diff = TransformDiff(score.diff)
+					console.log(Diff)
 					const newmap = {
 						"LevelID": score.map,
 						"TopPlayer": user.beatsaber,
@@ -157,7 +204,11 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						"TopPlayerName": user.realname,
 						"Hash": score.hash,
 						"Code": null,
-						"Diff": Diff,
+						"DiffInfo": {
+							"Diff": Diff[0],
+							"Mode": Diff[1],
+							"DiffValue": getDiffValue(Diff[0], Diff[1])
+						},
 						"PlayerCount": 1,
 						"Leaderboard": [{
 							"PlayerID": user.beatsaber,
