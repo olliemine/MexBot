@@ -1,6 +1,5 @@
 const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
-const puppeteer = require("puppeteer")
 const errorhandle = require("./error")
 const infohandle = require("./info")
 const CheckRoles = require("./CheckRoles")
@@ -9,55 +8,23 @@ const LevelSchema = require("../models/LevelSchema")
 //const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
-	
-	//Gets puppeteer to get all top 50 players
 	let usersupdatedraw = []
 	let users = await UserSchema.find({country: "MX", bsactive: true})
 	const server = await Client.guilds.fetch("905874757331857448")
 	const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
-
-	const browser = await puppeteer.launch({
-		args: ['--no-sandbox']
-	})
-	const page = await browser.newPage()
-	await page.goto("https://scoresaber.com/global?country=mx", { waitUntil: "networkidle0" })
-	let info
-	try {  //https://stackoverflow.com/a/60733311/14550193
-		rawlinks = await page.evaluate(() => {
-			const rows = document.querySelectorAll('table tr');
-			return Array.from(rows, row => {
-				const columns = row.querySelectorAll('td a');
-				return Array.from(columns, column => column.href);
-			});
+	async function GetInfo() {
+		let info
+		await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)
+		.then(async res => {
+			if(res.status !== 200) return info = null
+			const body = await res.json()
+			info = body
 		})
-		info = await page.evaluate(() => {
-			const rows = document.querySelectorAll('table tr');
-			return Array.from(rows, row => {
-				const columns = row.querySelectorAll('td');
-				return Array.from(columns, column => column.innerText);
-			});
-		})
-		info.shift()
-		rawlinks.shift()
-		links = []
-		rawlinks.forEach((row) => {
-			links.push(row[0].substring(25))
-		})
-		counter = 0
-		info.forEach((row) => {
-			row[1] = row[1].substring(1)
-			row.shift()
-			row[1] = row[1].substring(1)
-			row.splice(2, 2)
-			row.push(links[counter])
-			counter++
-		})
-		//["rank", "realname", "id"]
-	} catch(err) {
-		errorhandle(Client, err)
-	} finally {
-		browser.close()
+		return info
 	}
+	const info = await GetInfo()
+	if(!info) return
+	console.log(info.length)
 	async function UpdateName(beatsaber, newname) {
 		await LevelSchema.updateMany({ 
 			TopPlayer: beatsaber
@@ -73,8 +40,8 @@ module.exports = async (Client) => {
 	async function NewUser(row, country) {
 		const user = {
 			"discord": null,
-			"beatsaber": row[2],
-			"realname": row[1],
+			"beatsaber": row.id,
+			"realname": row.name,
 			"country": country,
 			"bsactive": true,
 			"dsactive": false,
@@ -83,41 +50,42 @@ module.exports = async (Client) => {
 			"lastmap": null,
 			"snipe": null,
 		}
-		console.log(row[1])
+		console.log(row.name)
 		await new UserSchema(user).save()
 	}
 
 	for await(const user of info) {
-		const userinfo = users.find(element => element.beatsaber == user[2])
+		const userinfo = users.find(element => element.beatsaber == user.id)
+		console.log(`${userinfo.realname} ${user.countryRank}`)
 		if(!userinfo) {
-			const exists = await UserSchema.countDocuments({ beatsaber: user[2] }, { limit: 1 })
+			const exists = await UserSchema.countDocuments({ beatsaber: user.id }).limit(1)
 			if(exists) continue
 			await NewUser(user, "MX")
 			continue
 		}
-		users = users.filter(element => element.beatsaber != user[2])
-		if(user[1] != userinfo.realname) await UpdateName(userinfo.beatsaber, user[1])
-		if(userinfo.lastrank == user[0]) continue
+		users = users.filter(element => element.beatsaber != user.id)
+		if(user.name != userinfo.realname) await UpdateName(userinfo.beatsaber, user.name)
+		if(userinfo.lastrank == user.countryRank) continue
 		usersupdatedraw.push({
 			"user": userinfo.realname,
-			"update":  userinfo.lastrank - user[0], 
+			"update":  userinfo.lastrank - user.countryRank, 
 			"lastrank": userinfo.lastrank,
-			"newrank": user[0]
+			"newrank": user.countryRank
 		})
 		await UserSchema.findOneAndUpdate({
 			beatsaber: userinfo.beatsaber
 		}, {
-			lastrank: user[0]
+			lastrank: user.countryRank
 		})
 		if(!userinfo.dsactive) continue
 		const discorduser = await server.members.fetch(userinfo.discord)
-		CheckRoles(user[0], discorduser, Client)
+		CheckRoles(user.countryRank, discorduser, Client)
 		if(discorduser.roles.highest.position > server.members.resolve(Client.user).roles.highest.position) { 
-			infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${body.playerInfo.countryRank} manually`)
+			infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${user.countryRank} manually`)
 			continue
 		}
 		try {
-			await discorduser.setNickname(`#${body.playerInfo.countryRank} | ${player.name}`)
+			await discorduser.setNickname(`#${user.countryRank} | ${userinfo.name}`)
 		} catch(err) {
 			errorhandle(Client, err)
 		}
@@ -125,7 +93,7 @@ module.exports = async (Client) => {
 		
 
 	async function GetPage(beatsaber) {
-		return fetch(`https://new.scoresaber.com/api/player/${beatsaber}/full`)
+		return fetch(`https://scoresaber.com/api/player/${beatsaber}/full`)
 			.then((res) => {
 				return res
 			})
@@ -182,26 +150,26 @@ module.exports = async (Client) => {
 		player = users[PlayerCounter]
 		PlayerCounter++
 		const body = await data.json()
-		if(body.playerInfo.playerName != player.realname) await UpdateName(player.beatsaber, body.playerInfo.playerName)
-		if(body.playerInfo.inactive == 1) { 
+		if(body.name != player.realname) await UpdateName(player.beatsaber, body.name)
+		if(body.inactive == 1) { 
 			InactiveAccount(player)
 			continue
 		}
-		if(player.lastrank == body.playerInfo.countryRank) continue
+		if(player.lastrank == body.countryRank) continue
 		await UserSchema.findOneAndUpdate({
 			beatsaber: player.beatsaber
 		}, {
-			lastrank: body.playerInfo.countryRank
+			lastrank: body.countryRank
 		})
 		if(!player.dsactive) continue
 		const discorduser = await server.members.fetch(player.discord)
-		CheckRoles(body.playerInfo.countryRank, discorduser, Client)
+		CheckRoles(body.countryRank, discorduser, Client)
 		if(discorduser.roles.highest.position > server.members.resolve(Client.user).roles.highest.position) { 
-			infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${body.playerInfo.countryRank} manually`)
+			infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${body.countryRank} manually`)
 			continue
 		}
 		try {
-			await discorduser.setNickname(`#${body.playerInfo.countryRank} | ${player.name}`)
+			await discorduser.setNickname(`#${body.countryRank} | ${player.name}`)
 		} catch(err) {
 			errorhandle(Client, err)
 		}

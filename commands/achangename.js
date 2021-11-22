@@ -21,7 +21,7 @@ module.exports = {
 		}
 		function GetBacktext(body) {
 			if(UserInfo.lastrank === null) return `${body.playerInfo.country} | `
-			if(UserInfo.active == false) return `IA | ` 
+			if(UserInfo.bsactive == false) return `IA | ` 
 			return `#${body.playerInfo.countryRank} | `
 		}
 		args.shift()

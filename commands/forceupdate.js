@@ -13,7 +13,6 @@ module.exports = {
 	dm: true,
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
-		return message.channel.send({ content: "no"})
 		message.channel.sendTyping()
 		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 		const server = await DiscordClient.guilds.fetch("905874757331857448")

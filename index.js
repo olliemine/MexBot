@@ -30,7 +30,7 @@ function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	return !!pattern.test(str);
 }
 function Refresh(id, pfp) {
-	if(pfp == "/images/steam.png") {
+	if(pfp == "https://cdn.scoresaber.com/avatars/steam.png") {
 		fetch(`https://new.scoresaber.com/api/user/${id}/refresh`)
 	}
 }
@@ -86,7 +86,6 @@ client.on("messageCreate", async (message) => {
 	if(message.guild === null && !command.dm) return message.channel.send({ content: "No se puede executar este comando en dm" })
 	if(command.cooldown > 0) {
 		RecentlyExecuted.push(CooldownString)
-		
 		setTimeout(() => {
 			RecentlyExecuted = RecentlyExecuted.filter((text) => {
 				return text != CooldownString
@@ -177,7 +176,7 @@ function SendAndDelete(msgcontent, msg) {
 	})
 }
 function VerifictionviaID(ID, msg, member, link = true) {
-	fetch(`https://new.scoresaber.com/api/player/${ID}/full`)
+	fetch(`https://scoresaber.com/api/player/${ID}/full`)
 		.then(res => res.json())
 		.then(async (body) => {
 			function getName(name, prefix) {
@@ -191,20 +190,20 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				}
 				return username
 			}
-			if(body.error) {
+			if(body.errorMessage) {
 				if(link == false) return VerifictionviaID(ID.slice(0, -14), msg, member)
 				infohandle(client, "Verification", `User ${member.user.username} failed verification with ${msg.content}`)
 				return SendAndDelete("Invalid ID ", msg)
 			}
 			try {
-				exists = await UserSchema.findOne({ beatsaber: body.playerInfo.playerId })
+				exists = await UserSchema.findOne({ beatsaber: body.id })
 				if(exists) {
 					if(!exists.discord) {
-						Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
+						Refresh(body.id, body.profilePicture)
 						const backtext = GetBacktext(exists)
-						const username = getName(body.playerInfo.playerName, backtext)
+						const username = getName(body.name, backtext)
 						await UserSchema.findOneAndUpdate({
-							beatsaber: body.playerInfo.playerId
+							beatsaber: body.id
 						}, {
 							discord: member.id,
 							dsactive: true,
@@ -213,39 +212,39 @@ function VerifictionviaID(ID, msg, member, link = true) {
 						member.setNickname(`${backtext} | ${username}`)
 						if(exists.country == "MX") {
 							member.roles.add("905874757331857453")
-							CheckRoles(body.playerInfo.countryRank, member, client)
+							CheckRoles(body.countryRank, member, client)
 						}
 						else member.roles.add("905874757331857452")
-						CheckRoles(body.playerInfo.countryRank, member, client)
+						CheckRoles(body.countryRank, member, client)
 						SendAndDelete("Ahora estas verificado!", msg)
-						return infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully (the account had already existed)`)
+						return infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.name} successfully (the account had already existed)`)
 					}
-					infohandle(client, "Verification", `User ${member.user.username} tried to login to ${body.playerInfo.playerName} which has already been taken`)
+					infohandle(client, "Verification", `User ${member.user.username} tried to login to ${body.name} which has already been taken`)
 					return SendAndDelete("Ya hay una usuario con esta cuenta. ```Si deverdad es tu cuenta porfavor contacta a un Admin```", msg)
 				}
 			} catch(err) {
 				errorhandle(client, err)
 				return SendAndDelete("Unexpected error", msg)
 			}
-			Refresh(body.playerInfo.playerId, body.playerInfo.avatar)
-			const backtext = body.playerInfo.inactive == 1 ? "IA" : body.playerInfo.country != "MX" ? body.playerInfo.country : `#${body.playerInfo.countryRank}`
-			const username = getName(body.playerInfo.playerName, backtext)
+			Refresh(body.id, body.profilePicture)
+			const backtext = body.inactive == 1 ? "IA" : body.country != "MX" ? body.country : `#${body.countryRank}`
+			const username = getName(body.name, backtext)
 			member.setNickname(`${backtext} | ${username}`)
 			let user = {
 				"discord": member.id,
-				"beatsaber": body.playerInfo.playerId,
-				"realname": body.playerInfo.playerName,
-				"country": body.playerInfo.country,
-				"bsactive": body.playerInfo.inactive == 0 ? false : true,
+				"beatsaber": body.id,
+				"realname": body.name,
+				"country": body.country,
+				"bsactive": body.inactive == 0 ? false : true,
 				"dsactive": true,
 				"name": username,
-				"lastrank": body.playerInfo.country == "MX" ? body.playerInfo.countryRank : null,
+				"lastrank": body.country == "MX" ? body.countryRank : null,
 				"lastmap": null,
 				"snipe": false,
 			}
-			if(body.playerInfo.country == "MX") {
+			if(body.country == "MX") {
 				member.roles.add("905874757331857453")
-				CheckRoles(body.playerInfo.countryRank, member, client)
+				CheckRoles(body.countryRank, member, client)
 			}
 			else member.roles.add("905874757331857452")
 			try {
@@ -255,7 +254,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				errorhandle(client, err)
 				return SendAndDelete("Unexpected Error", msg)
 			}
-			infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.playerInfo.playerName} successfully`)
+			infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.name} successfully`)
 		}).catch((err) => {
 			SendAndDelete("Unexpected Error", msg)
 			errorhandle(client, err)
@@ -286,7 +285,7 @@ async function Verificacion(member, msg) {
 		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member, false)
 	} else {//NAME?
 		if(msg.content.length <= 3 || msg.content.length > 32) return SendAndDelete("Nombre Invalido", msg)
-		const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${msg.content}`)
+		const NAMEURL = new URL(`https://scoresaber.com/api/players?search=${msg.content}`)
 		await fetch(NAMEURL)
 		.then(res => res.json())
 		.then(async (body) => {

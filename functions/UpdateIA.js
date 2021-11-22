@@ -4,7 +4,7 @@ const CheckRoles = require("./CheckRoles")
 
 module.exports = async (Client) => {
 	async function GetPage(beatsaber) {
-		return fetch(`https://new.scoresaber.com/api/player/${beatsaber}/full`)
+		return fetch(`https://scoresaber.com/api/player/${beatsaber}/full`)
 			.then((res) => {
 				return res
 			})
@@ -21,7 +21,7 @@ module.exports = async (Client) => {
 		counter++
 		if(data.status != 200) continue
 		const body = await data.json()
-		if(body.playerInfo.inactive == 1) continue
+		if(body.inactive == 1) continue
 		await UserSchema.findOneAndUpdate({ user: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) continue
 		const server = await Client.guilds.fetch("905874757331857448")
