@@ -31,7 +31,7 @@ module.exports = {
 			return message.channel.send({content: NoMentionText(`Changed name to ${new_name}`)})
 		}
 		async function User() {
-			const backtext = GetBacktext(body)
+			const backtext = GetBacktext(user)
 			const fronttext = args.length ? args.join(" ") : user.realname
 			const fullname = `${backtext}${fronttext}`
 			if(fullname.length > 32) return message.channel.send({content: "El nombre es muy largo"})
