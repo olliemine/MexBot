@@ -131,8 +131,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					playHistory = pushPlayHistory(playHistory, score.date)
 					let map
 					if(mapMode) map = maps.find(obj => obj.LevelID == score.map)
-					else map = await LevelSchema.find({ "LevelID": score.map })
-
+					else map = await LevelSchema.findOne({ "LevelID": score.map })
 					if(map) {
 						const Leaderboard = GetLeaderboard(score, user, map)
 						const PlayerCount = GetPlayerCount(user, map)
