@@ -49,6 +49,7 @@ module.exports = async (Client) => {
 			"lastrank": 50,
 			"lastmap": null,
 			"snipe": null,
+			"playHistory": []
 		}
 		console.log(row.name)
 		await new UserSchema(user).save()
@@ -151,7 +152,7 @@ module.exports = async (Client) => {
 		PlayerCounter++
 		const body = await data.json()
 		if(body.name != player.realname) await UpdateName(player.beatsaber, body.name)
-		if(body.inactive == 1) { 
+		if(body.inactive == true) { 
 			InactiveAccount(player)
 			continue
 		}

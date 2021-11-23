@@ -9,44 +9,41 @@ module.exports = {
 	dm: false,
 	cooldown: 1,
 	async execute(message, DiscordClient, args) {
-		let user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
-		if(user) user = await message.guild.members.fetch(user.id)
-		if(!user) return message.channel.send({content: "Tienes que mencionar a un usuario smh"})
-		if(user.roles.highest.position > message.guild.members.resolve(DiscordClient.user).roles.highest.position) return message.channel.send({content: "Cant change name because role higher than bot."})
-		const UserInfo = await UserSchema.findOne({
-			discord: user.id
-		})
+		let member = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+		args.shift()
+		if(member) member = await message.guild.members.fetch(user.id)
+		if(!member) return message.channel.send({content: "Tienes que mencionar a un usuario"})
+		const user = await UserSchema.findOne({ discord: member.id })
+		if(member.roles.highest.position > message.guild.members.resolve(DiscordClient.user).roles.highest.position) return message.channel.send({content: "Cant change name because role higher than bot."})
 		function NoMentionText(text) {
 			return Util.removeMentions(text)
 		}
-		function GetBacktext(body) {
-			if(UserInfo.lastrank === null) return `${body.playerInfo.country} | `
-			if(UserInfo.bsactive == false) return `IA | ` 
-			return `#${body.playerInfo.countryRank} | `
+		function GetBacktext() {
+			if(user.lastrank === null) return `${user.country} | `
+			if(user.bsactive == false) return `IA | ` 
+			return `#${user.lastrank} | `
 		}
-		args.shift()
-		if(!UserInfo) {
+		function NonUser() {
+			if(!Array.isArray(args) || !args.length) return message.channel.send({content: "Necesitas poner un nombre"})
 			const new_name = args.join(" ")
-			if(new_name.length > 32) return message.channel.send({content: "El nombre ta muy grande smh"})
-			user.setNickname(new_name)
-			return message.channel.send({content: NoMentionText(`Nombre cambiado a ${new_name}`)})
-		} 
-		await fetch(`https://new.scoresaber.com/api/player/${UserInfo.beatsaber}/full`)
-		.then(res => res.json())
-		.then(async (body) => {
+			if(new_name.length > 32) return message.channel.send({content: "El nombre es muy largo"})			
+			member.setNickname(new_name)
+			return message.channel.send({content: NoMentionText(`Changed name to ${new_name}`)})
+		}
+		async function User() {
 			const backtext = GetBacktext(body)
-			const fronttext = args.length ? args.join(" ") : body.playerInfo.playerName
+			const fronttext = args.length ? args.join(" ") : user.realname
 			const fullname = `${backtext}${fronttext}`
-			if(fullname.length > 32) return message.channel.send({content: "El nombre ta muy grande smh"})
+			if(fullname.length > 32) return message.channel.send({content: "El nombre es muy largo"})
 			await UserSchema.findOneAndUpdate({
-				discord: user.id
+				discord: member.id
 			}, {
 				name: fronttext
 			})
-			user.setNickname(fullname)
-			message.channel.send({content: NoMentionText(`Nombre cambiado a ${fronttext}`)})
-		}).catch(() => {
-			message.channel.send({content: "Parece que hay un error con scoresaber, porfavor intenta despues"})
-		})
+			member.setNickname(fullname)
+			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${fullname}`)})
+		}
+		if(!user) return NonUser()
+		return User()	
 	},
 };

@@ -21,7 +21,7 @@ module.exports = async (Client) => {
 		counter++
 		if(data.status != 200) continue
 		const body = await data.json()
-		if(body.inactive == 1) continue
+		if(body.inactive == true) continue
 		await UserSchema.findOneAndUpdate({ user: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) continue
 		const server = await Client.guilds.fetch("905874757331857448")

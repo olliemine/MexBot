@@ -20,6 +20,10 @@ const UserSchema = new mongoose.Schema({
 	"lastrank": Number,
 	"lastmap": String,
 	"snipe": Boolean,
+	"playHistory": [{
+		"plays": Number,
+		"week": Number
+	}],
 })
 
 module.exports = mongoose.model("users", UserSchema)

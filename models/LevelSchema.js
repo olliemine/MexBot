@@ -9,8 +9,7 @@ const Level = new mongoose.Schema({
 	"Code": String,
 	"DiffInfo": {
 		"Diff": String,
-		"Mode": String,
-		"DiffValue": Number
+		"Mode": String
 	},
 	"PlayerCount": Number,
 	"Leaderboard": [{

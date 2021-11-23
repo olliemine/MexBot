@@ -100,93 +100,70 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			if(!Mods) return []
 			return Mods.split(",")
 		}
-		function getDiffValue(diff, mode) {
-			let num = 0
-			switch(diff) {
-				case "Easy":
-					num += 1
-					break
-				case "Normal":
-					num += 2
-					break
-				case "Hard":
-					num += 3
-					break
-				case "Expert":
-					num += 4
-					break
-				case "ExpertPlus":
-					num += 5
-					break
-				default:
-					errorhandle(DiscordClient, new Error("Invalid diff: " + diff))
-			} 
-			switch(mode) {
-				case "Lightshow":
-					num += 1
-					break
-				case "360Degree":
-					num += 2
-					break
-				case "NoArrows":
-					num += 3
-					break
-				case "OneSaber":
-					num += 4
-					break
-				case "Lawless":
-					num += 5
-					break
-				case "Standard":
-					num += 6
-					break
-				default:
-					errorhandle(DiscordClient, new Error("Invalid mode: " + mode))
+		function pushPlayHistory(playHistory, date) {
+			const formatedDate = new Date(date)
+			const week = Math.floor((formatedDate.getTime() + 345_600_000) / 604_800_000)
+			const index = playHistory.findIndex(obj => obj.week == week)
+			if(index != -1) {
+				playHistory[index].plays++
+				return playHistory
 			}
-			console.log(num)
-			return num
+			playHistory.push({
+				plays: 1,
+				week: week
+			})
+			playHistory.sort((a, b) => {
+				return a.week - b.week
+			})
+			return playHistory
 		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 			return new Promise(async (resolve, reject) => {
 				console.log(`New from ${user.realname}`)
 				let newmaps = []
+				let updateBulkWrite = []
+				let playHistory = user.playHistory
+				let mapMode = newscores.length >= 25 ? true : false
+				let maps
+				if(mapMode) maps = await LevelSchema.find({})
 				for await(const score of newscores) {
-					const map = await LevelSchema.findOne({ "LevelID": score.map })
+					playHistory = pushPlayHistory(playHistory, score.date)
+					let map
+					if(mapMode) map = maps.find(obj => obj.LevelID == score.map)
+					else map = await LevelSchema.find({ "LevelID": score.map })
+
 					if(map) {
 						const Leaderboard = GetLeaderboard(score, user, map)
 						const PlayerCount = GetPlayerCount(user, map)
 						if(score.score <= map.TopScore) {
-							await LevelSchema.updateOne({
-								"LevelID": score.map
-							}, {
-								"PlayerCount": PlayerCount,
-								"Leaderboard": Leaderboard
-							})
+							updateBulkWrite.push({ updateOne: {
+								"filter": { "LevelID": score.map },
+								"update": { $set: { "PlayerCount": PlayerCount, "Leaderboard": Leaderboard }}
+							}})
 							//debug += `${score.score} worse than ${map.TopScore} ${score.map} ${map.LevelID} `
 							console.log(`Score ${score.score} not better than ${map.TopScore}`)
 							continue
 						}
 						if(user.beatsaber == map.TopPlayer) {
-							await LevelSchema.updateOne({
-								"LevelID": score.map
-							}, {
-								"TopScore": score.score,
-								"Leaderboard": Leaderboard
-							})
+							updateBulkWrite.push({ updateOne: {
+								"filter": { "LevelID": score.map },
+								"update": { $set: { "TopScore": score.score, "Leaderboard": Leaderboard }}
+							}})
 							//debug += `upgraded ${score.map} `
 							continue
 						}
 						console.log(`Better score ${score.score} better than ${map.TopScore}`)
-						await LevelSchema.updateOne({
-							"LevelID": score.map
-						}, {
-							"TopScore": score.score,
-							"TopPlayer": user.beatsaber,
-							"TopPlayerName": user.realname,
-							"PlayerCount": PlayerCount,
-							"Leaderboard": Leaderboard
-						})
+						updateBulkWrite.push({ updateOne: {
+							"filter": { "LevelID": score.map },
+							"update": { $set: { 
+								"TopScore": score.score,
+								"TopPlayer": user.beatsaber,
+								"TopPlayerName": user.realname,
+								"PlayerCount": PlayerCount,
+								"Leaderboard": Leaderboard
+							}}
+						}})
 						debug += `${score.score} better than ${map.TopScore} ${map.LevelID} `
 						if(!user.lastmap) continue
 						let previousname = map.TopPlayerName
@@ -196,7 +173,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						continue
 					}
 					const Diff = TransformDiff(score.diff)
-					console.log(Diff)
 					const newmap = {
 						"LevelID": score.map,
 						"TopPlayer": user.beatsaber,
@@ -206,8 +182,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						"Code": null,
 						"DiffInfo": {
 							"Diff": Diff[0],
-							"Mode": Diff[1],
-							"DiffValue": getDiffValue(Diff[0], Diff[1])
+							"Mode": Diff[1]
 						},
 						"PlayerCount": 1,
 						"Leaderboard": [{
@@ -222,18 +197,23 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					}
 					//debug += `new_map ${score.map}`
 					newmaps.push(newmap)
-					console.log(`New map ${score.map}`)
+					//console.log(`New map ${score.map}`)
 					continue
 				}
-				console.log("finished")
-				await LevelSchema.insertMany(newmaps)
+				await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
+				await LevelSchema.insertMany(newmaps, { ordered: false })
 				await UserSchema.updateOne({
 					"beatsaber": user.beatsaber
 				}, {
-					"lastmap": firstmap
+					"lastmap": firstmap,
+					"playHistory": playHistory
 				})
+				console.log("finished")
 				debug += `${firstmap} end\n`
 				newscores = null
+				maps = null
+				updateBulkWrite = null
+				newmaps = null
 				resolve()
 			})
 		}
@@ -325,10 +305,10 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 		}
 		await UpdatePlayers()
 		function GetCodes() {
-			return new Promise((resolve, reject) => {
-				async function GetCode() {
-					let maps = await LevelSchema.find({ Code: null }).limit(50)
-					if(!maps.length) return resolve()
+			return new Promise(async (resolve, reject) => {
+				console.log("execution")
+				let updateBulkWrite = []
+				async function GetCode(maps) {
 					let hashes = ""
 					maps.forEach((map) => {
 						hashes += `${map.Hash},`
@@ -341,28 +321,32 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							return GetCode()
 						}
 						const body = await res.json()
-						for await(const map of maps) {
+						for (const map of maps) {
 							let info = body[map.Hash.toLowerCase()]
-							console.log(`${map.Hash}`)
 							if(!info) {
-								console.log("info null")
 								info = { id: "0" }
 							}
-							await LevelSchema.updateMany({
-								"Hash": map.Hash
-							}, {
-								"Code": info.id
-							})
-							console.log(`${info.id}`)
+							updateBulkWrite.push({ updateMany: {
+								"filter": { "Hash": map.Hash },
+								"update": { $set: { "Code": info.id }}
+							}})
 						}
-						GetCode()
+						return
 					})
 				}
-				try {
-					GetCode()
-				} catch(err) {
-					console.log(err)
+				const allMaps = await LevelSchema.find({ Code: null })
+				let mapChunks = []
+				for (let i = 0; i < allMaps.length; i += 50) {
+					mapChunks.push(allMaps.slice(i, i + 50))
 				}
+				console.log(mapChunks.length)
+				for await(const mapChunk of mapChunks) {
+					await GetCode(mapChunk)
+					console.log(updateBulkWrite.length)
+				}
+				console.log("finished")
+				await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
+				resolve()
 			})
 		}
 		if(NewPlay) await GetCodes()

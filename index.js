@@ -227,7 +227,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				return SendAndDelete("Unexpected error", msg)
 			}
 			Refresh(body.id, body.profilePicture)
-			const backtext = body.inactive == 1 ? "IA" : body.country != "MX" ? body.country : `#${body.countryRank}`
+			const backtext = body.inactive == true ? "IA" : body.country != "MX" ? body.country : `#${body.countryRank}`
 			const username = getName(body.name, backtext)
 			member.setNickname(`${backtext} | ${username}`)
 			let user = {
@@ -235,12 +235,13 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				"beatsaber": body.id,
 				"realname": body.name,
 				"country": body.country,
-				"bsactive": body.inactive == 0 ? false : true,
+				"bsactive": body.inactive == true ? false : true,
 				"dsactive": true,
 				"name": username,
 				"lastrank": body.country == "MX" ? body.countryRank : null,
 				"lastmap": null,
 				"snipe": false,
+				"playHistory": []
 			}
 			if(body.country == "MX") {
 				member.roles.add("905874757331857453")
