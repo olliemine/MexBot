@@ -1,5 +1,6 @@
 const fetch = require("node-fetch")
 const { MessageEmbed } = require("discord.js")
+const { version } = require("../info.json")
 
 module.exports = {
 	name : "ping",
@@ -31,6 +32,7 @@ Bot Latency: ${botms}ms
 Discord API Latency: ${discordms}ms
 Scoresaber Latency: ${await scoresaberms()}
 Scoresaber API Latency: ${await scoresaberapims()}`)
+		.setFooter(version)
 		message.channel.send({ content: "🏓Pong!", embeds: [embed]});
 	},
 };
