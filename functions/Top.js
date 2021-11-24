@@ -53,7 +53,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 								"map": score.leaderboard.id,
 								"score": score.score.baseScore,
 								"hash": score.leaderboard.songHash,
-								"diff": score.leaderboard.difficultyRaw,
+								"diff": score.leaderboard.difficulty.difficultyRaw,
 								"date": score.score.timeSet,
 								"mods": GetMods(score.score.modifiers),
 								"pp": score.score.pp.toFixed(1)
@@ -302,7 +302,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							"map": score.leaderboard.id,
 							"score": score.score.baseScore,
 							"hash": score.leaderboard.songHash,
-							"diff": score.leaderboard.difficultyRaw,
+							"diff": score.leaderboard.difficulty.difficultyRaw,
 							"date": score.score.timeSet,
 							"mods": GetMods(score.score.modifiers),
 							"pp": score.score.pp.toFixed(1)
