@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "canvas": "^2.8.0",
+    "chart.js": "^3.6.0",
+    "chartjs-node-canvas": "^4.1.4",
     "discord.js": "^13.1.0",
     "fetch": "^1.1.0",
     "mongoose": "^5.12.1",
