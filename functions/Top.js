@@ -4,6 +4,7 @@ const UserSchema = require("../models/UserSchema")
 const ms = require("ms")
 const errorhandle = require("./error")
 const infohandle = require("./info")
+const { MessageActionRow, MessageButton } = require("discord.js")
 
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		let players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
@@ -100,6 +101,14 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			if(!Mods) return []
 			return Mods.split(",")
 		}
+		function getCode(hash) {
+			return fetch(`https://beatsaver.com/api/maps/hash/${hash}`)
+			.then(async (res) => {
+				if(res.status != 200) return null
+				const body = await res.json()
+				return body.id
+			})
+		}
 		function pushPlayHistory(playHistory, date) {
 			const formatedDate = new Date(date)
 			const week = Math.floor((formatedDate.getTime() + 345_600_000) / 604_800_000)
@@ -168,6 +177,19 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						let previousname = map.TopPlayerName
 						const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
 						if(previoususer) if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
+						const code = await getCode(score.hash)
+						if(code) { 
+							const row = new MessageActionRow()
+							.addComponents(
+								new MessageButton()
+									.setLabel("Beatsaver")
+									.setStyle("LINK")
+									.setURL(`https://beatsaver.com/maps/${code}`)
+							)
+
+							topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`, components: [row]})
+							continue
+						}
 						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
 						continue
 					}
