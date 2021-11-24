@@ -1,10 +1,11 @@
 const fetch = require('node-fetch');
-const { MessageEmbed } = require("discord.js");
+const { MessageEmbed, MessageAttachment } = require("discord.js");
 const UserSchema = require("../models/UserSchema")
 const UserCacheSchema = require("../models/UserCacheSchema")
 const errorhandle = require("../functions/error")
 const ms = require("ms")
 const LevelSchema = require("../models/LevelSchema")
+const { ChartJSNodeCanvas  } = require('chartjs-node-canvas');
 
 module.exports = {
 	name: "getplayer",
@@ -26,6 +27,84 @@ module.exports = {
 			cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
 			if(cacheduser) return GetPlayerDataID(cacheduser.id)
 			GetPlayerDataName(args.join("%20"))
+		}
+		async function GetGraph(user) {
+			function findMissingNumbers(arr) {
+				var sparse = arr.reduce((sparse, i) => (sparse[i]=1,sparse), []);
+				return [...sparse.keys()].filter(i => i && !sparse[i]);
+			}
+			let history = user.playHistory
+			let weeks = []
+			let plays = []
+			user.playHistory.forEach(h => {
+				weeks.push(h.week)
+			})
+			let missing = findMissingNumbers(weeks)
+			missing.splice(0, weeks[0] - 1)
+			missing.forEach(m => {
+				history.push({
+					plays: 0,
+					week: m
+				})
+			})
+			history.sort((a, b) => {
+				return a.week - b.week
+			})
+			history.forEach(h => {
+				plays.push(h.plays)
+			})	
+			const canvasRenderService = new ChartJSNodeCanvas({ width: 1000, height: 200 })
+			let labels = []
+			for(let i = 0; i < plays.length; i++) {
+				const year = Math.floor((((history[i].week * 604_800_000) + 345_600_000) / 31536000730) + 1970) 
+				labels.push(year.toString())
+				continue
+			}
+			const data = {
+				labels: labels,
+				datasets: [{
+					data: plays,
+					fill: false,
+					borderColor: 'rgb(75, 192, 192)',
+					tension: 0.3,
+					yAxisID: 'yAxis',
+					pointRadius: 0,
+					
+				}]
+			};
+			const config = {
+				type: 'line',
+				data: data,
+				options: {
+					scales: {
+					yAxis: {
+						reverse: false,
+						grid: {
+							display: true
+							},
+						ticks: {
+							display: true,
+							color: 'white',
+						}
+						},
+					x: {
+						grid:{
+						display:false
+							},
+						ticks: {
+							color: 'white'
+						}
+						},
+					},
+					plugins: {
+						legend: {
+							display: false
+						}
+					}
+				}
+			};
+			const imageBuffer = await canvasRenderService.renderToBuffer(config)
+			return imageBuffer
 		}
 		function getOneConvertedPP(id, embed, msg) {
 			let specific = false
@@ -91,30 +170,40 @@ module.exports = {
 			return message.channel.send({ embeds: [embed]})
 		}
 		async function BuildEmbed(data) {
-			const history = data.playerInfo.history.split(",")
+			const history = data.histories.split(",")
 			const top1ScoreCount = async () => {
-				a = await LevelSchema.countDocuments({ TopPlayer: data.playerInfo.playerId, PlayerCount: { $gte: 2 }})
+				a = await LevelSchema.countDocuments({ TopPlayer: data.id, PlayerCount: { $gte: 2 }})
 				if(a == 0) return ""
 				return `\nTop 1 Count: ${a} 🇲🇽`
 			}
-			const embed = new MessageEmbed()
+			const userinfo = await UserSchema.findOne({ beatsaber: data.id })
+			let embed = new MessageEmbed()
 			.setColor("#4C9CF6")
-			.setTitle(data.playerInfo.playerName + ` :flag_${data.playerInfo.country.toLowerCase()}:`)
-			.setURL(`https://scoresaber.com/u/${data.playerInfo.playerId}`)
-			.setThumbnail(`https://new.scoresaber.com${data.playerInfo.avatar}`)
-			.addField("PP", `${numberWithCommas(data.playerInfo.pp.toFixed(1))}pp
-Week difference: ${Addplus(history[history.length - 7] - data.playerInfo.rank)}${history[history.length - 7] - data.playerInfo.rank}`)
-			.addField("RANK", `Rank: #${numberWithCommas(data.playerInfo.rank)}
-Country rank: #${numberWithCommas(data.playerInfo.countryRank)}`)
+			.setTitle(data.name + ` :flag_${data.country.toLowerCase()}:`)
+			.setURL(`https://scoresaber.com/u/${data.id}`)
+			.setThumbnail(data.profilePicture)
+			.addField("PP", `${numberWithCommas(data.pp.toFixed(1))}pp
+Week difference: ${Addplus(history[history.length - 7] - data.rank)}${history[history.length - 7] - data.rank}`)
+			.addField("RANK", `Rank: #${numberWithCommas(data.rank)}
+Country rank: #${numberWithCommas(data.countryRank)}`)
 			.addField("RANKED", `Average Accuracy: ${data.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 			.addField("PP Calculation", "Loading...")
+			if(userinfo.playHistory.length) {
+				const png = await GetGraph(userinfo)
+				const buffer = new MessageAttachment(png, "graph.png")
+				embed.setImage("attachment://graph.png")
+				message.channel.send({ embeds: [embed], files: [buffer]}).then(msg => {
+					return getOneConvertedPP(data.id, embed, msg)
+				})
+				return
+			}
 			message.channel.send({ embeds: [embed]}).then(msg => {
-				return getOneConvertedPP(data.playerInfo.playerId, embed, msg)
+				return getOneConvertedPP(data.id, embed, msg)
 			})
 		}
 		function GetPlayerDataID(Id) {
-			const IDURL = new URL(`https://new.scoresaber.com/api/player/${Id}/full`)
+			const IDURL = new URL(`https://scoresaber.com/api/player/${Id}/full`)
 			fetch(IDURL)
 			.then(async res => {
 				if(res.status == 429) return ErrorEmbed("Api Overloaded! Please try again in some seconds")
@@ -125,7 +214,7 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 		}
 		function GetPlayerDataName(name) {
 			if(name.length <= 3 || name.length > 32) return message.channel.send({content: "Invalid Name length"})
-			const NAMEURL = new URL(`https://new.scoresaber.com/api/players/by-name/${name}`)
+			const NAMEURL = new URL(`https://scoresaber.com/api/players?search=${name}`)
 			fetch(NAMEURL)
 			.then(async res => {
 				if(res.status == 429) return ErrorEmbed("Api Overloaded! Please try again in some seconds")
@@ -135,7 +224,7 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 				if(Date.now() - message.createdTimestamp >= 1000*5) {
 					const user = {
 						name: args.join(" ").toLowerCase(),
-						id: player.playerId
+						id: body[0].id
 					}
 					try {
 						await new UserCacheSchema(user).save()
@@ -143,7 +232,7 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 						errorhandle(DiscordClient, err)
 					}
 				}
-				GetPlayerDataID(body.players[0].playerId)
+				BuildEmbed(body[0])
 			})
 		}
 	}
