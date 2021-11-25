@@ -9,7 +9,6 @@ const { MessageActionRow, MessageButton } = require("discord.js")
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		let players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
 		const topchannel = DiscordClient.channels.cache.get("905874757583503379")
-		let debug = ""
 		let NewPlay = false
 		async function GetFirstMap(beatsaber) {
 			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1`)
@@ -28,7 +27,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						GetMap(Page)
 					}, ms("25s"))
 				}
-				//debug +=  "advanced_look "
 				function GetMap(Page) {
 					fetch(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&page=${Page.toString()}`)
 					.then(async (res) => {
@@ -41,7 +39,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						}
 						if(res.status == 520) return GetMap(Page)
 						const body = await res.json()
-						//debug += Page + " "
 						if(Page == 1) firstmap = body[0].score.id
 						body.forEach(score => {
 							if(passed) return
@@ -60,7 +57,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							})
 						})
 						if(!passed) return GetMap(Page + 1)
-						debug += "finished_maps "
 						await StoreMaps(newscores, userid, firstmap).then(() =>{
 							resolve()
 							return
@@ -149,7 +145,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 								"filter": { "LevelID": score.map },
 								"update": { $set: { "PlayerCount": PlayerCount, "Leaderboard": Leaderboard }}
 							}})
-							//debug += `${score.score} worse than ${map.TopScore} ${score.map} ${map.LevelID} `
 							console.log(`Score ${score.score} not better than ${map.TopScore}`)
 							continue
 						}
@@ -158,7 +153,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 								"filter": { "LevelID": score.map },
 								"update": { $set: { "TopScore": score.score, "Leaderboard": Leaderboard }}
 							}})
-							//debug += `upgraded ${score.map} `
 							continue
 						}
 						console.log(`Better score ${score.score} better than ${map.TopScore}`)
@@ -172,7 +166,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 								"Leaderboard": Leaderboard
 							}}
 						}})
-						debug += `${score.score} better than ${map.TopScore} ${map.LevelID} `
 						if(!user.lastmap) continue
 						let previousname = map.TopPlayerName
 						const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
@@ -216,7 +209,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							"PP": score.pp
 						}]
 					}
-					//debug += `new_map ${score.map}`
 					newmaps.push(newmap)
 					//console.log(`New map ${score.map}`)
 					continue
@@ -230,7 +222,6 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					"playHistory": playHistory
 				})
 				console.log("finished")
-				debug += `${firstmap} end\n`
 				newscores = null
 				maps = null
 				updateBulkWrite = null
@@ -283,13 +274,10 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					if(!user.lastmap) {
 						checkAgain.push(user)
 						NewPlay = true
-						debug += user.realname + " "
-						debug += "new_user end\n"
 						continue
 					}
 					if(body[0].score.id == user.lastmap) continue
 					NewPlay = true
-					debug += user.realname + " "
 					const firstmap = body[0].score.id
 					let newscores = []
 					let passed = false
@@ -308,10 +296,8 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							"pp": score.score.pp.toFixed(1)
 						})
 					}
-					debug += "new_scores "
 					if(!passed) {
 						checkAgain.push(user)
-						debug += "no_pass end\n" 
 						continue
 					}
 					await StoreMaps(newscores, user, firstmap)
@@ -371,6 +357,5 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			})
 		}
 		if(NewPlay) await GetCodes()
-		if(debug.length) infohandle(DiscordClient, "debug", debug)
 		return
 };
