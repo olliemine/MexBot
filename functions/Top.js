@@ -324,7 +324,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					await fetch(`https://beatsaver.com/api/maps/hash/${hashes}`)
 					.then(async (res) => {
 						if(res.status != 200) {
-							errorhandle(Client, new Error(`${res.status} ${res.statusText}`))
+							errorhandle(DiscordClient, new Error(`${res.status} ${res.statusText}`))
 							return GetCode()
 						}
 						const body = await res.json()
