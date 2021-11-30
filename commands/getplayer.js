@@ -189,7 +189,7 @@ Country rank: #${numberWithCommas(data.countryRank)}`)
 			.addField("RANKED", `Average Accuracy: ${data.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 			.addField("PP Calculation", "Loading...")
-			if(userinfo.playHistory.length) {
+			if(userinfo && userinfo.playHistory.length) {
 				const png = await GetGraph(userinfo)
 				const buffer = new MessageAttachment(png, "graph.png")
 				embed.setImage("attachment://graph.png")
