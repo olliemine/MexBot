@@ -69,8 +69,8 @@ Ready POG`)
 client.on("messageCreate", async (message) => {
 	if(message.author.bot) return
 	if(message.channel.id === info.verificationChannel) return Verificacion(message.member, message)
-	if(!message.content.startsWith(prefix)) return
-	const args = message.content.slice(prefix.length).trim().split(/ +/)
+	if(!message.content.startsWith(info.prefix)) return
+	const args = message.content.slice(info.prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
 	if(!client.commands.has(commandName) && !client.aliases.has(commandName)) return;
 	const command = client.commands.get(commandName) || client.aliases.get(commandName) 
