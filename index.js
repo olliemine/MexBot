@@ -1,6 +1,6 @@
 const Discord = require("discord.js")
 //const { token } = require("./config.json")
-const { version, prefix } = require("./info.json")
+const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
@@ -46,8 +46,8 @@ client.once("ready", async() => {
 		if(response.status != 200) infohandle(client, "API Status", "API is offline")
 		else console.log("Connected to Scoresaber API")
 	})
-	console.log(`Prefix ${prefix}
-Running version: ${version}
+	console.log(`Prefix ${info.prefix}
+Running version: ${info.version}
 Ready POG`)
 	client.user.setPresence({
 			status: "online",
@@ -68,7 +68,7 @@ Ready POG`)
 
 client.on("messageCreate", async (message) => {
 	if(message.author.bot) return
-	if(message.channel.id === "905874757357043756") return Verificacion(message.member, message)
+	if(message.channel.id === info.verificationChannel) return Verificacion(message.member, message)
 	if(!message.content.startsWith(prefix)) return
 	const args = message.content.slice(prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
@@ -79,7 +79,7 @@ client.on("messageCreate", async (message) => {
 		return message.channel.send({ content: "Porfavor espera un poco para usar el bot otra vez."})
 	}
 	if(command.admin) {
-		const server = await client.guilds.fetch("905874757331857448")
+		const server = await client.guilds.fetch(info.serverId)
 		const member = await server.members.fetch(message.author.id)
 		if(!member.permissions.has("ADMINISTRATOR")) return
 	}
@@ -121,10 +121,10 @@ client.on("guildMemberAdd", async (member) => {
 		const backtext = GetBacktext(user)
 		member.setNickname(`${backtext} | ${user.name}`)
 		if(country == "MX") {
-			member.roles.add("905874757331857453")
+			member.roles.add(info.verificadoRole)
 			CheckRoles(body.playerInfo.countryRank, member, client)
 		}
-		else member.roles.add("905874757331857452")
+		else member.roles.add(info.visitanteRole)
 		await UserSchema.findOneAndUpdate({
 			discord: member.id
 		}, {
@@ -211,10 +211,10 @@ function VerifictionviaID(ID, msg, member, link = true) {
 						})
 						member.setNickname(`${backtext} | ${username}`)
 						if(exists.country == "MX") {
-							member.roles.add("905874757331857453")
+							member.roles.add(info.verificadoRole)
 							CheckRoles(body.countryRank, member, client)
 						}
-						else member.roles.add("905874757331857452")
+						else member.roles.add(info.visitanteRole)
 						CheckRoles(body.countryRank, member, client)
 						SendAndDelete("Ahora estas verificado!", msg)
 						return infohandle(client, "Verification", `User ${member.user.username} verified with account ${body.name} successfully (the account had already existed)`)
@@ -244,10 +244,10 @@ function VerifictionviaID(ID, msg, member, link = true) {
 				"playHistory": []
 			}
 			if(body.country == "MX") {
-				member.roles.add("905874757331857453")
+				member.roles.add(info.verificadoRole)
 				CheckRoles(body.countryRank, member, client)
 			}
-			else member.roles.add("905874757331857452")
+			else member.roles.add(info.visitanteRole)
 			try {
 				await new UserSchema(user).save()
 				SendAndDelete("Ahora estas verificado!", msg)
@@ -264,7 +264,7 @@ function VerifictionviaID(ID, msg, member, link = true) {
 
 async function Verificacion(member, msg) {
 	if(msg.content.toLowerCase() === "visitante") {
-		member.roles.add(msg.guild.roles.cache.get("905874757331857452"))
+		member.roles.add(msg.guild.roles.cache.get(info.visitanteRole))
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
@@ -273,7 +273,7 @@ async function Verificacion(member, msg) {
 		return true
 	})
 	if(!ohno) {
-		member.roles.add(msg.guild.roles.cache.get("905874757331857452"))
+		member.roles.add(msg.guild.roles.cache.get(info.visitanteRole))
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor, API is offline, later use ${msg.content}`)
 		member.send({ content: "Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan"})
 		return SendAndDelete("Gracias por visitar!", msg)

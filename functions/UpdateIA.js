@@ -1,6 +1,7 @@
 const fetch = require("node-fetch")
 const UserSchema = require("../models/UserSchema")
 const CheckRoles = require("./CheckRoles")
+const { serverId } = require("../info.json")
 
 module.exports = async (Client) => {
 	async function GetPage(beatsaber) {
@@ -24,7 +25,7 @@ module.exports = async (Client) => {
 		if(body.inactive == true) continue
 		await UserSchema.findOneAndUpdate({ user: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) continue
-		const server = await Client.guilds.fetch("905874757331857448")
+		const server = await Client.guilds.fetch(serverId)
 		const discorduser = await server.members.fetch(user.discord)
 		CheckRoles(user.lastrank, discorduser, Client)
 		await discorduser.setNickname(`#${user.lastrank} | ${user.name}`)//Probably change later?

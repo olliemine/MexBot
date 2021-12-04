@@ -1,5 +1,4 @@
 const UserSchema = require("../models/UserSchema")
-const fetch = require("node-fetch")
 const { Util } = require("discord.js")
 
 module.exports = {

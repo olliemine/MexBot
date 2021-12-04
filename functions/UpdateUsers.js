@@ -5,13 +5,14 @@ const infohandle = require("./info")
 const CheckRoles = require("./CheckRoles")
 const InfoChannelMessage = require("./InfoChannelMessage")
 const LevelSchema = require("../models/LevelSchema")
+const { serverId, topRoles } = require("../info.json")
 //const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async (Client) => {
 	let usersupdatedraw = []
 	let users = await UserSchema.find({country: "MX", bsactive: true})
-	const server = await Client.guilds.fetch("905874757331857448")
-	const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
+	const server = await Client.guilds.fetch(serverId)
+	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
 	async function GetInfo() {
 		let info
 		await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)

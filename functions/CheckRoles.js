@@ -1,8 +1,9 @@
 //This is now easier to read, I am much happy :D
-
+//10, 1, 2, 3
+const { serverId, topRoles } = require('../info.json')
 module.exports = async (rank, discorduser, Client) => {
-    const server = await Client.guilds.fetch("905874757331857448")
-	const ranks = [server.roles.cache.get("905874757331857454"), server.roles.cache.get("905874757331857457"), server.roles.cache.get("905874757331857456"), server.roles.cache.get("905874757331857455")]
+    const server = await Client.guilds.fetch(serverId)
+	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
 	function Check(rank) {
         return discorduser.roles.cache.find(r => r.id === rank.id)
     }

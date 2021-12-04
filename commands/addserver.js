@@ -1,4 +1,5 @@
 const { MessageEmbed } = require("discord.js")
+const { OSChannel } = require("../info.json")
 
 module.exports = {
 	name : "addserver",
@@ -10,7 +11,7 @@ module.exports = {
         const discordlink = args.shift()
         const color = args.shift()
         const name = args.join(" ")
-        const channel = DiscordClient.channels.cache.get("905874757583503377")
+        const channel = DiscordClient.channels.cache.get(OSChannel)
         const inviteinf = await DiscordClient.fetchInvite(discordlink)
         const embed = new MessageEmbed()
         .setTitle(name)

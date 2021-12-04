@@ -1,6 +1,7 @@
 const { MessageEmbed } = require("discord.js")
 const UserSchema = require("../models/UserSchema")
 const infohandle = require("./info")
+const { inforankingChannel } = require("../info.json")
 
 module.exports = async (Client, usersupdatedraw) => {
     if(!usersupdatedraw.length) return
@@ -44,6 +45,6 @@ module.exports = async (Client, usersupdatedraw) => {
 	const embed = new MessageEmbed()
 	.setColor("#412FF4")
 	.setDescription(finalmessage)
-	const channel = await Client.channels.cache.get("905874757889712218")
+	const channel = await Client.channels.cache.get(inforankingChannel)
 	channel.send({embeds: [embed]})
 }

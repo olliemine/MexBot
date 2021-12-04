@@ -3,12 +3,12 @@ const LevelSchema = require("../models/LevelSchema")
 const UserSchema = require("../models/UserSchema")
 const ms = require("ms")
 const errorhandle = require("./error")
-const infohandle = require("./info")
+const { top1feedChannel } = require("../info.json")
 const { MessageActionRow, MessageButton } = require("discord.js")
 
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		let players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
-		const topchannel = DiscordClient.channels.cache.get("905874757583503379")
+		const topchannel = DiscordClient.channels.cache.get(top1feedChannel)
 		let NewPlay = false
 		async function GetFirstMap(beatsaber) {
 			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1`)

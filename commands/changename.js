@@ -1,5 +1,6 @@
 const UserSchema = require("../models/UserSchema")
 const { Util } = require("discord.js")
+const { serverId } = require("../info.json")
 
 module.exports = {
 	name : "changename",
@@ -10,7 +11,7 @@ module.exports = {
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
 		const user = await UserSchema.findOne({ discord: message.author.id })
-		const server = await DiscordClient.guilds.fetch("905874757331857448")
+		const server = await DiscordClient.guilds.fetch(serverId)
 		const member = await server.members.fetch(message.author.id)
 		if(member.roles.highest.position > server.members.resolve(DiscordClient.user).roles.highest.position) return message.channel.send({content: "No se puede cambiar el nombre porque tiene role mayor."})
 		function NoMentionText(text) {
