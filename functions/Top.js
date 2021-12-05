@@ -180,10 +180,10 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 									.setURL(`https://beatsaver.com/maps/${code}`)
 							)
 
-							topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`, components: [row]})
+							topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`, components: [row]})
 							continue
 						}
-						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map} snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
+						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
 						continue
 					}
 					const Diff = TransformDiff(score.diff)
