@@ -3,6 +3,7 @@ const { Util } = require("discord.js")
 
 module.exports = {
 	name : "achangename",
+	aliases: ["ach"],
 	description: "Te cambia el nombre",
 	admin: true,
 	dm: false,
