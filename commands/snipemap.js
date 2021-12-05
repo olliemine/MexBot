@@ -39,7 +39,9 @@ module.exports = {
 			return "Expert+"
 		}
 		async function GetMap(id) {
-			let map = await LevelSchema.aggregate([ { $match: { TopPlayer: id, PlayerCount: { $gte: 2 }} }, { $sample: { size: 1 } }]).limit(1)
+			let map
+			if(id) map = await LevelSchema.aggregate([ { $match: { TopPlayer: id, PlayerCount: { $gte: 2 }} }, { $sample: { size: 1 } }]).limit(1)
+			else map = await LevelSchema.aggregate([ { $match: { PlayerCount: { $gte: 2 }} }, { $sample: { size: 1 } }]).limit(1)
 			map = map[0]
 			if(!map) return message.channel.send({ content: "Usuario no tiene mapas snipeables"})
 			const res = await fetch(`https://beatsaver.com/api/maps/hash/${map.Hash}`)
@@ -52,12 +54,12 @@ module.exports = {
 			return message.channel.send({ content: `${map.TopPlayerName} got **${percent}%** on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`})
 		}
 		async function GetUserInfo() {
-			if(!args[0]) return await UserSchema.findOne({ discord: message.author.id })
 			if(member) return await UserSchema.findOne({ discord: member.id })
 			if(+args[0]) return await UserSchema.findOne({ beatsaber: args[0] })
 			const regex = new RegExp(["^", name, "$"].join(""), "i")
 			return await UserSchema.findOne({realname: regex})
 		}
+		if(!args[0]) return GetMap(null)
 		const member = message.mentions.users.first()
 		const name = args.join(" ")
 		const userinfo = await GetUserInfo()
