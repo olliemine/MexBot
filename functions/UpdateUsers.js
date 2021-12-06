@@ -58,7 +58,6 @@ module.exports = async (Client) => {
 
 	for await(const user of info) {
 		const userinfo = users.find(element => element.beatsaber == user.id)
-		console.log(`${userinfo.realname} ${user.countryRank}`)
 		if(!userinfo) {
 			const exists = await UserSchema.countDocuments({ beatsaber: user.id }).limit(1)
 			if(exists) continue
