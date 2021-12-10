@@ -282,7 +282,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					let newscores = []
 					let passed = false
 					for(const score of body.playerScores) {
-						if(score.score.id == user.lastmap) {
+						if(score.id == user.lastmap) {
 							passed = true
 							break
 						}
