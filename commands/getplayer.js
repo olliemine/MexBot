@@ -1,11 +1,9 @@
 const fetch = require('node-fetch');
 const { MessageEmbed, MessageAttachment } = require("discord.js");
 const UserSchema = require("../models/UserSchema")
-const UserCacheSchema = require("../models/UserCacheSchema")
-const errorhandle = require("../functions/error")
-const ms = require("ms")
 const LevelSchema = require("../models/LevelSchema")
 const { ChartJSNodeCanvas  } = require('chartjs-node-canvas');
+let users = []
 
 module.exports = {
 	name: "getplayer",
@@ -14,9 +12,23 @@ module.exports = {
 	admin: false,
 	dm: true,
 	cooldown: 4,
+	async start() {
+		usersraw = await UserSchema.find()
+		usersraw.forEach(u => {
+			users.push({
+				realname: u.realname,
+				beatsaber: u.beatsaber
+			})
+		})
+		usersraw = null
+		return
+	},
 	async execute(message, DiscordClient, args) {
+		function escapeRegExp(text) {
+			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+		}
 		if (!Array.isArray(args) || !args.length) {
-			user = await UserSchema.findOne({ discord: message.author.id })
+			var user = await UserSchema.findOne({ discord: message.author.id })
 			if(user) return GetPlayerDataID(user.beatsaber)
 			message.channel.send({ content: "Tienes que mencionar a un usuario!"})
 		} else {
@@ -24,8 +36,9 @@ module.exports = {
 			let userschema
 			if(user) userschema = await UserSchema.findOne({ discord: user.id })
 			if(userschema) return GetPlayerDataID(userschema.beatsaber)
-			cacheduser = await UserCacheSchema.findOne({ name: args.join(" ").toLowerCase() })
-			if(cacheduser) return GetPlayerDataID(cacheduser.id)
+			const regex = new RegExp(["^", escapeRegExp(args.join(" ")), "$"].join(""), "i")
+			cacheduser = users.find(r => regex.test(r.realname))
+			if(cacheduser) return GetPlayerDataID(cacheduser.beatsaber)
 			GetPlayerDataName(args.join("%20"))
 		}
 		async function GetGraph(user) {
@@ -146,7 +159,7 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 				const png = await GetGraph(userinfo)
 				const buffer = new MessageAttachment(png, "graph.png")
 				embed.setImage("attachment://graph.png")
-				message.channel.send({ embeds: [embed], files: [buffer]})
+				message.channel.send({ embeds: [embed], files: [buffer] })
 				return
 			}
 			message.channel.send({ embeds: [embed]})
@@ -170,17 +183,6 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 				if(res.status == 404 && +name) return GetPlayerDataID(name)
 				if(res.status != 200) return ErrorEmbed(`Unknown Error ${res.status} ${res.statusText}`)
 				const body = await res.json()
-				if(Date.now() - message.createdTimestamp >= 1000*5) {
-					const user = {
-						name: args.join(" ").toLowerCase(),
-						id: body.players[0].id
-					}
-					try {
-						await new UserCacheSchema(user).save()
-					} catch(err) {
-						errorhandle(DiscordClient, err)
-					}
-				}
 				BuildEmbed(body.players[0])
 			})
 		}

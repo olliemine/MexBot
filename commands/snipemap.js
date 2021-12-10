@@ -38,6 +38,9 @@ module.exports = {
 			if(diff != "ExpertPlus") return diff
 			return "Expert+"
 		}
+		function escapeRegExp(text) {
+			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+		}
 		async function GetMap(id) {
 			let map
 			if(id) map = await LevelSchema.aggregate([ { $match: { TopPlayer: id, PlayerCount: { $gte: 2 }} }, { $sample: { size: 1 } }]).limit(1)
@@ -56,7 +59,7 @@ module.exports = {
 		async function GetUserInfo() {
 			if(member) return await UserSchema.findOne({ discord: member.id })
 			if(+args[0]) return await UserSchema.findOne({ beatsaber: args[0] })
-			const regex = new RegExp(["^", name, "$"].join(""), "i")
+			const regex = new RegExp(["^", escapeRegExp(name), "$"].join(""), "i")
 			return await UserSchema.findOne({realname: regex})
 		}
 		if(!args[0]) return GetMap(null)

@@ -12,6 +12,7 @@ const Top = require("./functions/Top")
 const CheckRoles = require("./functions/CheckRoles")
 const fs = require("fs");
 const ms = require("ms")
+const getplayer = require("./commands/getplayer")
 const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
@@ -42,6 +43,8 @@ client.once("ready", async() => {
 	}).catch((err) => {
 		errorhandle(client, err)
 	})
+	await getplayer.start()
+	console.log("Loaded cache")
 	await fetch("https://new.scoresaber.com/api").then(response => {
 		if(response.status != 200) infohandle(client, "API Status", "API is offline")
 		else console.log("Connected to Scoresaber API")
