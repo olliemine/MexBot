@@ -11,7 +11,6 @@ const UpdateIA = require("./functions/UpdateIA")
 const Top = require("./functions/Top")
 const CheckRoles = require("./functions/CheckRoles")
 const fs = require("fs");
-const ms = require("ms")
 const getplayer = require("./commands/getplayer")
 const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
 client.commands = new Discord.Collection();
@@ -175,7 +174,7 @@ function SendAndDelete(msgcontent, msg) {
 	msg.channel.send({ content: msgcontent }).then(message => {
 		setTimeout(() => {
 			message.delete()
-		}, ms("4s"))
+		}, (1000*60)*4)
 	})
 }
 function VerifictionviaID(ID, msg, member, link = true) {
@@ -288,7 +287,7 @@ async function Verificacion(member, msg) {
 		URLseparated = msg.content.split("/")
 		VerifictionviaID(URLseparated[URLseparated.length - 1], msg, member, false)
 	} else {//NAME?
-		if(msg.content.length <= 3 || msg.content.length > 32) return SendAndDelete("Nombre Invalido", msg)
+		if(msg.content.length < 3 || msg.content.length > 32) return SendAndDelete("Nombre Invalido", msg)
 		const NAMEURL = new URL(`https://scoresaber.com/api/players?search=${msg.content}`)
 		await fetch(NAMEURL)
 		.then(res => res.json())

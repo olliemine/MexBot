@@ -1,7 +1,6 @@
 const fetch = require("node-fetch")
 const LevelSchema = require("../models/LevelSchema")
 const UserSchema = require("../models/UserSchema")
-const ms = require("ms")
 const errorhandle = require("./error")
 const { top1feedChannel } = require("../info.json")
 const { MessageActionRow, MessageButton } = require("discord.js")
@@ -25,7 +24,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					console.log("waiting 25 sec")
 					setTimeout(() => {
 						GetMap(Page)
-					}, ms("25s"))
+					}, (1000*60)*25)
 				}
 				function GetMap(Page) {
 					fetch(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&withMetadata=false&page=${Page.toString()}`)
