@@ -106,53 +106,6 @@ module.exports = {
 			const imageBuffer = await canvasRenderService.renderToBuffer(config)
 			return imageBuffer
 		}
-		function getOneConvertedPP(id, embed, msg) {
-			let specific = false
-			function ChangeEmbed(text) {
-				let newembed = embed
-				newembed.fields[3].value = text
-				msg.edit({ embeds: [newembed]})
-			}
-			function GetPP(pp, weight) {
-				return Number((pp*weight).toFixed(2))
-			}
-			function Wait(Page) {
-				console.log("waiting 25s")
-				setTimeout(() => {
-					return CheckPages(Page)
-				}, ms("25s"))
-			}
-			function CheckPage(Page, list) {
-				if(GetPP(list[0].pp, list[0].weight) < 1) return CheckPages(Page - 1)
-				let placement = 0
-				let Pinlist = 0
-				for(let entry of list) {
-					Pinlist++
-					if(GetPP(entry.pp, entry.weight) > 1) continue
-					placement = ((Page - 1)*8) + Pinlist
-					break
-				}
-				if(placement == 0) placement = Page*8
-				placement--
-				let rawpp = 1 / (0.965**placement)
-				return ChangeEmbed(`1pp = ${rawpp.toFixed(2)} Raw pp~`)
-			}
-			function CheckPages(Page) {
-				fetch(`https://new.scoresaber.com/api/player/${id}/scores/top/${Page.toString()}`)
-				.then(async (res) => {
-					if(res.status == 404) return CheckPages(Page - 1)
-					if(res.status == 429) return Wait(Page)
-					if(res.status != 200 && res.status != 404 && res.status != 429) return ChangeEmbed("UnexpectedResponseFromServer " + res.status)
-					const body = await res.json()
-					if(specific) return CheckPage(Page, body.scores)
-					if(GetPP(body.scores[body.scores.length - 1].pp, body.scores[body.scores.length - 1].weight) > 1) return CheckPages(Page + 3)
-					specific = true
-					return CheckPage(Page, body.scores)
-				})
-
-			}
-			CheckPages(1)
-		}
 		function numberWithCommas(x) {//https://stackoverflow.com/a/2901298
 			var parts = x.toString().split(".");
 			parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -188,19 +141,15 @@ Week difference: ${Addplus(history[history.length - 7] - data.rank)}${history[hi
 Country rank: #${numberWithCommas(data.countryRank)}`)
 			.addField("RANKED", `Average Accuracy: ${data.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
-			.addField("PP Calculation", "Loading...")
+			.setFooter("Made by olliemine")
 			if(userinfo && userinfo.playHistory.length) {
 				const png = await GetGraph(userinfo)
 				const buffer = new MessageAttachment(png, "graph.png")
 				embed.setImage("attachment://graph.png")
-				message.channel.send({ embeds: [embed], files: [buffer]}).then(msg => {
-					return getOneConvertedPP(data.id, embed, msg)
-				})
+				message.channel.send({ embeds: [embed], files: [buffer]})
 				return
 			}
-			message.channel.send({ embeds: [embed]}).then(msg => {
-				return getOneConvertedPP(data.id, embed, msg)
-			})
+			message.channel.send({ embeds: [embed]})
 		}
 		function GetPlayerDataID(Id) {
 			const IDURL = new URL(`https://scoresaber.com/api/player/${Id}/full`)
