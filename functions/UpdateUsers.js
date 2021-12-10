@@ -19,7 +19,7 @@ module.exports = async (Client) => {
 		.then(async res => {
 			if(res.status !== 200) return info = null
 			const body = await res.json()
-			info = body
+			info = body.players
 		})
 		return info
 	}
@@ -55,7 +55,6 @@ module.exports = async (Client) => {
 		console.log(row.name)
 		await new UserSchema(user).save()
 	}
-
 	for await(const user of info) {
 		const userinfo = users.find(element => element.beatsaber == user.id)
 		if(!userinfo) {

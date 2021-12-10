@@ -268,7 +268,7 @@ async function Verificacion(member, msg) {
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
-	const ohno = await fetch("https://new.scoresaber.com/api").then(response => {
+	const ohno = await fetch("https://scoresaber.com/api").then(response => {
 		if(response.status == 404) return false
 		return true
 	})
@@ -292,7 +292,7 @@ async function Verificacion(member, msg) {
 		.then(async (body) => {
 			if(body.error) return SendAndDelete("Nombre Invalido", msg)
 			if(body.players[1]) return SendAndDelete("Hay varios usuarios con este nombre, porfavor utiliza el Id", msg)
-			return VerifictionviaID(body.players[0].playerId, msg, member)
+			return VerifictionviaID(body.players[0].id, msg, member)
 		}).catch((err) => {
 			SendAndDelete("Unexpected Error", msg)
 			errorhandle(client, err)
