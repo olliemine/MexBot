@@ -173,7 +173,7 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 				if(Date.now() - message.createdTimestamp >= 1000*5) {
 					const user = {
 						name: args.join(" ").toLowerCase(),
-						id: body[0].id
+						id: body.players[0].id
 					}
 					try {
 						await new UserCacheSchema(user).save()
@@ -181,7 +181,7 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 						errorhandle(DiscordClient, err)
 					}
 				}
-				BuildEmbed(body[0])
+				BuildEmbed(body.players[0])
 			})
 		}
 	}
