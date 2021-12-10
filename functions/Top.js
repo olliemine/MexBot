@@ -11,7 +11,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 		const topchannel = DiscordClient.channels.cache.get(top1feedChannel)
 		let NewPlay = false
 		async function GetFirstMap(beatsaber) {
-			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1`)
+			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1&withMetadata=false`)
 			.then((res) => {
 				return res
 			})
@@ -28,7 +28,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					}, ms("25s"))
 				}
 				function GetMap(Page) {
-					fetch(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&page=${Page.toString()}`)
+					fetch(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&withMetadata=false&page=${Page.toString()}`)
 					.then(async (res) => {
 						console.log(Page)
 						if(res.status == 429) return Timeout(Page)
@@ -39,21 +39,21 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						}
 						if(res.status == 520) return GetMap(Page)
 						const body = await res.json()
-						if(Page == 1) firstmap = body[0].score.id
-						body.forEach(score => {
+						if(Page == 1) firstmap = body.playerScores[0].score.id
+						body.playerScores.forEach(score => {
 							if(passed) return
-							if(score.score.id == userid.lastmap) {
+							if(score.id == userid.lastmap) {
 								passed = true
 								return
 							}
 							newscores.push({
 								"map": score.leaderboard.id,
-								"score": score.score.baseScore,
+								"score": score.baseScore,
 								"hash": score.leaderboard.songHash,
 								"diff": score.leaderboard.difficulty.difficultyRaw,
-								"date": score.score.timeSet,
-								"mods": GetMods(score.score.modifiers),
-								"pp": score.score.pp.toFixed(1)
+								"date": score.timeSet,
+								"mods": GetMods(score.modifiers),
+								"pp": score.pp.toFixed(1)
 							})
 						})
 						if(!passed) return GetMap(Page + 1)
@@ -276,24 +276,24 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						NewPlay = true
 						continue
 					}
-					if(body[0].score.id == user.lastmap) continue
+					if(body.playerScores[0].score.id == user.lastmap) continue
 					NewPlay = true
-					const firstmap = body[0].score.id
+					const firstmap = body.playerScores[0].score.id
 					let newscores = []
 					let passed = false
-					for(const score of body) {
+					for(const score of body.playerScores) {
 						if(score.score.id == user.lastmap) {
 							passed = true
 							break
 						}
 						newscores.push({
 							"map": score.leaderboard.id,
-							"score": score.score.baseScore,
+							"score": score.baseScore,
 							"hash": score.leaderboard.songHash,
 							"diff": score.leaderboard.difficulty.difficultyRaw,
-							"date": score.score.timeSet,
-							"mods": GetMods(score.score.modifiers),
-							"pp": score.score.pp.toFixed(1)
+							"date": score.timeSet,
+							"mods": GetMods(score.modifiers),
+							"pp": score.pp.toFixed(1)
 						})
 					}
 					if(!passed) {
