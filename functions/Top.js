@@ -41,18 +41,18 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						if(Page == 1) firstmap = body.playerScores[0].score.id
 						body.playerScores.forEach(score => {
 							if(passed) return
-							if(score.id == userid.lastmap) {
+							if(score.score.id == userid.lastmap) {
 								passed = true
 								return
 							}
 							newscores.push({
 								"map": score.leaderboard.id,
-								"score": score.baseScore,
+								"score": score.score.baseScore,
 								"hash": score.leaderboard.songHash,
 								"diff": score.leaderboard.difficulty.difficultyRaw,
-								"date": score.timeSet,
-								"mods": GetMods(score.modifiers),
-								"pp": score.pp.toFixed(1)
+								"date": score.score.timeSet,
+								"mods": GetMods(score.score.modifiers),
+								"pp": score.score.pp.toFixed(1)
 							})
 						})
 						if(!passed) return GetMap(Page + 1)
@@ -281,18 +281,18 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					let newscores = []
 					let passed = false
 					for(const score of body.playerScores) {
-						if(score.id == user.lastmap) {
+						if(score.score.id == user.lastmap) {
 							passed = true
 							break
 						}
 						newscores.push({
 							"map": score.leaderboard.id,
-							"score": score.baseScore,
+							"score": score.score.baseScore,
 							"hash": score.leaderboard.songHash,
 							"diff": score.leaderboard.difficulty.difficultyRaw,
-							"date": score.timeSet,
-							"mods": GetMods(score.modifiers),
-							"pp": score.pp.toFixed(1)
+							"date": score.score.timeSet,
+							"mods": GetMods(score.score.modifiers),
+							"pp": score.score.pp.toFixed(1)
 						})
 					}
 					if(!passed) {
