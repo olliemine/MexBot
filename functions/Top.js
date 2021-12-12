@@ -324,7 +324,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					.then(async (res) => {
 						if(res.status != 200) {
 							errorhandle(DiscordClient, new Error(`${res.status} ${res.statusText}`))
-							return GetCode()
+							return GetCode(maps)
 						}
 						const body = await res.json()
 						for (const map of maps) {
