@@ -30,9 +30,9 @@ module.exports = {
 		if (!Array.isArray(args) || !args.length) {
 			var user = await UserSchema.findOne({ discord: message.author.id })
 			if(user) return GetPlayerDataID(user.beatsaber)
-			message.channel.send({ content: "Tienes que mencionar a un usuario!"})
+			return message.channel.send({ content: "Tienes que mencionar a un usuario."})
 		} else {
-			const user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+			var user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 			let userschema
 			if(user) userschema = await UserSchema.findOne({ discord: user.id })
 			if(userschema) return GetPlayerDataID(userschema.beatsaber)
@@ -155,7 +155,7 @@ Country rank: #${numberWithCommas(data.countryRank)}`)
 			.addField("RANKED", `Average Accuracy: ${data.scoreStats.averageRankedAccuracy.toFixed(2)}%
 Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 			.setFooter("Made by olliemine")
-			if(userinfo && userinfo.playHistory.length) {
+			if(userinfo?.playHistory.length) {
 				const png = await GetGraph(userinfo)
 				const buffer = new MessageAttachment(png, "graph.png")
 				embed.setImage("attachment://graph.png")
