@@ -7,6 +7,7 @@ const Level = new mongoose.Schema({
 	"TopPlayerName": String,
 	"Hash": String,
 	"Code": String,
+	"Ranked": Boolean,
 	"DiffInfo": {
 		"Diff": String,
 		"Mode": String

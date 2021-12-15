@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-//const { token } = require("./config.json")
+//const { token, redisuri } = require("./config.json")
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -13,11 +13,15 @@ const CheckRoles = require("./functions/CheckRoles")
 const fs = require("fs");
 const getplayer = require("./commands/getplayer")
 const VerificacionID = require("./functions/Verification")
+const RankedMaps = require("./functions/RankedMaps")
 const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 client.login(process.env.TOKEN)
+const redis = require("redis");
+const redisClient = redis.createClient({ url: process.env.REDIS_URL })
+redisClient.connect()
 let RecentlyExecuted = []
 
 
@@ -30,7 +34,13 @@ function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
 	return !!pattern.test(str);
 }
-
+redisClient.once("ready", () => {
+	console.log("Connected to redis")
+	redisClient.quit()
+})
+redisClient.on("error", (err) => {
+	errorhandle(client, err)
+})
 client.once("ready", async() => {
 	await mongo().then(() => {
 		console.log("Connected to mongo")
@@ -54,7 +64,7 @@ Ready POG`)
 		}]
 	})
 })
-	
+
 
 client.on("messageCreate", async (message) => {
 	if(message.author.bot) return
@@ -153,6 +163,13 @@ setInterval(async () => {
 	}
 	
 }, (1000*60)*60)//1h
+setInterval(() => {
+	try {
+		RankedMaps(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+}, (1000*60)*30)//30m
 
 function SendAndDelete(msgcontent, msg) {
 	msg.delete()

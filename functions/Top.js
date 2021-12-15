@@ -52,7 +52,8 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 								"diff": score.leaderboard.difficulty.difficultyRaw,
 								"date": score.score.timeSet,
 								"mods": GetMods(score.score.modifiers),
-								"pp": score.score.pp.toFixed(1)
+								"pp": score.score.pp.toFixed(1),
+								"ranked": score.leaderboard.ranked
 							})
 						})
 						if(!passed) return GetMap(Page + 1)
@@ -168,22 +169,24 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						if(!user.lastmap) continue
 						let previousname = map.TopPlayerName
 						const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
-						if(previoususer) if(previoususer.snipe) previousname = `<@${previoususer.discord}>`
+						if(previoususer?.dsactive && previoususer?.snipe) previousname = `<@${previoususer.discord}>`
 						const code = await getCode(score.hash)
-						if(code) { 
-							const row = new MessageActionRow()
-							.addComponents(
-								new MessageButton()
-									.setLabel("Beatsaver")
-									.setStyle("LINK")
-									.setURL(`https://beatsaver.com/maps/${code}`)
-							)
-
-							topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`, components: [row]})
+						if(!code) {
+							updateBulkWrite.pop()
+							updateBulkWrite.push({ deleteOne: { 
+								"filter": { "LevelID": score.map }
+							}})
 							continue
 						}
-						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`})
-						continue
+						const row = new MessageActionRow()
+						.addComponents(
+							new MessageButton()
+								.setLabel("Beatsaver")
+								.setStyle("LINK")
+								.setURL(`https://beatsaver.com/maps/${code}`)
+						)
+						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`, components: [row]})
+						continue												
 					}
 					const Diff = TransformDiff(score.diff)
 					const newmap = {
@@ -193,6 +196,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						"TopPlayerName": user.realname,
 						"Hash": score.hash,
 						"Code": null,
+						"Ranked": score.ranked,
 						"DiffInfo": {
 							"Diff": Diff[0],
 							"Mode": Diff[1]
@@ -292,7 +296,8 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							"diff": score.leaderboard.difficulty.difficultyRaw,
 							"date": score.score.timeSet,
 							"mods": GetMods(score.score.modifiers),
-							"pp": score.score.pp.toFixed(1)
+							"pp": score.score.pp.toFixed(1),
+							"ranked": score.leaderboard.ranked
 						})
 					}
 					if(!passed) {
@@ -314,6 +319,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			return new Promise(async (resolve, reject) => {
 				console.log("execution")
 				let updateBulkWrite = []
+				let deleteBulkWrite = []
 				async function GetCode(maps) {
 					let hashes = ""
 					maps.forEach((map) => {
@@ -322,19 +328,31 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					hashes = hashes.slice(0, -1)
 					await fetch(`https://beatsaver.com/api/maps/hash/${hashes}`)
 					.then(async (res) => {
+						if(res.status == 404) {
+							for(var map of maps) {
+								console.log(`deleting`)
+								deleteBulkWrite.push({ deleteOne: {
+									"filter": { "Hash": map.Hash}
+								}})
+							}
+							return
+						}
 						if(res.status != 200) {
 							errorhandle(DiscordClient, new Error(`${res.status} ${res.statusText}`))
 							return GetCode(maps)
 						}
 						const body = await res.json()
-						for (const map of maps) {
+						for (var map of maps) {
 							let info = body[map.Hash.toLowerCase()]
 							if(!info) {
-								info = { id: "0" }
+								deleteBulkWrite.push({ deleteOne: {
+									"filter": { "Hash": map.Hash }
+								} })
+								continue
 							}
 							updateBulkWrite.push({ updateMany: {
 								"filter": { "Hash": map.Hash },
-								"update": { $set: { "Code": info.id }}
+								"update": { $set: { "Code": info.id  }}
 							}})
 						}
 						return
@@ -352,6 +370,8 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 				}
 				console.log("finished")
 				await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
+				await LevelSchema.bulkWrite(deleteBulkWrite, { ordered: false })
+				console.log("finished exporting")
 				resolve()
 			})
 		}

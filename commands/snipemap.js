@@ -1,6 +1,8 @@
 const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const fetch = require("node-fetch")
+const infohandle = require("../functions/info")
+const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js")
 
 module.exports = {
 	name : "snipemap",
@@ -41,32 +43,133 @@ module.exports = {
 		function escapeRegExp(text) {
 			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 		}
-		async function GetMap(id) {
-			let map
-			if(id) map = await LevelSchema.aggregate([ { $match: { TopPlayer: id, PlayerCount: { $gte: 2 }} }, { $sample: { size: 1 } }]).limit(1)
-			else map = await LevelSchema.aggregate([ { $match: { PlayerCount: { $gte: 2 }} }, { $sample: { size: 1 } }]).limit(1)
+		async function GetMap(filter) {
+			let map = await LevelSchema.aggregate([ { $match:  filter  }, { $sample: { size: 1 } }]).limit(1)
 			map = map[0]
-			if(!map) return message.channel.send({ content: "Usuario no tiene mapas snipeables"})
+			if(!map) return message.channel.send({ content: "No maps found."})
 			const res = await fetch(`https://beatsaver.com/api/maps/hash/${map.Hash}`)
-			if(res.status != 200) return GetMap(id)
+			if(res.status == 404) {
+				await LevelSchema.deleteMany({ Hash: map.Hash })
+				infohandle(DiscordClient, "Snipemap", `Deleted ${map.Hash}`)
+				return GetMap(filter)
+			}
+			if(res.status != 200) return GetMap(filter)
 			const body = await res.json()
 			const maxscore = GetMaxScore(body.versions[0].diffs, map)
 			const timesince = timeSince(map.Leaderboard[0].Date)
-			if(!maxscore) return message.channel.send({ content: `${map.TopPlayerName} **${timesince} ago** https://beatsaver.com/maps/${map.Code} | ${FormatDiff(map.DiffInfo.Diff)}` })
+			const row = new MessageActionRow()
+			.addComponents(
+				new MessageButton()
+					.setLabel("Scoresaber")
+					.setStyle("LINK")
+					.setURL(`https://scoresaber.com/leaderboard/${map.LevelID}`)
+			)	
+			if(!maxscore) return message.channel.send({ content: `${map.TopPlayerName} **${timesince} ago** https://beatsaver.com/maps/${map.Code} | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 			const percent = ((map.TopScore / maxscore)*100).toFixed(2)
-			return message.channel.send({ content: `${map.TopPlayerName} got **${percent}%** on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`})
+			return message.channel.send({ content: `${map.TopPlayerName} got **${percent}%** on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 		}
-		async function GetUserInfo() {
-			if(member) return await UserSchema.findOne({ discord: member.id })
-			if(+args[0]) return await UserSchema.findOne({ beatsaber: args[0] })
-			const regex = new RegExp(["^", escapeRegExp(name), "$"].join(""), "i")
-			return await UserSchema.findOne({realname: regex})
+		function AddWarning(text) {
+			warnings += text + "\n"
 		}
-		if(!args[0]) return GetMap(null)
-		const member = message.mentions.users.first()
-		const name = args.join(" ")
-		const userinfo = await GetUserInfo()
-		if(!userinfo || !userinfo.lastmap) return message.channel.send({ content: "Usuario no tiene cuenta"})
-		GetMap(userinfo.beatsaber)
+		async function GetFilter() {
+			function IdfromMention(text) {
+				text = text.substring(3)
+				text = text.slice(0, -1)
+				console.log(text)
+				return text
+			}
+			let fil = {$and: [{ PlayerCount: {$gte: 2} }]}
+			if(!args[0]) return fil
+			let rankcheck = false
+			let playedcheck = false
+			let used = []
+			let tokens = []
+			let names = []
+			var temp = args.join("")
+			let gnegative = null
+			temp = temp.split(",")
+			temp.forEach(t => {
+				if(!t) return
+				if(t.toLowerCase() == "ranked" || t.toLowerCase() == "played" || t.toLowerCase() == "unranked" || t.toLowerCase() == "unplayed") return tokens.push(t)
+				names.push(t)
+			})
+			const mentionregex = new RegExp("^<@![0-9]*>$", "g")
+			tokens.forEach(argument => {
+				console.log(argument)
+				if(rankcheck && playedcheck) return
+				switch(argument.toLowerCase()) {
+					case "ranked":
+						if(rankcheck) return AddWarning(`A Ranked token is already in use, ignoring ${argument}`)
+						fil.$and.push({ Ranked: true })
+						rankcheck = true
+						break
+					case "unranked":
+						if(rankcheck) return AddWarning(`A Ranked token is already in use, ignoring ${argument}`)
+						fil.$and.push({ Ranked: false })
+						rankcheck = true
+						break
+					case "played":
+						if(!userMessageInfo) return AddWarning(`No account found, ignoring ${argument}`)
+						if(playedcheck) return AddWarning(`A Played token is already in use, ignoring ${argument}`)
+						fil.$and.push({Leaderboard: {$elemMatch: {PlayerID: userMessageInfo.beatsaber}}})
+						playedcheck = true
+						break
+					case "unplayed":
+						if(!userMessageInfo) return AddWarning(`No account found, ignoring ${argument}`)	
+					if(playedcheck) return AddWarning(`A Played token is already in use, ignoring ${argument}`)
+						fil.$and.push({Leaderboard: {$elemMatch: {PlayerID: {$ne: userMessageInfo.beatsaber}}}})
+						playedcheck = true	
+						return
+				}
+			})
+			async function AddFilterUser(search, negative, argument) {
+				const user = await UserSchema.findOne(search)
+				if(!user) return AddWarning(`Invalid token: ${argument}, ignoring it`)
+				if(used.includes(user.realname)) return AddWarning(`Token for ${user.realname} already in use, ignoring it`)
+				used.push(user.realname)
+				if(negative) return fil.$and.push({TopPlayer: {$ne: user.beatsaber}})
+				if(!fil.$or) fil.$or = []
+				return fil.$or.push({TopPlayer: user.beatsaber})
+			}
+			for await(let argument of names) {
+				const unchanged = argument
+				let negative = argument.startsWith("!")
+				if(gnegative == null) gnegative = negative
+				if(gnegative != negative) {
+					AddWarning(`Convoluded operations, ignoring ${argument}`)
+					continue
+				}
+				if(negative) argument = argument.substring(1)
+				let id = argument
+				if(mentionregex.test(argument)) id = IdfromMention(argument)
+				const member = DiscordClient.users.cache.get(id)
+				if(member) {
+					await AddFilterUser({ discord: member.id }, negative, unchanged)
+					continue
+				}
+				if(+argument) {
+					await AddFilterUser({ beatsaber: argument }, negative, unchanged)
+					continue
+				}
+				const regex = new RegExp(["^", escapeRegExp(argument), "$"].join(""), "i")
+				await AddFilterUser({realname: regex}, negative, unchanged)
+				continue
+			}
+			return fil
+		}
+		let warnings = ""
+		const userMessageInfo = await UserSchema.findOne({ discord: message.author.id, country: "MX" })
+		const filter = await GetFilter()
+		if(!filter) return message.channel.send({ content: "Unexpected Error"})
+		if(warnings) {
+			const embed = new MessageEmbed()
+			.setColor("YELLOW")
+			.setTitle(":warning: Warnings")
+			.setDescription(warnings)
+			.setFooter("!snipemaphelp for more information")
+			message.channel.send({ embeds: [embed] })
+		}
+		console.log(filter.$and)
+		GetMap(filter)
 	},
 };
