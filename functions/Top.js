@@ -122,6 +122,19 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			})
 			return playHistory
 		}
+		function GetMaxScore(diffs, map) {
+			let diff
+			for(const diffinfo of diffs) {
+				if(diffinfo.characteristic == map.DiffInfo.Mode && diffinfo.difficulty == map.DiffInfo.Diff) {
+					diff = diffinfo
+					break
+				} 
+			}
+			if(diff.notes == 1) return 115;
+			if(diff.notes <= 4) return 115 + (diff.notes - 1) * 115 * 2;
+			if(diff.notes <= 13) return 115 + 4 * 115 * 2 + (diff.notes - 5) * 115 * 4
+			return 115 + 4 * 115 * 2 + 8 * 115 * 4 + (diff.notes - 13) * 115 * 8
+		}
 		async function StoreMaps(newscores, user, firstmap) {
 			if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 			return new Promise(async (resolve, reject) => {
@@ -170,7 +183,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						let previousname = map.TopPlayerName
 						const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
 						if(previoususer?.dsactive && previoususer?.snipe) previousname = `<@${previoususer.discord}>`
-						const code = await getCode(score.hash)
+						const levelinfo = await getCode(score.hash)
 						if(!code) {
 							updateBulkWrite.pop()
 							updateBulkWrite.push({ deleteOne: { 
@@ -183,9 +196,11 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 							new MessageButton()
 								.setLabel("Beatsaver")
 								.setStyle("LINK")
-								.setURL(`https://beatsaver.com/maps/${code}`)
+								.setURL(`https://beatsaver.com/maps/${levelinfo.id}`)
 						)
-						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** | https://scoresaber.com/u/${user.beatsaber}`, components: [row]})
+						const maxscore = GetMaxScore(levelinfo.versions[0].diffs, map)
+						const percent = (((score.score / maxscore)*100) - ((map.TopScore / maxscore)*100)).toFixed(2)//newpercent - oldpercent
+						topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** por **${percent}**%\nhttps://scoresaber.com/u/${user.beatsaber}`, components: [row]})
 						continue												
 					}
 					const Diff = TransformDiff(score.diff)

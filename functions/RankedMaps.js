@@ -40,6 +40,7 @@ module.exports = async (DiscordClient) => {
 			return body.id
 		})
 	}
+	return //waiting on glitch to be repaired
 	const timeout = (prom, time) => Promise.race([prom, new Promise((acc, rej) => setTimeout(() => acc(false), 5000))]);
 	let NewLastRankedMap
 	let found = false
@@ -62,7 +63,6 @@ module.exports = async (DiscordClient) => {
 		if(!NewLastRankedMap) NewLastRankedMap = body.leaderboards[0].id
 		if(NewLastRankedMap == LastRankedMap) break
 		body.leaderboards.forEach(leaderboard => {
-			console.log(leaderboard.id)
 			if(found) return
 			if(leaderboard.id == LastRankedMap) return found = true
 			if(newestHash != leaderboard.songHash) {

@@ -19,8 +19,10 @@ module.exports = {
 					break
 				} 
 			}
-			if(diff.notes < 11) return null
-			return (920*(diff.notes - 11)) + 2875
+			if(diff.notes == 1) return 115;
+			if(diff.notes <= 4) return 115 + (diff.notes - 1) * 115 * 2;
+			if(diff.notes <= 13) return 115 + 4 * 115 * 2 + (diff.notes - 5) * 115 * 4
+			return 115 + 4 * 115 * 2 + 8 * 115 * 4 + (diff.notes - 13) * 115 * 8
 		}
 		function timeSince(date) { //https://stackoverflow.com/a/3177838
 			var seconds = Math.floor((new Date() - date) / 1000)
@@ -64,7 +66,6 @@ module.exports = {
 					.setStyle("LINK")
 					.setURL(`https://scoresaber.com/leaderboard/${map.LevelID}`)
 			)	
-			if(!maxscore) return message.channel.send({ content: `${map.TopPlayerName} **${timesince} ago** https://beatsaver.com/maps/${map.Code} | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 			const percent = ((map.TopScore / maxscore)*100).toFixed(2)
 			return message.channel.send({ content: `${map.TopPlayerName} got **${percent}%** on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 		}
