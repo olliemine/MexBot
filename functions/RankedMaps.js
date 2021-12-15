@@ -40,7 +40,6 @@ module.exports = async (DiscordClient) => {
 			return body.id
 		})
 	}
-	return //waiting on glitch to be repaired
 	const timeout = (prom, time) => Promise.race([prom, new Promise((acc, rej) => setTimeout(() => acc(false), 5000))]);
 	let NewLastRankedMap
 	let found = false
