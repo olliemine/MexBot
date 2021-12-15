@@ -102,7 +102,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			.then(async (res) => {
 				if(res.status != 200) return null
 				const body = await res.json()
-				return body.id
+				return body
 			})
 		}
 		function pushPlayHistory(playHistory, date) {
@@ -184,7 +184,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
 						if(previoususer?.dsactive && previoususer?.snipe) previousname = `<@${previoususer.discord}>`
 						const levelinfo = await getCode(score.hash)
-						if(!code) {
+						if(!levelinfo) {
 							updateBulkWrite.pop()
 							updateBulkWrite.push({ deleteOne: { 
 								"filter": { "LevelID": score.map }
