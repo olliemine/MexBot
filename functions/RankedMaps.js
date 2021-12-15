@@ -60,6 +60,7 @@ module.exports = async (DiscordClient) => {
 		}
 		const body = await res.json()
 		if(!NewLastRankedMap) NewLastRankedMap = body.leaderboards[0].id
+		console.log(NewLastRankedMap == LastRankedMap)
 		if(NewLastRankedMap == LastRankedMap) break
 		body.leaderboards.forEach(leaderboard => {
 			if(found) return
