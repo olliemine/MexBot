@@ -47,6 +47,9 @@ module.exports = {
 				return [...sparse.keys()].filter(i => i && !sparse[i]);
 			}
 			let history = user.playHistory
+			const currentDate = new Date()
+			const week = Math.floor((currentDate.getTime() + 345_600_000) / 604_800_000)
+			if(history[history.length - 1].week != week) history.push({ plays: 0, week: week })
 			let weeks = []
 			let plays = []
 			user.playHistory.forEach(h => {
