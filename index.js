@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-//const { token, redisuri } = require("./config.json")
+const { token, redisuri } = require("./config.json")
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -18,9 +18,9 @@ const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_R
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-client.login(process.env.TOKEN)
+client.login(token)
 const redis = require("redis");
-const redisClient = redis.createClient({ url: process.env.REDIS_URL })
+const redisClient = redis.createClient({ url: redisuri })
 redisClient.connect()
 let RecentlyExecuted = []
 
@@ -78,7 +78,7 @@ client.on("messageCreate", async (message) => {
 	if(command.cooldown > 0 && RecentlyExecuted.includes(CooldownString)) {
 		return message.channel.send({ content: "Porfavor espera un poco para usar el bot otra vez."})
 	}
-	if(command.admin) {
+	if(command.admin && message.author.id != info.devId) {
 		const server = await client.guilds.fetch(info.serverId)
 		const member = await server.members.fetch(message.author.id)
 		if(!member.permissions.has("ADMINISTRATOR")) return
