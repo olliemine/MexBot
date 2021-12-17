@@ -1,6 +1,5 @@
 const { MessageEmbed } = require("discord.js")
 const UserSchema = require("../models/UserSchema")
-const infohandle = require("./info")
 const { inforankingChannel } = require("../info.json")
 
 module.exports = async (Client, usersupdatedraw) => {
@@ -28,7 +27,7 @@ module.exports = async (Client, usersupdatedraw) => {
 	const negativeusers = usersupdatedraw.filter((user) => {
 		return user.update < 0
 	})
-	if(!positiveusers.length || !negativeusers.length) return infohandle(CLient, "the", "stoped thingy")
+	if(!positiveusers.length || !negativeusers.length) return
 	if(positiveusers) positiveusers.forEach((user) => {
 		finalmessage = finalmessage + `+ ${user.user} ${user.update}\n`
 		if(user.lastrank > 20 && user.newrank <= 20) finalmessage = finalmessage + `* ${user.user} is now top 20\n`
