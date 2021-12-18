@@ -32,6 +32,7 @@ module.exports = {
 		const userinfo = await GetUserInfo()
 		if(!userinfo?.lastmap) return message.channel.send({ content: "Usuario no tiene cuenta"})
 		const levels = await LevelSchema.find({ TopPlayer: userinfo.beatsaber, PlayerCount: { $gte: 2 }, Code: { $ne: "0" } })
+		if(!levels.length) return message.channel.send({ content: "No snipeable maps found."})
 		let data = {
 			"playlistTitle": `${userinfo.realname} snipe playlist`,
 			"playlistAuthor": "MexBot",
