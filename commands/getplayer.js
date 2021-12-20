@@ -140,12 +140,12 @@ module.exports = {
 		}
 		async function BuildEmbed(data) {
 			const history = data.histories.split(",")
-			const top1ScoreCount = async () => {
-				a = await LevelSchema.countDocuments({ TopPlayer: data.id, PlayerCount: { $gte: 2 }})
-				if(a == 0) return ""
-				return `\nTop 1 Count: ${a} 🇲🇽`
-			}
 			const userinfo = await UserSchema.findOne({ beatsaber: data.id })
+			const top1ScoreCount = async () => {
+				LevelCount = await LevelSchema.countDocuments({ TopPlayer: data.id, PlayerCount: { $gte: 2 }})
+				if(LevelCount == 0 && userinfo.country != "MX") return ""
+				return `\nTop 1 Count: ${LevelCount} 🇲🇽`
+			}
 			let embed = new MessageEmbed()
 			.setColor("#4C9CF6")
 			.setTitle(data.name + ` :flag_${data.country.toLowerCase()}:`)
