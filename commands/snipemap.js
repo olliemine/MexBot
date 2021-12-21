@@ -79,7 +79,7 @@ module.exports = {
 				console.log(text)
 				return text
 			}
-			let fil = {$and: [{ PlayerCount: {$gte: 2} }]}
+			let fil = {$and: [{ PlayerCount: {$gte: 2}}, { bsactive: true} ]}
 			if(!args[0]) return fil
 			let rankcheck = false
 			let playedcheck = false
@@ -170,7 +170,6 @@ module.exports = {
 			.setFooter("!snipemaphelp for more information")
 			message.channel.send({ embeds: [embed] })
 		}
-		console.log(filter.$and)
 		GetMap(filter)
 	},
 };

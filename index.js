@@ -4,11 +4,11 @@ const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
+const LevelSchema = require("./models/LevelSchema")
 const errorhandle = require("./functions/error")
 const infohandle = require("./functions/info");
 const UpdateUsers = require("./functions/UpdateUsers");
-const UpdateIA = require("./functions/UpdateIA")
-const Top = require("./functions/Top")
+const Top = require("./functions/TopFeed/Top")
 const CheckRoles = require("./functions/CheckRoles")
 const fs = require("fs");
 const getplayer = require("./commands/getplayer")
@@ -21,6 +21,8 @@ const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith("
 client.login(process.env.TOKEN)
 const redis = require("redis");
 const redisClient = redis.createClient({ url: process.env.REDIS_URL })
+const WebSocket = require('ws');
+const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
 redisClient.connect()
 let RecentlyExecuted = []
 
@@ -34,6 +36,29 @@ function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
 	return !!pattern.test(str);
 }
+beatsaversocket.onopen = () => {
+	console.log("Connected to Beatsaver socket")
+}
+beatsaversocket.onclose = (event) => {
+	infohandle(client, "Beatsaver socket", `Closed ${event.code} ${event.reason}`)
+}
+beatsaversocket.onerror = (err) => {
+	errorhandle(client, err)
+}
+beatsaversocket.onmessage = async (msg) => {
+	console.log("recieved message")
+	let data = JSON.parse(msg.data)
+	data = data.msg
+	if(!data.versions.length) return infohandle(client, "Beatsaver socker" `${data.id} had no version`)
+	if(data.createdAt == data.versions[0].createdAt) return console.log("New")
+	console.log("Updated")
+	const level = await LevelSchema.findOne({Code: data.id })
+	if(!level) return console.log("No update needed " + data.id)
+	const count = await LevelSchema.countDocuments({Code: data.id})
+	await LevelSchema.deleteMany({Code: data.id})
+	infohandle(client, "Beatsaver socker", `Deleted ${data.id} (${count} documents)`)
+}
+
 redisClient.once("ready", () => {
 	console.log("Connected to redis")
 	redisClient.quit()
@@ -155,14 +180,6 @@ setInterval(async () => {
 	}
 	
 }, (1000*60)*15)//15m
-setInterval(async () => {
-	try {
-		UpdateIA(client)
-	} catch(err) {
-		errorhandle(client, err)
-	}
-	
-}, (1000*60)*60)//1h
 setInterval(() => {
 	try {
 		RankedMaps(client)
@@ -179,6 +196,7 @@ function SendAndDelete(msgcontent, msg) {
 		}, (1000*60)*4)
 	})
 }
+
 function VerificationHandler(msg, member, id, link = true) {
 	VerificacionID(client, member, id, link)
 	.then(data => {

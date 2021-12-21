@@ -1,5 +1,9 @@
 const errorhandle = require("../functions/error");
-const Top = require("../functions/Top")
+const Top = require("../functions/TopFeed/Top")
+const UserSchema = require("../models/UserSchema")
+const fetch = require("node-fetch")
+const StoreUserFull = require("../functions/TopFeed/StoreUserFull")
+const GetCodes = require("../functions/TopFeed/GetCodes")
 
 module.exports = {
 	name: "forcetop",
@@ -7,9 +11,38 @@ module.exports = {
 	admin: true,
 	dm: true,
 	cooldown: 15,
-	async execute(message, DiscordClient) {
+	async execute(message, DiscordClient, args) {
 		message.channel.sendTyping()
 		const time = new Date()
+		if(+args[0]) {
+			const res = await fetch(`https://scoresaber.com/api/player/${args[0]}/full`)
+			if(res.status != 200) return message.channel.send({content: `Error ${res.status} ${res.statusText}`})
+			const body = await res.json()
+			if(body.country != "MX") return message.channel.send({content: "User is not from MX"})
+			let userinfo = await UserSchema.findOne({beatsaber: body.id})
+			if(body.inactive && userinfo?.lastmap) return message.channel.send({content: "No updates are needed"})
+			if(!userinfo) {
+				userinfo = {
+					"discord": null,
+					"beatsaber": body.id,
+					"realname": body.name,
+					"country": body.country,
+					"bsactive": !body.inactive,
+					"dsactive": false,
+					"name": null,
+					"lastrank": body.countryRank,
+					"lastmap": null,
+					"lastmapdate": null,
+					"snipe": null,
+					"playHistory": []
+				}
+				await UserSchema(userinfo).save()
+			}
+			console.log(userinfo.realname)
+			await StoreUserFull(userinfo, DiscordClient)
+			await GetCodes()
+			return message.channel.send({content: `Succesfully saved player ${userinfo.realname}, ${new Date() - time}`})
+		}
 		try {
 			await Top(DiscordClient)
 		} catch(err) {

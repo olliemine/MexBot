@@ -86,10 +86,11 @@ module.exports = async (DiscordClient) => {
 		})
 		if(!found) page++
 	}
-	if(!NewRankedMaps.length) return
+	if(!NewRankedMaps.length) return redisClient.quit()
 	console.log(NewRankedMaps)
 	const channel = await DiscordClient.channels.cache.get(rankedmapsChannel)
 	let firsttime = true
+	let updateBulkWrite = []
 	for await(const leaderboards of NewRankedMaps) {
 		const body = leaderboards.shift()
 		var response = await fetch(body.coverImage)
@@ -104,8 +105,15 @@ module.exports = async (DiscordClient) => {
 		let text = firsttime ? `<@&${rankedNotiRole}>` : " "
 		channel.send({ embeds: [embed], content: text })
 		await LevelSchema.updateMany({ Hash: body.hash }, { Ranked: true })
+		leaderboards.forEach(leaderboard => {
+			updateBulkWrite.push({ updateOne: {
+				"filter": { "LevelID": leaderboard.id },
+				"update": { $set: { "Stars": leaderboard.stars  }}
+			}})
+		})
 		firsttime = false
 	}
+	await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 	await redisClient.set("LastRankedMap", NewLastRankedMap)
 	redisClient.quit()
 }

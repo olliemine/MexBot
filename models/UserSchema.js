@@ -19,6 +19,7 @@ const UserSchema = new mongoose.Schema({
 	"name": String,
 	"lastrank": Number,
 	"lastmap": String,
+	"lastmapdate": String,
 	"snipe": Boolean,
 	"playHistory": [{
 		"plays": Number,

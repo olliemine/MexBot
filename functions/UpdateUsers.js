@@ -14,24 +14,23 @@ module.exports = async (Client) => {
 	const server = await Client.guilds.fetch(serverId)
 	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
 	async function GetInfo() {
-		let info
-		await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)
-		.then(async res => {
-			if(res.status !== 200) return info = null
-			const body = await res.json()
-			info = body.players
-		})
-		return info
+		const res = await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)
+		if(res.status !== 200) return null
+		const body = await res.json()
+		return body.players
 	}
 	const info = await GetInfo()
 	if(!info) return
-	console.log(info.length)
 	async function UpdateName(beatsaber, newname) {
 		await LevelSchema.updateMany({ 
 			TopPlayer: beatsaber
 		}, {
 			TopPlayerName: newname
 		})
+		await LevelSchema.updateMany(
+			{"Leaderboard.PlayerID": beatsaber},
+			{ $set: { "Leaderboard.$.PlayerName": newname }}
+		)
 		return await UserSchema.findOneAndUpdate({
 			beatsaber: beatsaber
 		}, {
@@ -49,17 +48,29 @@ module.exports = async (Client) => {
 			"name": null,
 			"lastrank": 50,
 			"lastmap": null,
+			"lastmapdate": null,
 			"snipe": null,
 			"playHistory": []
 		}
 		console.log(row.name)
 		await new UserSchema(user).save()
 	}
+	async function UpdateIA(user) {
+		infohandle(Client, "UpdateUsers", user.realname)
+		await UserSchema.findOneAndUpdate({ user: user.beatsaber }, { bsactive: true })
+		if(!user.dsactive) return
+		const discorduser = await server.members.fetch(user.discord)
+		CheckRoles(user.lastrank, discorduser, Client)
+		await discorduser.setNickname(`#${user.lastrank} | ${user.name}`)
+	}
 	for await(const user of info) {
 		const userinfo = users.find(element => element.beatsaber == user.id)
 		if(!userinfo) {
-			const exists = await UserSchema.countDocuments({ beatsaber: user.id }).limit(1)
-			if(exists) continue
+			const exists = await UserSchema.findOne({ beatsaber: user.id })
+			if(exists) {
+				await UpdateIA(exists)
+				continue
+			}
 			await NewUser(user, "MX")
 			continue
 		}

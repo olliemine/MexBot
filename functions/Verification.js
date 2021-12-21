@@ -52,6 +52,7 @@ module.exports = async (DiscordClient, user, ID, link = true) => {
 		"name": username,
 		"lastrank": body.country == "MX" ? body.countryRank : null,
 		"lastmap": null,
+		"lastmapdate": null,
 		"snipe": false,
 		"playHistory": []
 	}
