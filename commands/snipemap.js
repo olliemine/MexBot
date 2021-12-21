@@ -79,7 +79,7 @@ module.exports = {
 				console.log(text)
 				return text
 			}
-			let fil = {$and: [{ PlayerCount: {$gte: 2}}, { bsactive: true} ]}
+			let fil = {$and: [{ PlayerCount: {$gte: 2}} ]}
 			if(!args[0]) return fil
 			let rankcheck = false
 			let playedcheck = false

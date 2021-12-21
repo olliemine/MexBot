@@ -143,7 +143,7 @@ module.exports = {
 			const userinfo = await UserSchema.findOne({ beatsaber: data.id })
 			const top1ScoreCount = async () => {
 				LevelCount = await LevelSchema.countDocuments({ TopPlayer: data.id, PlayerCount: { $gte: 2 }})
-				if(LevelCount == 0 && userinfo.country != "MX") return ""
+				if(LevelCount == 0 && userinfo?.country != "MX") return ""
 				return `\nTop 1 Count: ${LevelCount} 🇲🇽`
 			}
 			let embed = new MessageEmbed()
