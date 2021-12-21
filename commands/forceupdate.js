@@ -8,6 +8,7 @@ module.exports = {
 	dm: true,
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
+		const time = new Date()
 		message.channel.sendTyping()
 		try {
 			await UpdateUsers(DiscordClient)
