@@ -46,17 +46,21 @@ beatsaversocket.onerror = (err) => {
 	errorhandle(client, err)
 }
 beatsaversocket.onmessage = async (msg) => {
-	console.log("recieved message")
-	let data = JSON.parse(msg.data)
-	data = data.msg
-	if(!data.versions[0]) return infohandle(client, "Beatsaver socker" `${data.id} had no version`)
-	if(data.createdAt == data.versions[0].createdAt) return console.log("New")
-	console.log("Updated")
-	const level = await LevelSchema.findOne({Code: data.id })
-	if(!level) return console.log("No update needed " + data.id)
-	const count = await LevelSchema.countDocuments({Code: data.id})
-	await LevelSchema.deleteMany({Code: data.id})
-	infohandle(client, "Beatsaver socker", `Deleted ${data.id} (${count} documents)`)
+	try{
+		console.log("recieved message")
+		let data = JSON.parse(msg.data)
+		data = data.msg
+		if(!data.versions[0]) return infohandle(client, "Beatsaver socker" `${data.id} had no version`)
+		if(data.createdAt == data.versions[0].createdAt) return console.log("New")
+		console.log("Updated")
+		const level = await LevelSchema.findOne({Code: data.id })
+		if(!level) return console.log("No update needed " + data.id)
+		const count = await LevelSchema.countDocuments({Code: data.id})
+		await LevelSchema.deleteMany({Code: data.id})
+		infohandle(client, "Beatsaver socker", `Deleted ${data.id} (${count} documents)`)
+	} catch(err){
+		errorhandle(client, err)
+	}
 }
 
 redisClient.once("ready", () => {
