@@ -7,19 +7,6 @@ const fetch = require("node-fetch")
 module.exports = (newscores, user, firstmap, DiscordClient) => {
 	if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 	const topchannel = DiscordClient.channels.cache.get(top1feedChannel)
-	function GetMaxScore(diffs, map) {
-		let diff
-		for(const diffinfo of diffs) {
-			if(diffinfo.characteristic == map.DiffInfo.Mode && diffinfo.difficulty == map.DiffInfo.Diff) {
-				diff = diffinfo
-				break
-			} 
-		}
-		if(diff.notes == 1) return 115;
-		if(diff.notes <= 4) return 115 + (diff.notes - 1) * 115 * 2;
-		if(diff.notes <= 13) return 115 + 4 * 115 * 2 + (diff.notes - 5) * 115 * 4
-		return 115 + 4 * 115 * 2 + 8 * 115 * 4 + (diff.notes - 13) * 115 * 8
-	}
 	function FormatDiff(diff) {
 		if(diff != "ExpertPlus") return diff
 		return "Expert+"
@@ -69,14 +56,6 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 		if(!userscore) return map.PlayerCount += 1
 		return map.PlayerCount
 	}
-	function getCode(hash) {
-		return fetch(`https://beatsaver.com/api/maps/hash/${hash}`)
-		.then(async (res) => {
-			if(res.status != 200) return null
-			const body = await res.json()
-			return body
-		})
-	}
 	return new Promise(async (resolve, reject) => {
 		console.log(`New from ${user.realname}`)
 		let newmaps = []
@@ -123,22 +102,15 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 				let previousname = map.TopPlayerName
 				const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
 				if(previoususer?.dsactive && previoususer?.snipe) previousname = `<@${previoususer.discord}>`
-				const levelinfo = await getCode(score.hash)
-				if(!levelinfo) {
-					updateBulkWrite.pop()
-					updateBulkWrite.push({ deleteOne: { 
-						"filter": { "LevelID": score.map }
-					}})
-					continue
-				}
 				const row = new MessageActionRow()
 				.addComponents(
 					new MessageButton()
 						.setLabel("Beatsaver")
 						.setStyle("LINK")
-						.setURL(`https://beatsaver.com/maps/${levelinfo.id}`)
+						.setURL(`https://beatsaver.com/maps/${map.Code}`)
 				)
-				const maxscore = GetMaxScore(levelinfo.versions[0].diffs, map)
+				const maxscore = map.MaxScore
+				if(!maxscore) return topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}**\nhttps://scoresaber.com/u/${user.beatsaber}`, components: [row]})
 				const percent = (((score.score / maxscore)*100) - ((map.TopScore / maxscore)*100)).toFixed(2)//newpercent - oldpercent
 				topchannel.send({ content: `${user.realname} ha conseguido top 1 en https://scoresaber.com/leaderboard/${score.map}?countries=MX snipeando a **${previousname}** por **${percent}**%\nhttps://scoresaber.com/u/${user.beatsaber}`, components: [row]})
 				continue												

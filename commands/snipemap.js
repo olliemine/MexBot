@@ -1,7 +1,5 @@
 const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
-const fetch = require("node-fetch")
-const infohandle = require("../functions/info")
 const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js")
 
 module.exports = {
@@ -11,19 +9,6 @@ module.exports = {
 	dm: true,
 	cooldown: 2,
 	async execute(message, DiscordClient, args) {
-		function GetMaxScore(diffs, map) {
-			let diff
-			for(const diffinfo of diffs) {
-				if(diffinfo.characteristic == map.DiffInfo.Mode && diffinfo.difficulty == map.DiffInfo.Diff) {
-					diff = diffinfo
-					break
-				} 
-			}
-			if(diff.notes == 1) return 115;
-			if(diff.notes <= 4) return 115 + (diff.notes - 1) * 115 * 2;
-			if(diff.notes <= 13) return 115 + 4 * 115 * 2 + (diff.notes - 5) * 115 * 4
-			return 115 + 4 * 115 * 2 + 8 * 115 * 4 + (diff.notes - 13) * 115 * 8
-		}
 		function timeSince(date) { //https://stackoverflow.com/a/3177838
 			var seconds = Math.floor((new Date() - date) / 1000)
 			var interval = seconds / 31536000
@@ -49,15 +34,7 @@ module.exports = {
 			let map = await LevelSchema.aggregate([ { $match:  filter  }, { $sample: { size: 1 } }]).limit(1)
 			map = map[0]
 			if(!map) return message.channel.send({ content: "No maps found."})
-			const res = await fetch(`https://beatsaver.com/api/maps/hash/${map.Hash}`)
-			if(res.status == 404) {
-				await LevelSchema.deleteMany({ Hash: map.Hash })
-				infohandle(DiscordClient, "Snipemap", `Deleted ${map.Hash}`)
-				return GetMap(filter)
-			}
-			if(res.status != 200) return GetMap(filter)
-			const body = await res.json()
-			const maxscore = GetMaxScore(body.versions[0].diffs, map)
+			const maxscore = map.MaxScore
 			const timesince = timeSince(map.Leaderboard[0].Date)
 			const row = new MessageActionRow()
 			.addComponents(
@@ -65,7 +42,8 @@ module.exports = {
 					.setLabel("Scoresaber")
 					.setStyle("LINK")
 					.setURL(`https://scoresaber.com/leaderboard/${map.LevelID}`)
-			)	
+			)
+			if(!maxscore) return message.channel.send({ content: `${map.TopPlayerName} on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 			const percent = ((map.TopScore / maxscore)*100).toFixed(2)
 			return message.channel.send({ content: `${map.TopPlayerName} got **${percent}%** on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 		}
