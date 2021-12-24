@@ -156,6 +156,7 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 				"Code": null,
 				"Ranked": score.ranked,
 				"Stars": score.stars,
+				"MaxScore": score.maxscore,
 				"DiffInfo": {
 					"Diff": Diff[0],
 					"Mode": Diff[1],

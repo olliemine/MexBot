@@ -4,6 +4,7 @@ const StoreMaps = require("./StoreMaps")
 const Score = require("./Score")
 const StoreUserFull = require("./StoreUserFull")
 const GetCodes = require("./GetCodes")
+const GetMaxScores = require("./GetMaxScores")
 
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		let players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
@@ -96,6 +97,9 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			})
 		}
 		await UpdatePlayers()
-		if(NewPlay) await GetCodes()
+		if(NewScore) {
+			await GetCodes()
+			await GetMaxScores()
+		}	
 		return
 };

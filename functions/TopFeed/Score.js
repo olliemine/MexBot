@@ -12,6 +12,7 @@ module.exports = class Score {
 		this.mods = map.score.modifiers.split(","), 
 		this.pp = map.score.pp.toFixed(1),
 		this.ranked = map.leaderboard.ranked,
-		this.stars = map.leaderboard.stars
+		this.stars = map.leaderboard.stars,
+		this.maxscore = map.leaderboard.maxScore
 	}
 }

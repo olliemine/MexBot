@@ -4,6 +4,7 @@ const UserSchema = require("../models/UserSchema")
 const fetch = require("node-fetch")
 const StoreUserFull = require("../functions/TopFeed/StoreUserFull")
 const GetCodes = require("../functions/TopFeed/GetCodes")
+const GetMaxScores = require("../functions/TopFeed/GetMaxScores")
 
 module.exports = {
 	name: "forcetop",
@@ -41,6 +42,7 @@ module.exports = {
 			console.log(userinfo.realname)
 			await StoreUserFull(userinfo, DiscordClient)
 			await GetCodes()
+			await GetMaxScores()
 			return message.channel.send({content: `Succesfully saved player ${userinfo.realname}, ${new Date() - time}`})
 		}
 		try {

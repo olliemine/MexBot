@@ -12,6 +12,7 @@ const Level = new mongoose.Schema({
 	"Code": String,
 	"Ranked": Boolean,
 	"Stars": Number,
+	"MaxScore": Number,
 	"DiffInfo": {
 		"Diff": String,
 		"Mode": String,
