@@ -97,7 +97,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			})
 		}
 		await UpdatePlayers()
-		if(NewScore) {
+		if(NewPlay) {
 			await GetCodes()
 			await GetMaxScores()
 		}	
