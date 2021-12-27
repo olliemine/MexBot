@@ -36,7 +36,7 @@ module.exports = () => {
 			}
 			const body = await res.json()
 			for await(var map of maps) {
-				let info = body[map[0].Hash.toLowerCase()]
+				let info = body[map[0].Hash.toLowerCase()] || body
 				const MapsDict = HashDict[map[0].Hash]
 				MapsDict.forEach(m => {
 					const maxscore = GetMaxScore(info.versions[0].diffs, m)
