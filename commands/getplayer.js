@@ -17,7 +17,8 @@ module.exports = {
 		usersraw.forEach(u => {
 			users.push({
 				realname: u.realname,
-				beatsaber: u.beatsaber
+				beatsaber: u.beatsaber,
+				discord: u.discord
 			})
 		})
 		usersraw = null
@@ -28,6 +29,8 @@ module.exports = {
 			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 		}
 		if (!Array.isArray(args) || !args.length) {
+			cacheduser = users.find(r => r.discord == message.author.id)
+			if(cacheduser) return GetPlayerDataID(cacheduser.beatsaber)
 			var user = await UserSchema.findOne({ discord: message.author.id })
 			if(user) return GetPlayerDataID(user.beatsaber)
 			return message.channel.send({ content: "Tienes que mencionar a un usuario."})
@@ -160,8 +163,8 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 			.setFooter("Made by olliemine")
 			if(userinfo?.playHistory.length) {
 				const png = await GetGraph(userinfo)
-				const buffer = new MessageAttachment(png, "graph.png")
-				embed.setImage("attachment://graph.png")
+				const buffer = new MessageAttachment(png, `${data.id}-graph.png`)
+				embed.setImage(`attachment://${data.id}-graph.png`)
 				message.channel.send({ embeds: [embed], files: [buffer] })
 				return
 			}
