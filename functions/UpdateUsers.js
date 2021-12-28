@@ -57,7 +57,7 @@ module.exports = async (Client) => {
 	}
 	async function UpdateIA(user) {
 		infohandle(Client, "UpdateUsers", user.realname)
-		await UserSchema.findOneAndUpdate({ user: user.beatsaber }, { bsactive: true })
+		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) return
 		const discorduser = await server.members.fetch(user.discord)
 		CheckRoles(user.lastrank, discorduser, Client)
