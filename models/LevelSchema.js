@@ -2,9 +2,6 @@ const mongoose = require("mongoose")
 
 const Level = new mongoose.Schema({
 	"LevelID": Number,
-	"SongName": String,
-	"SongAuthorName": String,
-	"MapAuthor": String,
 	"TopPlayer": String,
 	"TopScore": Number,
 	"TopPlayerName": String,

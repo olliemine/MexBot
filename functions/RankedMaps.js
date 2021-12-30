@@ -5,6 +5,7 @@ const infohandle = require("./info")
 const { createClient } = require("redis")
 const { MessageEmbed } = require("discord.js")
 const LevelSchema = require("../models/LevelSchema")
+const BaseLevelSchema = require("../models/BaseLevelSchema")
 const Vibrant = require('node-vibrant')
 
 module.exports = async (DiscordClient) => {
@@ -101,10 +102,11 @@ module.exports = async (DiscordClient) => {
 		.setTitle(`${body.song} - ${body.songauthor}`)
 		.setThumbnail(body.coverImage)
 		.setDescription(`Mapped by ${body.mapper}\n\n${formatDiffs(leaderboards)}\n[Download](https://beatsaver.com/maps/${code})`)
-		.setColor(palette.Vibrant.getHex())
+		.setColor(palette.Vibrant.hex)
 		let text = firsttime ? `<@&${rankedNotiRole}>` : " "
 		channel.send({ embeds: [embed], content: text })
 		await LevelSchema.updateMany({ Hash: body.hash }, { Ranked: true })
+		await BaseLevelSchema.updateOne({ Hash: body.hash }, { Ranked: true })
 		leaderboards.forEach(leaderboard => {
 			updateBulkWrite.push({ updateOne: {
 				"filter": { "LevelID": leaderboard.id },

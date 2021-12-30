@@ -2,7 +2,7 @@ const LevelSchema = require("../../models/LevelSchema")
 const UserSchema = require("../../models/UserSchema")
 const { MessageActionRow, MessageButton } = require("discord.js")
 const { top1feedChannel } = require("../../info.json")
-const fetch = require("node-fetch")
+const BaseLevelSchema = require("../../models/BaseLevelSchema")
 
 module.exports = (newscores, user, firstmap, DiscordClient) => {
 	if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
@@ -59,9 +59,10 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 	return new Promise(async (resolve, reject) => {
 		console.log(`New from ${user.realname}`)
 		let newmaps = []
+		let uniqueBaseLevels = {}
 		let updateBulkWrite = []
 		let playHistory = user.playHistory
-		let mapMode = newscores.length >= 25 ? true : false
+		let mapMode = newscores.length >= 30 ? true : false
 		let maps
 		if(mapMode) maps = await LevelSchema.find({})
 		for await(const score of newscores) {
@@ -118,9 +119,6 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 			const Diff = GetDiff(score.diff)
 			const newmap = {
 				"LevelID": score.map,
-				"SongName": score.songName,
-				"SongAuthorName": score.songAuthorName,
-				"MapAuthor": score.mapAuthor,
 				"TopPlayer": user.beatsaber,
 				"TopScore": score.score,
 				"TopPlayerName": user.realname,
@@ -147,11 +145,31 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 				}]
 			}
 			newmaps.push(newmap)
+			if(uniqueBaseLevels[score.hash]) continue
+			uniqueBaseLevels[score.hash] = {
+				"SongName": score.songName,
+				"SongAuthorName": score.songAuthorName,
+				"MapAuthor": score.mapAuthor,
+				"Hash": score.hash,
+				"Code": null,
+				"Ranked": score.ranked
+			}
 			//console.log(`New map ${score.map}`)
 			continue
 		}
+		uniqueBaseLevels = Object.values(uniqueBaseLevels)
+		let i = -1
+		for await(let level of uniqueBaseLevels) {
+			i++
+			let map 
+			if(mapMode) map = maps.find(obj => obj.Hash == level.Hash)
+			else map = await BaseLevelSchema.exists({ Hash: level.Hash })
+			if(!map) continue
+			uniqueBaseLevels.splice(i, 1)
+		}
 		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 		await LevelSchema.insertMany(newmaps, { ordered: false })
+		await BaseLevelSchema.insertMany(uniqueBaseLevels, { ordered: false })
 		await UserSchema.updateOne({
 			"beatsaber": user.beatsaber
 		}, {
@@ -164,6 +182,7 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 		maps = null
 		updateBulkWrite = null
 		newmaps = null
+		uniqueBaseLevels = null
 		resolve()
 	})
 }

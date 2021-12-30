@@ -5,6 +5,7 @@ const mongo = require("./mongo")
 const fetch = require("node-fetch")
 const UserSchema = require("./models/UserSchema");
 const LevelSchema = require("./models/LevelSchema")
+const BaseLevelSchema = require("./models/BaseLevelSchema")
 const errorhandle = require("./functions/error")
 const infohandle = require("./functions/info");
 const UpdateUsers = require("./functions/UpdateUsers");
@@ -25,7 +26,6 @@ const WebSocket = require('ws');
 const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
 redisClient.connect()
 let RecentlyExecuted = []
-
 
 function validURL(str) {//https://stackoverflow.com/a/5717133/14550193
 	var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
@@ -57,6 +57,7 @@ beatsaversocket.onmessage = async (msg) => {
 		if(!level) return console.log("No update needed " + data.id)
 		const count = await LevelSchema.countDocuments({Code: data.id})
 		await LevelSchema.deleteMany({Code: data.id})
+		await BaseLevelSchema.deleteOne({Code: data.id})
 		infohandle(client, "Beatsaver socker", `Deleted ${data.id} (${count} documents)`)
 	} catch(err){
 		errorhandle(client, err)
@@ -107,6 +108,7 @@ client.on("messageCreate", async (message) => {
 	if(command.cooldown > 0 && RecentlyExecuted.includes(CooldownString)) {
 		return message.channel.send({ content: "Porfavor espera un poco para usar el bot otra vez."})
 	}
+	if(command.dev && message.author.id != info.devId) return message.channel.send({ content: "Unable to execute, this is a dev command."})
 	if(command.admin && message.author.id != info.devId) {
 		const server = await client.guilds.fetch(info.serverId)
 		const member = await server.members.fetch(message.author.id)
