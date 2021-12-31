@@ -227,10 +227,12 @@ module.exports = {
 					await CacheControl.NextPage()
 					break
 				case "exit":
-					CacheControl.Stop()
 					return collector.stop()
 			}
 			CacheControl.PostEmbed()
+		})
+		collector.on("end", () => {
+			return CacheControl.Stop()
 		})
 	}
 }
