@@ -91,15 +91,16 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 				}
 				for await (const user of checkAgain) {
 					await StoreUserFull(user, DiscordClient).then(() => {
+					}).catch(() => {
+						console.log(`User ${user.realname} couldnt be checked`)
 					})
 				}
 				resolve()
 			})
 		}
 		await UpdatePlayers()
-		if(NewPlay) {
-			await GetCodes()
-			await GetMaxScores()
-		}	
+		if(!NewPlay) return
+		await GetCodes()
+		await GetMaxScores()	
 		return
 };

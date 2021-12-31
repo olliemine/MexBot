@@ -158,18 +158,20 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 			continue
 		}
 		uniqueBaseLevels = Object.values(uniqueBaseLevels)
-		let i = -1
+		let uniqueBaseLevelsInsert = []
 		for await(let level of uniqueBaseLevels) {
-			i++
-			let map 
-			if(mapMode) map = maps.find(obj => obj.Hash == level.Hash)
+			let map
+			if(mapMode) map = maps.some(obj => obj.Hash === level.Hash)
 			else map = await BaseLevelSchema.exists({ Hash: level.Hash })
-			if(!map) continue
-			uniqueBaseLevels.splice(i, 1)
+			if(!map) {
+				uniqueBaseLevelsInsert.push(level)
+				continue
+			}
+			continue
 		}
 		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 		await LevelSchema.insertMany(newmaps, { ordered: false })
-		await BaseLevelSchema.insertMany(uniqueBaseLevels, { ordered: false })
+		await BaseLevelSchema.insertMany(uniqueBaseLevelsInsert, { ordered: false })
 		await UserSchema.updateOne({
 			"beatsaber": user.beatsaber
 		}, {
