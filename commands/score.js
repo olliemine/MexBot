@@ -109,11 +109,16 @@ module.exports = {
 				this.maps[this.page].LastDiff = this.diff
 			}
 			Stop() {
+				const diff = this.maps[this.page].Difficulties[this.diff]
+				const info = this.maps[this.page].Info
+				const DiffSelector = DifficultySelector(MapsToDiff(this.maps[this.page].Difficulties), this.maps[this.page].Difficulties[this.diff].DiffInfo.FormatDiff)
 				const embed = new MessageEmbed()
-				.setTitle("Stopped")
-				.setDescription("Stopped cleanly")
-				.setColor("#FFB131")
-				this.msg.edit({ embeds: [embed], content: null, components: []})
+				.setColor(this.maps[this.page].Color)
+				.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
+				.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
+				.setURL(`https://beatsaver.com/maps/${info.Code}`)
+				.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}`)
+				this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [], embeds: [embed]})
 				this.maps = []
 			}
 			GetNumberOfDiffs() {
