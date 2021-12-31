@@ -113,7 +113,7 @@ module.exports = {
 				.setTitle("Stopped")
 				.setDescription("Stopped cleanly")
 				.setColor("#FFB131")
-				this.msg.edit({ embeds: [embed], content: "", components: []})
+				this.msg.edit({ embeds: [embed], content: null, components: []})
 				this.maps = []
 			}
 			GetNumberOfDiffs() {
