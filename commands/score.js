@@ -113,7 +113,7 @@ module.exports = {
 				.setTitle("Stopped")
 				.setDescription("Stopped cleanly")
 				.setColor("#FFB131")
-				this.msg.edit({ embeds: [embed]})
+				this.msg.edit({ embeds: [embed], content: "", components: []})
 				this.maps = []
 			}
 			GetNumberOfDiffs() {
@@ -160,7 +160,7 @@ module.exports = {
 		mapResults.sort((a, b) => {
 			return b.Score - a.Score
 		})	
-		const msg = await message.channel.send({content: "."})
+		const msg = await message.channel.send({content: "Loading..."})
 		let row = new MessageActionRow()
 		.addComponents(
 			new MessageButton()
