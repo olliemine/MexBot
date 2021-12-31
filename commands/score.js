@@ -109,7 +109,12 @@ module.exports = {
 				this.maps[this.page].LastDiff = this.diff
 			}
 			Stop() {
-
+				const embed = new MessageEmbed()
+				.setTitle("Stopped")
+				.setDescription("Stopped cleanly")
+				.setColor("#FFB131")
+				this.msg.edit({ embeds: [embed]})
+				this.maps = []
 			}
 			GetNumberOfDiffs() {
 				return this.maps[this.page].Difficulties.length - 1
@@ -217,6 +222,7 @@ module.exports = {
 					await CacheControl.NextPage()
 					break
 				case "exit":
+					CacheControl.Stop()
 					return collector.stop()
 			}
 			CacheControl.PostEmbed()
