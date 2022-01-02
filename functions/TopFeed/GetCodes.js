@@ -5,9 +5,9 @@ const BaseLevelSchema = require("../../models/BaseLevelSchema")
 
 module.exports = () => {
 	return new Promise(async (resolve, reject) => {
-		console.log("execution")
 		let updateBulkWrite = []
-		let baseUpdateBulkWrite = []		
+		let baseUpdateBulkWrite = []
+		console.log("execution")		
 		async function GetCode(maps) {
 			let hashes = ""
 			maps.forEach((map) => {
@@ -46,7 +46,7 @@ module.exports = () => {
 						}})
 						baseUpdateBulkWrite.push({ deleteOne: {
 							"filter": { "Hash": map }
-						} })
+						}})
 						console.log("Deleting " + map)
 						continue
 					}
@@ -71,12 +71,11 @@ module.exports = () => {
 		console.log(mapChunks.length)
 		for await(const mapChunk of mapChunks) {
 			await GetCode(mapChunk)
-			console.log(baseUpdateBulkWrite.length)
+			console.log(updateBulkWrite.length)
 		}
 		console.log("finished")
-		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
+		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false})
 		await BaseLevelSchema.bulkWrite(baseUpdateBulkWrite, { ordered: false })
-		console.log("finished exporting")
 		resolve()
 	})
 }

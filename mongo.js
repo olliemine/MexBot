@@ -1,8 +1,8 @@
 const mongoose = require("mongoose")
-//const {mongoPath} = require("./config.json")
+const {mongoPath} = require("./config.json")
 
 module.exports = async () => {
-	await mongoose.connect(process.env.MONGOPATH, {
+	await mongoose.connect(mongoPath, {
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 		useFindAndModify: false
