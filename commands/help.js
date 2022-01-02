@@ -16,6 +16,7 @@ module.exports = {
 		.addField("!snipe", "Habilita o Desactiva las notificaciones en top 1 feed", true)
 		.addField("!snipemap (Filtros)", "Consigue un mapa snipeable dependiendo de filtros (!snipemaphelp)\nAliases: [!smap]", true)
 		.addField("!snipeplaylist (Usuario)", "Consigue una lista de todos los mapas snipeables de un usuario\nAliases: [!slist]", true)
+		.addField("!score (Search)", "Busca una cancion y te da informacion del leaderboard", true)
 		message.channel.send({embeds: [embed]})
 	},
 }
