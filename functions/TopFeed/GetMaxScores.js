@@ -62,7 +62,9 @@ module.exports = () => {
 		}
 		console.log(mapChunks.length)
 		for await(const mapChunk of mapChunks) {
-			await GetCode(mapChunk)
+			
+				await GetCode(mapChunk)
+			
 			console.log(updateBulkWrite.length)
 		}
 		console.log("finished")

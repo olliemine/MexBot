@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-const { token, redisuri } = require("./config.json")
+//const { token, redisuri } = require("./config.json")
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -19,9 +19,9 @@ const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_R
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-client.login(token)
+client.login(process.env.TOKEN)
 const redis = require("redis");
-const redisClient = redis.createClient({ url: redisuri })
+const redisClient = redis.createClient({ url: process.env.REDIS_URL })
 const WebSocket = require('ws');
 const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
 redisClient.connect()
@@ -170,29 +170,29 @@ for(const file of commandFiles) {
 		});
 	}
 }
-//setInterval(() => {
-//	try {
-//		Top(client)
-//	} catch(err) {
-//		errorhandle(client, err)
-//	}
-//}, (1000*60)*6)//6m
-//
-//setInterval(async () => {
-//	try {
-//		UpdateUsers(client)
-//	} catch(err) {
-//		errorhandle(client, err)
-//	}
-//	
-//}, (1000*60)*15)//15m
-//setInterval(() => {
-//	try {
-//		RankedMaps(client)
-//	} catch(err) {
-//		errorhandle(client, err)
-//	}
-//}, (1000*60)*30)//30m
+setInterval(() => {
+	try {
+		Top(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+}, (1000*60)*6)//6m
+
+setInterval(async () => {
+	try {
+		UpdateUsers(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+	
+}, (1000*60)*15)//15m
+setInterval(() => {
+	try {
+		RankedMaps(client)
+	} catch(err) {
+		errorhandle(client, err)
+	}
+}, (1000*60)*30)//30m
 
 function SendAndDelete(msgcontent, msg) {
 	msg.delete()

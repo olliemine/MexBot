@@ -1,6 +1,6 @@
 const fetch = require("node-fetch")
 const { rankedmapsChannel, rankedNotiRole } = require("../info.json")
-const { redisuri } = require("../config.json")
+//const { redisuri } = require("../config.json")
 const infohandle = require("./info")
 const { createClient } = require("redis")
 const { MessageEmbed } = require("discord.js")
@@ -48,7 +48,7 @@ module.exports = async (DiscordClient) => {
 	let newestHash
 	let arrayNum = -1
 	let NewRankedMaps = []
-	const redisClient = createClient({ url: redisuri })
+	const redisClient = createClient({ url: process.env.REDIS_URL })
 	const timeoutTest = await timeout(connect(), 5000)
 	if(!timeoutTest) return
 	const LastRankedMap = await redisClient.get("LastRankedMap")
