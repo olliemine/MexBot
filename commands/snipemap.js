@@ -27,9 +27,6 @@ module.exports = {
 			if(diff != "ExpertPlus") return diff
 			return "Expert+"
 		}
-		function escapeRegExp(text) {
-			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-		}
 		async function GetMap(filter) {
 			let map = await LevelSchema.aggregate([ { $match:  filter  }, { $sample: { size: 1 } }]).limit(1)
 			map = map[0]
@@ -101,8 +98,7 @@ module.exports = {
 						return
 				}
 			})
-			async function AddFilterUser(search, negative, argument) {
-				const user = await UserSchema.findOne(search)
+			async function AddFilterUser(user, negative, argument) {
 				if(!user) return AddWarning(`Invalid token: ${argument}, ignoring it`)
 				if(used.includes(user.realname)) return AddWarning(`Token for ${user.realname} already in use, ignoring it`)
 				used.push(user.realname)
@@ -122,16 +118,19 @@ module.exports = {
 				let id = argument
 				if(mentionregex.test(argument)) id = IdfromMention(argument)
 				const member = DiscordClient.users.cache.get(id)
+				let user
 				if(member) {
-					await AddFilterUser({ discord: member.id }, negative, unchanged)
+					user = await UserSchema.findOne({ discord: member.id })
+					await AddFilterUser(user, negative, unchanged)
 					continue
 				}
 				if(+argument) {
-					await AddFilterUser({ beatsaber: argument }, negative, unchanged)
+					user = await UserSchema.findOne({ beatsaber: argument })
+					await AddFilterUser(user, negative, unchanged)
 					continue
 				}
-				const regex = new RegExp(["^", escapeRegExp(argument), "$"].join(""), "i")
-				await AddFilterUser({realname: regex}, negative, unchanged)
+				user = await UserSchema.findOne({ $text: { $search: argument }})
+				await AddFilterUser(user, negative, unchanged)
 				continue
 			}
 			return fil
