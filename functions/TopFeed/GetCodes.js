@@ -3,7 +3,7 @@ const errorhandle = require("../error")
 const fetch = require("node-fetch")
 const BaseLevelSchema = require("../../models/BaseLevelSchema")
 
-module.exports = () => {
+module.exports = (DiscordClient, Logger) => {
 	return new Promise(async (resolve, reject) => {
 		console.log("execution")
 		let updateBulkWrite = []
@@ -18,7 +18,7 @@ module.exports = () => {
 			.then(async (res) => {
 				if(res.status == 404) {
 					for await(var map of maps) {
-						console.log(`deleting ${map}`)
+						Logger.addLog("Code", `deleting maps`)
 						await LevelSchema.deleteMany({ "Hash": map})
 						await BaseLevelSchema.deleteOne({ "Hash": map })
 					}
@@ -47,7 +47,7 @@ module.exports = () => {
 						baseUpdateBulkWrite.push({ deleteOne: {
 							"filter": { "Hash": map }
 						} })
-						console.log("Deleting " + map)
+						Logger.addLog("Code", `deleting ${map}`)
 						continue
 					}
 					updateBulkWrite.push({ updateMany: {
@@ -63,7 +63,7 @@ module.exports = () => {
 			})
 		}
 		let allHashes = await LevelSchema.find({ Code: null }).distinct("Hash")
-		console.log(`All uniqs ${allHashes.length}`)
+		Logger.addLog("Code", `All uniqs ${allHashes.length}`)
 		let mapChunks = []
 		for (let i = 0; i < allHashes.length; i += 50) {
 			mapChunks.push(allHashes.slice(i, i + 50))
@@ -77,6 +77,7 @@ module.exports = () => {
 		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 		await BaseLevelSchema.bulkWrite(baseUpdateBulkWrite, { ordered: false })
 		console.log("finished exporting")
+		Logger.sendLog("Code")
 		resolve()
 	})
 }

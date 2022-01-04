@@ -47,11 +47,10 @@ beatsaversocket.onerror = (err) => {
 }
 beatsaversocket.onmessage = async (msg) => {
 	try{
-		console.log("recieved message")
 		let data = JSON.parse(msg.data)
 		data = data.msg
 		if(!data.versions) return
-		if(data.createdAt == data.versions[0].createdAt) return console.log("New")
+		if(data.createdAt == data.versions[0].createdAt) return
 		console.log("Updated")
 		const level = await LevelSchema.findOne({Code: data.id })
 		if(!level) return console.log("No update needed " + data.id)
