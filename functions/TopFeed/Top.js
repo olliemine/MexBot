@@ -21,7 +21,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			}
 			sendLog(id) {
 				if(!this.logs[id]) return
-				this.logs[id] = this.logs[id].slice(0, -2)
+				this.logs[id] = this.logs[id].slice(0, -1)
 				this.channel.send({content: this.logs[id]})
 				this.logs[id] = ""
 			}

@@ -145,6 +145,7 @@ module.exports = (newscores, user, firstmap, DiscordClient, Logger) => {
 				}]
 			}
 			newmaps.push(newmap)
+			Logger.sendSingle(JSON.stringify(newmap))
 			Logger.addLog(user.beatsaber, `New map ${newmap.LevelID}`)
 			if(uniqueBaseLevels[score.hash]) continue
 			uniqueBaseLevels[score.hash] = {
