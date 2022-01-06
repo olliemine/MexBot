@@ -3,10 +3,12 @@ const UserSchema = require("../../models/UserSchema")
 const { MessageActionRow, MessageButton } = require("discord.js")
 const { top1feedChannel } = require("../../info.json")
 const BaseLevelSchema = require("../../models/BaseLevelSchema")
+const Log = require("./Logger")
 
-module.exports = (newscores, user, firstmap, DiscordClient, Logger) => {
+module.exports = (newscores, user, firstmap, DiscordClient) => {
 	if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 	const topchannel = DiscordClient.channels.cache.get(top1feedChannel)
+	const Logger = new Log(DiscordClient)
 	function FormatDiff(diff) {
 		if(diff != "ExpertPlus") return diff
 		return "Expert+"

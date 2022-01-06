@@ -5,30 +5,12 @@ const Score = require("./Score")
 const StoreUserFull = require("./StoreUserFull")
 const GetCodes = require("./GetCodes")
 const GetMaxScores = require("./GetMaxScores")
-const { infoChannel } = require("../../info.json")
+const Logger = require("./Logger")
 
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		const players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
 		let NewPlay = false
-		const Logger = new class Logger {
-			constructor() {
-				this.logs = {}
-				this.channel = DiscordClient.channels.cache.get(infoChannel)
-			}
-			addLog(id, log) {
-				if(!this.logs[id]) this.logs[id] = ""
-				this.logs[id] += log + "\n"
-			}
-			sendLog(id) {
-				if(!this.logs[id]) return
-				this.logs[id] = this.logs[id].slice(0, -1)
-				this.channel.send({content: this.logs[id]})
-				this.logs[id] = ""
-			}
-			sendSingle(log) {
-				this.channel.send({content: log})
-			}
-		}
+		const Log = new Logger(DiscordClient)
 		async function GetFirstMap(beatsaber) {
 			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1&withMetadata=false`)
 			.then((res) => {
@@ -106,13 +88,13 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						checkAgain.push(user)
 						continue
 					}
-					await StoreMaps(newscores, user, firstmap, DiscordClient, Logger)
+					await StoreMaps(newscores, user, firstmap, DiscordClient)
 					continue
 				}
 				for await (const user of checkAgain) {
 					await StoreUserFull(user, DiscordClient).then(() => {
 					}).catch(() => {
-						Logger.sendSingle(`User ${user.realname} couldnt be check)ed`)
+						Log.sendSingle(`User ${user.realname} couldnt be check)ed`)
 					})
 				}
 				resolve()
@@ -120,7 +102,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 		}
 		await UpdatePlayers()
 		if(!NewPlay) return
-		await GetCodes(DiscordClient,Logger)
+		await GetCodes(DiscordClient,Log)
 		await GetMaxScores()	
 		return
 };
