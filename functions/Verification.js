@@ -26,7 +26,7 @@ module.exports = async (DiscordClient, user, ID, link = true) => {
 	Refresh(body.id, body.profilePicture)
 	const backtext = body.inactive == true ? "IA" : body.country != "MX" ? body.country : `#${body.countryRank}`
 	const username = getName(body.name, backtext)
-	user.setNickname(`${backtext} | ${username}`)
+	await user.setNickname(`${backtext} | ${username}`)
 	if(body.country == "MX") {
 		user.roles.add(verificadoRole)
 		CheckRoles(body.countryRank, user, DiscordClient)

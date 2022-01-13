@@ -53,11 +53,9 @@ beatsaversocket.onmessage = async (msg) => {
 		if(data.createdAt == data.versions[0].createdAt) return
 		console.log("Updated")
 		const level = await LevelSchema.findOne({Code: data.id })
-		if(!level) return console.log("No update needed " + data.id)
-		const count = await LevelSchema.countDocuments({Code: data.id})
+		if(!level) return
 		await LevelSchema.deleteMany({Code: data.id})
 		await BaseLevelSchema.deleteOne({Code: data.id})
-		infohandle(client, "Beatsaver socker", `Deleted ${data.id} (${count} documents)`)
 	} catch(err){
 		errorhandle(client, err)
 	}
@@ -97,7 +95,7 @@ Ready POG`)
 
 client.on("messageCreate", async (message) => {
 	if(message.author.bot) return
-	if(message.channel.id === info.verificationChannel) return Verificacion(message.member, message)
+	if(message.channel.id === info.verificationChannel) return Verificacion(message)
 	if(!message.content.startsWith(info.prefix)) return
 	const args = message.content.slice(info.prefix.length).trim().split(/ +/)
 	const commandName = args.shift().toLowerCase();
@@ -213,7 +211,8 @@ function VerificationHandler(msg, member, id, link = true) {
 	})
 }
 
-async function Verificacion(member, msg) {
+async function Verificacion(msg) {
+	const member = msg.member
 	if(msg.content.toLowerCase() === "visitante") {
 		member.roles.add(msg.guild.roles.cache.get(info.visitanteRole))
 		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
@@ -239,14 +238,10 @@ async function Verificacion(member, msg) {
 	//NAME?
 	if(msg.content.length < 3 || msg.content.length > 32) return SendAndDelete("Nombre Invalido", msg)
 	const NAMEURL = new URL(`https://scoresaber.com/api/players?search=${msg.content}`)
-	await fetch(NAMEURL)
-	.then(res => res.json())
-	.then(async (body) => {
-		if(body.error) return SendAndDelete("Nombre Invalido", msg)
-		if(body.players[1]) return SendAndDelete("Hay varios usuarios con este nombre, porfavor utiliza el Id", msg)
-		return VerificationHandler(msg, member, body.players[0].id)
-	}).catch((err) => {
-		SendAndDelete("Unexpected Error", msg)
-		errorhandle(client, err)
-	})
+	const res = await fetch(NAMEURL)
+	if(res.status != 200) return SendAndDelete(`Unexpected Error ${res.status} ${res.statusText}`)
+	const body = await res.json()
+	if(body.error) return SendAndDelete("Nombre Invalido", msg)
+	if(body.players[1]) return SendAndDelete("Hay varios usuarios con este nombre, porfavor utiliza el Id", msg)
+	return VerificationHandler(msg, member, body.players[0].id)
 }
