@@ -5,12 +5,10 @@ const Score = require("./Score")
 const StoreUserFull = require("./StoreUserFull")
 const GetCodes = require("./GetCodes")
 const GetMaxScores = require("./GetMaxScores")
-const Logger = require("./Logger")
 
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		const players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
 		let NewPlay = false
-		const Log = new Logger(DiscordClient)
 		async function GetFirstMap(beatsaber) {
 			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1&withMetadata=false`)
 			.then((res) => {
@@ -94,7 +92,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 				for await (const user of checkAgain) {
 					await StoreUserFull(user, DiscordClient).then(() => {
 					}).catch(() => {
-						Log.sendSingle(`User ${user.realname} couldnt be check)ed`)
+						console.log(`User ${user.realname} couldnt be check)ed`)
 					})
 				}
 				resolve()
@@ -102,7 +100,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 		}
 		await UpdatePlayers()
 		if(!NewPlay) return
-		await GetCodes(DiscordClient,Log)
+		await GetCodes(DiscordClient)
 		await GetMaxScores()	
 		return
 };

@@ -3,12 +3,11 @@ const UserSchema = require("../../models/UserSchema")
 const { MessageActionRow, MessageButton } = require("discord.js")
 const { top1feedChannel } = require("../../info.json")
 const BaseLevelSchema = require("../../models/BaseLevelSchema")
-const Log = require("./Logger")
+let cachedmaps = null
 
 module.exports = (newscores, user, firstmap, DiscordClient) => {
 	if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
 	const topchannel = DiscordClient.channels.cache.get(top1feedChannel)
-	const Logger = new Log(DiscordClient)
 	function FormatDiff(diff) {
 		if(diff != "ExpertPlus") return diff
 		return "Expert+"
@@ -59,14 +58,13 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 		return map.PlayerCount
 	}
 	return new Promise(async (resolve, reject) => {
-		Logger.addLog(user.beatsaber, `New from ${user.realname}`)
 		let newmaps = []
 		let uniqueBaseLevels = {}
 		let updateBulkWrite = []
 		let playHistory = user.playHistory
 		let mapMode = newscores.length >= 30 ? true : false
 		let maps
-		if(mapMode) maps = await LevelSchema.find({})
+		if(mapMode) maps = cachedmaps || await LevelSchema.find({})
 		for await(const score of newscores) {
 			playHistory = pushPlayHistory(playHistory, score.date)
 			let map
@@ -80,7 +78,6 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 						"filter": { "LevelID": score.map },
 						"update": { $set: { "PlayerCount": PlayerCount, "Leaderboard": Leaderboard }}
 					}})
-					Logger.addLog(user.beatsaber, `Score ${score.score} not better than ${map.TopScore}`)
 					continue
 				}
 				if(user.beatsaber == map.TopPlayer) {
@@ -90,7 +87,6 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 					}})
 					continue
 				}
-				Logger.addLog(user.beatsaber, `Better score ${score.score} better than ${map.TopScore}`)
 				updateBulkWrite.push({ updateOne: {
 					"filter": { "LevelID": score.map },
 					"update": { $set: { 
@@ -147,8 +143,6 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 				}]
 			}
 			newmaps.push(newmap)
-			Logger.sendSingle(JSON.stringify(newmap))
-			Logger.addLog(user.beatsaber, `New map ${newmap.LevelID}`)
 			if(uniqueBaseLevels[score.hash]) continue
 			uniqueBaseLevels[score.hash] = {
 				"SongName": score.songName,
@@ -182,7 +176,7 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 			"lastmapdate": firstmap.date,
 			"playHistory": playHistory
 		})
-		Logger.sendLog(user.beatsaber)
+		if(maps) cachedmaps = maps
 		newscores = null
 		maps = null
 		updateBulkWrite = null

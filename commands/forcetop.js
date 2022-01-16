@@ -1,7 +1,6 @@
 const errorhandle = require("../functions/error");
 const Top = require("../functions/TopFeed/Top")
 const UserSchema = require("../models/UserSchema")
-const fetch = require("node-fetch")
 const StoreUserFull = require("../functions/TopFeed/StoreUserFull")
 const GetCodes = require("../functions/TopFeed/GetCodes")
 const GetMaxScores = require("../functions/TopFeed/GetMaxScores")

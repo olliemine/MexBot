@@ -3,7 +3,7 @@ const errorhandle = require("../error")
 const fetch = require("node-fetch")
 const BaseLevelSchema = require("../../models/BaseLevelSchema")
 
-module.exports = (DiscordClient, Logger) => {
+module.exports = (DiscordClient) => {
 	return new Promise(async (resolve, reject) => {
 		console.log("execution")
 		let updateBulkWrite = []
@@ -18,7 +18,6 @@ module.exports = (DiscordClient, Logger) => {
 			.then(async (res) => {
 				if(res.status == 404) {
 					for await(var map of maps) {
-						Logger.addLog("Code", `deleting maps`)
 						await LevelSchema.deleteMany({ "Hash": map})
 						await BaseLevelSchema.deleteOne({ "Hash": map })
 					}
@@ -30,14 +29,14 @@ module.exports = (DiscordClient, Logger) => {
 				}
 				const body = await res.json()
 				for await(var map of maps) {
-					let info = body[map.toLowerCase()]
+					let info = maps.length == 1 ? body : body[map.toLowerCase()]
 					if(!info) {
 						updateBulkWrite.push({ deleteMany: {
 							"filter": { "Hash": map }
-						} })
+						}})
 						baseUpdateBulkWrite.push({ deleteOne: {
 							"filter": { "Hash": map }
-						} })
+						}})
 						continue
 					}
 					if(info.versions[0].hash.toUpperCase() != map) {
@@ -47,7 +46,6 @@ module.exports = (DiscordClient, Logger) => {
 						baseUpdateBulkWrite.push({ deleteOne: {
 							"filter": { "Hash": map }
 						} })
-						Logger.addLog("Code", `deleting ${map}`)
 						continue
 					}
 					updateBulkWrite.push({ updateMany: {
@@ -63,7 +61,6 @@ module.exports = (DiscordClient, Logger) => {
 			})
 		}
 		let allHashes = await LevelSchema.find({ Code: null }).distinct("Hash")
-		Logger.addLog("Code", `All uniqs ${allHashes.length}`)
 		let mapChunks = []
 		for (let i = 0; i < allHashes.length; i += 50) {
 			mapChunks.push(allHashes.slice(i, i + 50))
@@ -77,7 +74,6 @@ module.exports = (DiscordClient, Logger) => {
 		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 		await BaseLevelSchema.bulkWrite(baseUpdateBulkWrite, { ordered: false })
 		console.log("finished exporting")
-		Logger.sendLog("Code")
 		resolve()
 	})
 }

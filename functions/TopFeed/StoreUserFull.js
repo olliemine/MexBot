@@ -4,6 +4,7 @@ const Score = require("./Score")
 
 module.exports = (userid, DiscordClient) => {
 	return new Promise(async (resolve, reject) => {
+		console.log(userid)
 		let newscores = []
 		let passed = false
 		let firstmap
