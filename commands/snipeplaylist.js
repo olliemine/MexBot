@@ -53,8 +53,8 @@ module.exports = {
 			})
 		})
 		const res = await GetUser.basicSearch(userinfo.beatsaber)
-		if(!res.status) return ErrorEmbed(`Unknown Error ${res.info}`)
-		const body = res.info
+		if(!res.status) return ErrorEmbed(`Unknown Error ${res.body}`)
+		const body = res.body
 		var response = await fetch(body.profilePicture)
 		var buffer = await response.buffer()
 		var base64data = buffer.toString('base64')

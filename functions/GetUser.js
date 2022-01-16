@@ -35,7 +35,7 @@ async function resResolve(res, func, full) {
 * Id Scoresaber lookup
 *
 * @param {String} id
-* @return {{status: boolean, body: ScoresaberUserBody}} status of operation and information about the result
+* @return {Promise<{status: boolean, body: ScoresaberUserBody}>} status of operation and information about the result
 */
 module.exports.idSearch = async (id) => {
 	const res = await fetch(`${scoresaberApi}/player/${id}/full`)
@@ -46,7 +46,7 @@ module.exports.idSearch = async (id) => {
 * Basic Id Scoresaber lookup
 *
 * @param {String} id
-* @return {{status: boolean, body: ScoresaberUserBody}} status of operation and information about the result
+* @return {Promise<{status: boolean, body: ScoresaberUserBody}>} status of operation and information about the result
 */
 module.exports.basicSearch = async (id) => {
 	const res = await fetch(`${scoresaberApi}/player/${id}/basic`)
@@ -56,7 +56,7 @@ module.exports.basicSearch = async (id) => {
 /** 
 * Name Scoresaber Lookup
 * @param {String} name
-* @return {{status: boolean, body: ScoresaberUserBody}} status of operation and information about the result
+* @return {Promise<{status: boolean, body: ScoresaberUserBody}>} status of operation and information about the result
 */
 module.exports.nameSearch = async (name) => {
 	if(name.length < 3 || name.length > 32) return {status: false, body: `404 Invalid Name`}
@@ -69,7 +69,7 @@ module.exports.nameSearch = async (name) => {
 * Id, Link or Name Scoresaber lookup
 *
 * @param {String} full - ID or LINK or NAME
-* @return {{status: boolean, body: ScoresaberUserBody}} status of operation and information about the result
+* @return {Promise<{status: boolean, body: ScoresaberUserBody}>} status of operation and information about the result
 */
 module.exports.fullSearch = async (full) => {
 	const regex = new RegExp("^https:\/\/scoresaber.com\/u\/[0-9]*(\\?.*)?$", "i")

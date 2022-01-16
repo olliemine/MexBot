@@ -23,8 +23,8 @@ module.exports = {
 		const user = await GetUserInfo()
 		if(!user) return message.channel.send({content: "No user found"})
 		const res = await GetUser.basicSearch(user.beatsaber)
-		if(!res.status) return message.channel.send({content: `Error ${res.info}`})
-		const body = res.info
+		if(!res.status) return message.channel.send({content: `Error ${res.body}`})
+		const body = res.body
 		if(body.inactive == true) return message.channel.send({content: "User still inactive"})
 		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) return message.channel.send({content: "User has been activated"})

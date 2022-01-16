@@ -17,8 +17,8 @@ module.exports = {
 		const time = new Date()
 		if(+args[0]) {
 			const res = await GetUser.fullSearch(args.join(" "))
-			if(!res.status) return message.channel.send({content: `Error ${res.info}`})
-			const body = res.info
+			if(!res.status) return message.channel.send({content: `Error ${res.body}`})
+			const body = res.body
 			if(body.country != "MX") return message.channel.send({content: "User is not from MX"})
 			let userinfo = await UserSchema.findOne({beatsaber: body.id})
 			if(body.inactive && userinfo?.lastmap) return message.channel.send({content: "No updates are needed"})

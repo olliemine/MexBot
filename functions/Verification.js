@@ -14,8 +14,8 @@ module.exports = async (DiscordClient, user, scoresaber) => {
 		if(pfp == "https://cdn.scoresaber.com/avatars/steam.png") fetch(`https://scoresaber.com/api/user/${id}/refresh`)
 	}
 	const res = await GetUser.fullSearch(scoresaber)
-	if(!res.status) throw [res.info, `User ${user.user.username} recieved error ${res.info} on ${scoresaber}`]
-	const body = res.info
+	if(!res.status) throw [res.body, `User ${user.user.username} recieved error ${res.body} on ${scoresaber}`]
+	const body = res.body
 	const exists = await UserSchema.findOne({ beatsaber: body.id })
 	if(exists && exists.discord && exists.dsactive) throw ["Ya hay una usuario con esta cuenta, Si deverdad es tu cuenta porfavor contacta a un Admin", `Account ${body.name} has already been taken ${user.user.username}`]
 	Refresh(body.id, body.profilePicture)
