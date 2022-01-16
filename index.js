@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-const { token, redisuri } = require("./config.json")
+//const { token, redisuri } = require("./config.json")
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
