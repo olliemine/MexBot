@@ -2,6 +2,7 @@ const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const fetch = require("node-fetch")
 const { MessageEmbed, MessageAttachment } = require("discord.js")
+const GetUser = require("../functions/GetUser")
 
 module.exports = {
 	name : "snipeplaylist",
@@ -51,9 +52,9 @@ module.exports = {
 				}]
 			})
 		})
-		const res = await fetch(`https://scoresaber.com/api/player/${userinfo.beatsaber}/basic`)
-		if(res.status != 200) return ErrorEmbed(`Unknown Error ${res.status} ${res.statusText}`)
-		const body = await res.json()
+		const res = await GetUser.basicSearch(userinfo.beatsaber)
+		if(!res.status) return ErrorEmbed(`Unknown Error ${res.info}`)
+		const body = res.info
 		var response = await fetch(body.profilePicture)
 		var buffer = await response.buffer()
 		var base64data = buffer.toString('base64')

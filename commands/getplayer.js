@@ -1,8 +1,8 @@
-const fetch = require('node-fetch');
 const { MessageEmbed, MessageAttachment } = require("discord.js");
 const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const { ChartJSNodeCanvas  } = require('chartjs-node-canvas');
+const GetUser = require("../functions/GetUser")
 let users = []
 
 module.exports = {
@@ -28,21 +28,33 @@ module.exports = {
 		function escapeRegExp(text) {
 			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 		}
+		function ErrorEmbed(description) {
+			const embed = new MessageEmbed()
+			.setTitle("Error!")
+			.setDescription(description)
+			.setColor("#F83939")
+			return message.channel.send({ embeds: [embed]})
+		}
+		async function GetPlayerData(data) {
+			const info = await GetUser.fullSearch(data)
+			if(!info.status) return ErrorEmbed(info.info)
+			return BuildEmbed(info.info)
+		}
 		if (!Array.isArray(args) || !args.length) {
 			cacheduser = users.find(r => r.discord == message.author.id)
-			if(cacheduser) return GetPlayerDataID(cacheduser.beatsaber)
+			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
 			var user = await UserSchema.findOne({ discord: message.author.id })
-			if(user) return GetPlayerDataID(user.beatsaber)
+			if(user) return GetPlayerData(user.beatsaber)
 			return message.channel.send({ content: "Tienes que mencionar a un usuario."})
 		} else {
 			var user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 			let userschema
 			if(user) userschema = await UserSchema.findOne({ discord: user.id })
-			if(userschema) return GetPlayerDataID(userschema.beatsaber)
+			if(userschema) return GetPlayerData(userschema.beatsaber)
 			const regex = new RegExp(["^", escapeRegExp(args.join(" ")), "$"].join(""), "i")
 			cacheduser = users.find(r => regex.test(r.realname))
-			if(cacheduser) return GetPlayerDataID(cacheduser.beatsaber)
-			GetPlayerDataName(args.join("%20"))
+			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
+			GetPlayerData(args.join("%20"))
 		}
 		async function GetGraph(user) {
 			function findMissingNumbers(arr) {
@@ -134,13 +146,6 @@ module.exports = {
 			if(number > 0) return "+"
 			return ""
 		}
-		function ErrorEmbed(description) {
-			const embed = new MessageEmbed()
-			.setTitle("Error!")
-			.setDescription(description)
-			.setColor("#F83939")
-			return message.channel.send({ embeds: [embed]})
-		}
 		async function BuildEmbed(data) {
 			const history = data.histories.split(",")
 			const userinfo = await UserSchema.findOne({ beatsaber: data.id })
@@ -169,28 +174,6 @@ Ranked playcount: ${data.scoreStats.rankedPlayCount}${await top1ScoreCount()}`)
 				return
 			}
 			message.channel.send({ embeds: [embed]})
-		}
-		function GetPlayerDataID(Id) {
-			const IDURL = new URL(`https://scoresaber.com/api/player/${Id}/full`)
-			fetch(IDURL)
-			.then(async res => {
-				if(res.status == 429) return ErrorEmbed("Api Overloaded! Please try again in some seconds")
-				if(res.status != 200) return ErrorEmbed(`Unknown Error ${res.status} ${res.statusText}`)
-				const body = await res.json()
-				BuildEmbed(body)
-			})
-		}
-		function GetPlayerDataName(name) {
-			if(name.length < 3 || name.length > 32) return message.channel.send({content: "Invalid Name length"})
-			const NAMEURL = new URL(`https://scoresaber.com/api/players?search=${name}`)
-			fetch(NAMEURL)
-			.then(async res => {
-				if(res.status == 429) return ErrorEmbed("Api Overloaded! Please try again in some seconds")
-				if(res.status == 404 && +name) return GetPlayerDataID(name)
-				if(res.status != 200) return ErrorEmbed(`Unknown Error ${res.status} ${res.statusText}`)
-				const body = await res.json()
-				BuildEmbed(body.players[0])
-			})
 		}
 	}
 }

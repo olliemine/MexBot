@@ -1,5 +1,5 @@
 const Discord = require("discord.js")
-//const { token, redisuri } = require("./config.json")
+const { token, redisuri } = require("./config.json")
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -200,8 +200,8 @@ function SendAndDelete(msgcontent, msg) {
 	})
 }
 
-function VerificationHandler(msg, member, id, link = true) {
-	VerificacionID(client, member, id, link)
+function VerificationHandler(msg, member, id) {
+	VerificacionID(client, member, id)
 	.then(data => {
 		SendAndDelete("Ahora estas verificado!", msg)
 		infohandle(client, "Verification", `User ${data[0]} verified with account ${data[1]}`)
@@ -228,20 +228,5 @@ async function Verificacion(msg) {
 		member.send({ content: "Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan"})
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
-	//ID
-	if(+msg.content) return VerificationHandler(msg, member, msg.content)
-	if(validURL(msg.content)) { //LINK?
-		let URLseparated = []
-		URLseparated = msg.content.split("/")
-		return VerificationHandler(msg, member, URLseparated[URLseparated.length - 1], false)
-	} 
-	//NAME?
-	if(msg.content.length < 3 || msg.content.length > 32) return SendAndDelete("Nombre Invalido", msg)
-	const NAMEURL = new URL(`https://scoresaber.com/api/players?search=${msg.content}`)
-	const res = await fetch(NAMEURL)
-	if(res.status != 200) return SendAndDelete(`Unexpected Error ${res.status} ${res.statusText}`)
-	const body = await res.json()
-	if(body.error) return SendAndDelete("Nombre Invalido", msg)
-	if(body.players[1]) return SendAndDelete("Hay varios usuarios con este nombre, porfavor utiliza el Id", msg)
-	return VerificationHandler(msg, member, body.players[0].id)
+	VerificationHandler(msg, member, msg.content)
 }

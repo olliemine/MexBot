@@ -1,7 +1,7 @@
-const fetch = require("node-fetch")
 const UserSchema = require("../models/UserSchema")
 const CheckRoles = require("../functions/CheckRoles")
 const { serverId } = require("../info.json")
+const GetUser = require("../functions/GetUser")
 
 module.exports = {
 	name : "active",
@@ -22,9 +22,9 @@ module.exports = {
 		const member = message.mentions.users.first()
 		const user = await GetUserInfo()
 		if(!user) return message.channel.send({content: "No user found"})
-		const res = await fetch(`https://scoresaber.com/api/player/${user.beatsaber}/basic`)
-		if(res.status != 200) return message.channel.send({content: `Error ${res.status} ${res.statusText}`})
-		const body = await res.json()
+		const res = await GetUser.basicSearch(user.beatsaber)
+		if(!res.status) return message.channel.send({content: `Error ${res.info}`})
+		const body = res.info
 		if(body.inactive == true) return message.channel.send({content: "User still inactive"})
 		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) return message.channel.send({content: "User has been activated"})

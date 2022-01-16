@@ -92,6 +92,8 @@ module.exports = async (DiscordClient) => {
 	const channel = await DiscordClient.channels.cache.get(rankedmapsChannel)
 	let firsttime = true
 	let updateBulkWrite = []
+	let embeds = [[]]
+	let embedsPointer = 0
 	for await(const leaderboards of NewRankedMaps) {
 		const body = leaderboards.shift()
 		var response = await fetch(body.coverImage)
@@ -103,8 +105,11 @@ module.exports = async (DiscordClient) => {
 		.setThumbnail(body.coverImage)
 		.setDescription(`Mapped by ${body.mapper}\n\n${formatDiffs(leaderboards)}\n[Download](https://beatsaver.com/maps/${code})`)
 		.setColor(palette.Vibrant.hex)
-		let text = firsttime ? `<@&${rankedNotiRole}>` : " "
-		channel.send({ embeds: [embed], content: text })
+		if(embeds[embedsPointer].length >= 5) {
+			embedsPointer++
+			embeds[embedsPointer] = []
+		}
+		embeds[embedsPointer].push(embed)
 		await LevelSchema.updateMany({ Hash: body.hash }, { Ranked: true })
 		await BaseLevelSchema.updateOne({ Hash: body.hash }, { Ranked: true })
 		leaderboards.forEach(leaderboard => {
@@ -113,8 +118,12 @@ module.exports = async (DiscordClient) => {
 				"update": { $set: { "Stars": leaderboard.stars  }}
 			}})
 		})
-		firsttime = false
 	}
+	embeds.forEach(e => {
+		let text = firsttime ? `<@&${rankedNotiRole}>` : " "
+		channel.send({ embeds: e, content: text })
+		firsttime = false
+	})
 	await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 	await redisClient.set("LastRankedMap", NewLastRankedMap)
 	redisClient.quit()

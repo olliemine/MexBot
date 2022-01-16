@@ -5,6 +5,7 @@ const fetch = require("node-fetch")
 const StoreUserFull = require("../functions/TopFeed/StoreUserFull")
 const GetCodes = require("../functions/TopFeed/GetCodes")
 const GetMaxScores = require("../functions/TopFeed/GetMaxScores")
+const GetUser = require("../functions/GetUser")
 
 module.exports = {
 	name: "forcetop",
@@ -16,9 +17,9 @@ module.exports = {
 		message.channel.sendTyping()
 		const time = new Date()
 		if(+args[0]) {
-			const res = await fetch(`https://scoresaber.com/api/player/${args[0]}/full`)
-			if(res.status != 200) return message.channel.send({content: `Error ${res.status} ${res.statusText}`})
-			const body = await res.json()
+			const res = await GetUser.fullSearch(args.join(" "))
+			if(!res.status) return message.channel.send({content: `Error ${res.info}`})
+			const body = res.info
 			if(body.country != "MX") return message.channel.send({content: "User is not from MX"})
 			let userinfo = await UserSchema.findOne({beatsaber: body.id})
 			if(body.inactive && userinfo?.lastmap) return message.channel.send({content: "No updates are needed"})
