@@ -205,7 +205,7 @@ module.exports = {
 						await CacheControl.GotoPage(mapResults.length - 1)
 						break
 					}
-					CacheControl.BackPage()
+					await CacheControl.BackPage()
 					break
 				case "backdiff":
 					if(CacheControl.diff == CacheControl.GetNumberOfDiffs()) {
