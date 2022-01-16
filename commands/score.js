@@ -89,6 +89,7 @@ module.exports = {
 			}
 			BackPage() {
 				this.page--
+				if(!this.maps[this.page]) await this.AddMap()
 				this.diff = this.maps[this.page].LastDiff
 			}
 			async GotoPage(page) {
@@ -125,6 +126,7 @@ module.exports = {
 				return this.maps[this.page].Difficulties.length - 1
 			}
 		}
+		if(!args.length) return message.channel.send({ content: "Please input the name of a map"})
 		let mapResults = await BaseLevelSchema.aggregate([
 			{
 				'$search': {
