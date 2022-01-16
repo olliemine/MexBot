@@ -87,7 +87,7 @@ module.exports = {
 				if(!this.maps[this.page]) await this.AddMap()
 				this.diff = this.maps[this.page].LastDiff
 			}
-			BackPage() {
+			async BackPage() {
 				this.page--
 				if(!this.maps[this.page]) await this.AddMap()
 				this.diff = this.maps[this.page].LastDiff
