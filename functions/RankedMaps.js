@@ -44,7 +44,7 @@ module.exports = async (DiscordClient) => {
 	const timeout = (prom, time) => Promise.race([prom, new Promise((acc, rej) => setTimeout(() => acc(false), 5000))]);
 	let NewLastRankedMap
 	let found = false
-	let page = 1
+	let page = 0
 	let newestHash
 	let arrayNum = -1
 	let NewRankedMaps = []
@@ -85,10 +85,14 @@ module.exports = async (DiscordClient) => {
 				"stars": leaderboard.stars
 			})
 		})
+		if(!found && page == 0) {
+			page = 2
+			continue
+		}
 		if(!found) page++
 	}
 	if(!NewRankedMaps.length) return redisClient.quit()
-	console.log(NewRankedMaps)
+	console.log(NewRanehkedMaps)
 	const channel = await DiscordClient.channels.cache.get(rankedmapsChannel)
 	let firsttime = true
 	let updateBulkWrite = []
@@ -115,7 +119,7 @@ module.exports = async (DiscordClient) => {
 		leaderboards.forEach(leaderboard => {
 			updateBulkWrite.push({ updateOne: {
 				"filter": { "LevelID": leaderboard.id },
-				"update": { $set: { "Stars": leaderboard.stars  }}
+				"update": { $set: {"Stars": leaderboard.stars  }}
 			}})
 		})
 	}
