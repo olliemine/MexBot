@@ -6,7 +6,7 @@ const GetUser = require("../functions/GetUser")
 
 module.exports = {
 	name : "snipeplaylist",
-	aliases : ["slist"],
+	aliases : ["slist", "splaylist"],
 	admin: false,
 	dm: true,
 	cooldown: 2,
