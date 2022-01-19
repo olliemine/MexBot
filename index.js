@@ -23,32 +23,40 @@ client.login(process.env.TOKEN)
 const redis = require("redis");
 const redisClient = redis.createClient({ url: process.env.REDIS_URL })
 const WebSocket = require('ws');
-const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
 redisClient.connect()
 let RecentlyExecuted = []
+let BeatsaverWebSocketReconnectRetries = 0
 
-beatsaversocket.onopen = () => {
-	console.log("Connected to Beatsaver socket")
-}
-beatsaversocket.onclose = (event) => {
-	infohandle(client, "Beatsaver socket", `Closed ${event.code} ${event.reason}`)
-}
-beatsaversocket.onerror = (err) => {
-	errorhandle(client, err)
-}
-beatsaversocket.onmessage = async (msg) => {
-	try{
-		let data = JSON.parse(msg.data)
-		data = data.msg
-		if(!data.versions) return
-		if(data.createdAt == data.versions[0].createdAt) return
-		console.log("Updated")
-		const level = await LevelSchema.findOne({Code: data.id })
-		if(!level) return
-		await LevelSchema.deleteMany({Code: data.id})
-		await BaseLevelSchema.deleteOne({Code: data.id})
-	} catch(err){
+function BeatsaverWebSocket() {
+	if(BeatsaverWebSocketReconnectRetries > 3) return infohandle(client, "Beatsaver socket", "Connection Closed, Retries exceded")
+	const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
+	beatsaversocket.onopen = () => {
+		console.log("Connected to Beatsaver socket")
+	}
+	beatsaversocket.onclose = () => {
+		console.log("Connection closed, retrying in 5 seconds")
+		setTimeout(() => {
+			BeatsaverWebSocketReconnectRetries++
+			BeatsaverWebSocket()
+		}, 5000)
+	}
+	beatsaversocket.onerror = (err) => {
 		errorhandle(client, err)
+	}
+	beatsaversocket.onmessage = async (msg) => {
+		try{
+			let data = JSON.parse(msg.data)
+			data = data.msg
+			if(!data.versions) return
+			if(data.createdAt == data.versions[0].createdAt) return
+			const level = await LevelSchema.findOne({Code: data.id })
+			if(!level) return
+			console.log("Updated")
+			await LevelSchema.deleteMany({Code: data.id})
+			await BaseLevelSchema.deleteOne({Code: data.id})
+		} catch(err){
+			errorhandle(client, err)
+		}
 	}
 }
 
@@ -60,6 +68,7 @@ redisClient.on("error", (err) => {
 	errorhandle(client, err)
 })
 client.once("ready", async() => {
+	BeatsaverWebSocket()
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
