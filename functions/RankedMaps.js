@@ -92,7 +92,6 @@ module.exports = async (DiscordClient) => {
 		if(!found) page++
 	}
 	if(!NewRankedMaps.length) return redisClient.quit()
-	console.log(NewRanehkedMaps)
 	const channel = await DiscordClient.channels.cache.get(rankedmapsChannel)
 	let firsttime = true
 	let updateBulkWrite = []

@@ -1,0 +1,17 @@
+// This is not an actual command and its used only for demonstration purposes.
+
+module.exports = {
+	name : "", // Command Name
+	aliases: [], // Array of all possible aliases
+	admin: true, // Whether to only allow the admin to execute the command
+	dm: true, // Whether to allow the command to be executed in the Direct Messages
+	dev: true, // Whether to only allow the dev user to execute the command
+	cooldown: -1, // Cooldown of the command in seconds (-1 to disable)
+	execute(message, DiscordClient, args) {
+		// Command execution function
+
+		// message: the Message Object to the command message
+		// DiscordClient: the Discord Client
+		// args: The command arguments passed
+	},
+}
