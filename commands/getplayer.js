@@ -37,8 +37,8 @@ module.exports = {
 		}
 		async function GetPlayerData(data) {
 			const info = await GetUser.fullSearch(data)
-			if(!info.status) return ErrorEmbed(info.info)
-			return BuildEmbed(info.info)
+			if(!info.status) return ErrorEmbed(info.body)
+			return BuildEmbed(info.body)
 		}
 		if (!Array.isArray(args) || !args.length) {
 			cacheduser = users.find(r => r.discord == message.author.id)
