@@ -54,7 +54,9 @@ module.exports = {
 			const regex = new RegExp(["^", escapeRegExp(args.join(" ")), "$"].join(""), "i")
 			cacheduser = users.find(r => regex.test(r.realname))
 			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
-			GetPlayerData(args.join("%20"))
+			const info = await GetUser.nameSearch(args.join(" "))
+			if(!info.status) return ErrorEmbed(info.body)
+			return BuildEmbed(info.body.players[0])
 		}
 		async function GetGraph(user) {
 			function findMissingNumbers(arr) {
@@ -147,6 +149,7 @@ module.exports = {
 			return ""
 		}
 		async function BuildEmbed(data) {
+			if(!data.name) return ErrorEmbed("Unknown data given, in simpler terms, olliemine is a stupid")
 			const history = data.histories.split(",")
 			const userinfo = await UserSchema.findOne({ beatsaber: data.id })
 			const top1ScoreCount = async () => {
