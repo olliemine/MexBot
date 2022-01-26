@@ -77,7 +77,7 @@ module.exports = {
 				.setColor(this.maps[this.page].Color)
 				.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
 				.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
-				.setURL(`https://beatsaver.com/maps/${info.Code}`)
+				.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
 				.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}\nOperation took ${new Date - start}ms\n\nScore of ${info.Score}${err}\nResult ${this.page + 1} of ${mapResults.length}`)
 				.setFooter("In beta, if you have any feedback you can send it to olliemine")
 				this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [embed]})
@@ -117,7 +117,7 @@ module.exports = {
 				.setColor(this.maps[this.page].Color)
 				.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
 				.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
-				.setURL(`https://beatsaver.com/maps/${info.Code}`)
+				.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
 				.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}`)
 				this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [], embeds: [embed]})
 				this.maps = []
