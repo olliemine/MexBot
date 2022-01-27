@@ -18,7 +18,7 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 			if(index != -1) {
 				this.plays.splice(index, 1)
 			} 
-			this.plays.push({
+			this.plays.unshift({
 				LevelID: score.map,
 				Hash: score.hash,
 				PP: score.pp == 0 ? null : score.pp 

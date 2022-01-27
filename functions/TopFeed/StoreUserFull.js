@@ -68,6 +68,7 @@ module.exports = (userid, DiscordClient) => {
 			})
 			if(passed) break
 		}
+		newscores.reverse()
 		await StoreMaps(newscores, userid, firstmap, DiscordClient).then(() =>{
 			resolve()
 			return

@@ -98,6 +98,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 			})
 		}
 		await UpdatePlayers()
+		if(!NewPlay) return
 		await GetAll()
 		return
 };
