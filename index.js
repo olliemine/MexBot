@@ -1,5 +1,5 @@
+require('dotenv').config()
 const Discord = require("discord.js")
-//const { token, redisuri } = require("./config.json")
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -8,13 +8,14 @@ const LevelSchema = require("./models/LevelSchema")
 const BaseLevelSchema = require("./models/BaseLevelSchema")
 const errorhandle = require("./functions/error")
 const infohandle = require("./functions/info");
-const UpdateUsers = require("./functions/UpdateUsers");
+const UpdateUsers = require("./functions/UpdateUsers")
 const Top = require("./functions/TopFeed/Top")
 const CheckRoles = require("./functions/CheckRoles")
-const fs = require("fs");
+const fs = require("fs")
 const getplayer = require("./commands/getplayer")
 const VerificacionID = require("./functions/Verification")
 const RankedMaps = require("./functions/RankedMaps")
+const {GetBacktext} = require("./Util")
 const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
 client.commands = new Discord.Collection();
 client.aliases = new Discord.Collection();
@@ -60,7 +61,7 @@ function BeatsaverWebSocket() {
 	}
 }
 
-redisClient.once("ready", () => {
+redisClient.once("ready", async () => {
 	console.log("Connected to redis")
 	redisClient.quit()
 })
@@ -134,16 +135,12 @@ client.on("guildMemberRemove", async (member) => {
 		dsactive: false
 	})
 })
-function GetBacktext(user) {
-	if(!user.bsactive) return "IA"
-	if(user.country != "MX") return user.country
-	return `#${user.lastrank}`
-}
+
 client.on("guildMemberAdd", async (member) => {
 	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
-		const user = await UserSchema.findOne({ discord: member.id })
-		const backtext = GetBacktext(user)
+		const user = await UserSchema.findOne({ discord: member.id }, { name: 1 })
+		const backtext = GetBacktext(user, "user")
 		member.setNickname(`${backtext} | ${user.name}`)
 		if(country == "MX") {
 			member.roles.add(info.verificadoRole)

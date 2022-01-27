@@ -2,8 +2,7 @@ const errorhandle = require("../functions/error");
 const Top = require("../functions/TopFeed/Top")
 const UserSchema = require("../models/UserSchema")
 const StoreUserFull = require("../functions/TopFeed/StoreUserFull")
-const GetCodes = require("../functions/TopFeed/GetCodes")
-const GetMaxScores = require("../functions/TopFeed/GetMaxScores")
+const GetAll = require("../functions/TopFeed/GetAll")
 const GetUser = require("../functions/GetUser")
 
 module.exports = {
@@ -20,7 +19,7 @@ module.exports = {
 			if(!res.status) return message.channel.send({content: `Error ${res.body}`})
 			const body = res.body
 			if(body.country != "MX") return message.channel.send({content: "User is not from MX"})
-			let userinfo = await UserSchema.findOne({beatsaber: body.id})
+			let userinfo = await UserSchema.findOne({beatsaber: body.id}, {plays: 0})
 			if(body.inactive && userinfo?.lastmap) return message.channel.send({content: "No updates are needed"})
 			if(!userinfo) {
 				userinfo = {
@@ -35,14 +34,14 @@ module.exports = {
 					"lastmap": null,
 					"lastmapdate": null,
 					"snipe": null,
-					"playHistory": []
+					"playHistory": [],
+					"plays": []
 				}
 				await UserSchema(userinfo).save()
 			}
 			console.log(userinfo.realname)
 			await StoreUserFull(userinfo, DiscordClient)
-			await GetCodes()
-			await GetMaxScores()
+			await GetAll()
 			return message.channel.send({content: `Succesfully saved player ${userinfo.realname}, ${new Date() - time}`})
 		}
 		try {

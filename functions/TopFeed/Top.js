@@ -3,8 +3,7 @@ const UserSchema = require("../../models/UserSchema")
 const StoreMaps = require("./StoreMaps")
 const Score = require("./Score")
 const StoreUserFull = require("./StoreUserFull")
-const GetCodes = require("./GetCodes")
-const GetMaxScores = require("./GetMaxScores")
+const GetAll = require("./GetAll")
 
 module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		const players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
@@ -92,15 +91,13 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 				for await (const user of checkAgain) {
 					await StoreUserFull(user, DiscordClient).then(() => {
 					}).catch(() => {
-						console.log(`User ${user.realname} couldnt be check)ed`)
+						console.log(`User ${user.realname} couldnt be checked`)
 					})
 				}
 				resolve()
 			})
 		}
 		await UpdatePlayers()
-		if(!NewPlay) return
-		await GetCodes(DiscordClient)
-		await GetMaxScores()	
+		await GetAll()
 		return
 };

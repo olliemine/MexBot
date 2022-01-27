@@ -1,6 +1,7 @@
 const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const BaseLevelSchema = require("../models/BaseLevelSchema")
+const {GetUserInfo} = require("../Util")
 
 module.exports = {
 	name : "delscoresuser",
@@ -9,21 +10,11 @@ module.exports = {
 	dev: true,
 	cooldown: -1,
 	async execute(message, DiscordClient, args) {
-		function escapeRegExp(text) {
-			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-		}
-		async function GetUserInfo() {
-			if(member) return await UserSchema.findOne({ discord: member.id })
-			if(+args[0]) return await UserSchema.findOne({ beatsaber: args[0] })
-			const regex = new RegExp(["^", escapeRegExp(args.join(" ")), "$"].join(""), "i")
-			return await UserSchema.findOne({realname: regex})
-		}
-		const member = message.mentions.users.first()
-		const user = await GetUserInfo()
+		const user = await GetUserInfo(args, message)
 		if(!user) {
 			return message.channel.send({content: "No user found."})
 		}
-		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { lastmap: null, lastmapdate: null, playHistory: []})
+		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { lastmap: null, lastmapdate: null, playHistory: [], plays: []})
 		let levels = await LevelSchema.find({
 			Leaderboard: {$elemMatch: {PlayerID: user.beatsaber}}
 		})

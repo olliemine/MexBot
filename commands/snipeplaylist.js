@@ -1,8 +1,8 @@
-const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const fetch = require("node-fetch")
 const { MessageEmbed, MessageAttachment } = require("discord.js")
 const GetUser = require("../functions/GetUser")
+const {GetUserInfo} = require("../Util")
 
 module.exports = {
 	name : "snipeplaylist",
@@ -18,15 +18,9 @@ module.exports = {
 			.setColor("#F83939")
 			return message.channel.send({ embeds: [embed]})
 		}
-		async function GetUserInfo() {
-			const member = message.mentions.users.first()
-			if(member) return await UserSchema.findOne({ discord: member.id })
-			if(+args[0]) return await UserSchema.findOne({ beatsaber: args[0] })
-			return await UserSchema.findOne({ $text: { $search: args.join(" ") }})
-		}
 		if(!args[0]) return message.channel.send({ content: "Please enter a user."})
-		const userinfo = await GetUserInfo()
-		if(!userinfo?.lastmap) return message.channel.send({ content: "Usuario no tiene cuenta"})
+		const userinfo = await GetUserInfo(args, message)
+		if(!userinfo?.lastmap) return message.channel.send({ content: "Usuario no tiene cuenta o es una cuenta invalida"})
 		const levels = await LevelSchema.find({ TopPlayer: userinfo.beatsaber, PlayerCount: { $gte: 2 }, Code: { $ne: "0" } })
 		if(!levels.length) return message.channel.send({ content: "No snipeable maps found."})
 		let data = {

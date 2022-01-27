@@ -10,7 +10,7 @@ const { serverId, topRoles } = require("../info.json")
 
 module.exports = async (Client) => {
 	let usersupdatedraw = []
-	let users = await UserSchema.find({country: "MX", bsactive: true})
+	let users = await UserSchema.find({country: "MX", bsactive: true}, {playHistory: 0, plays: 0})
 	const server = await Client.guilds.fetch(serverId)
 	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
 	async function GetInfo() {
@@ -50,7 +50,8 @@ module.exports = async (Client) => {
 			"lastmap": null,
 			"lastmapdate": null,
 			"snipe": null,
-			"playHistory": []
+			"playHistory": [],
+			"plays": []
 		}
 		console.log(row.name)
 		await new UserSchema(user).save()
@@ -66,7 +67,7 @@ module.exports = async (Client) => {
 	for await(const user of info) {
 		const userinfo = users.find(element => element.beatsaber == user.id)
 		if(!userinfo) {
-			const exists = await UserSchema.findOne({ beatsaber: user.id })
+			const exists = await UserSchema.findOne({ beatsaber: user.id }, {playHistory: 0, plays: 0})
 			if(exists) {
 				await UpdateIA(exists)
 				continue

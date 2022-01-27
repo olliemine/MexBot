@@ -3,10 +3,28 @@ const UserSchema = require("../../models/UserSchema")
 const { MessageActionRow, MessageButton } = require("discord.js")
 const { top1feedChannel } = require("../../info.json")
 const BaseLevelSchema = require("../../models/BaseLevelSchema")
-let cachedmaps = null
 
 module.exports = (newscores, user, firstmap, DiscordClient) => {
 	if(!newscores || !user || !firstmap) return errorhandle(DiscordClient, new Error("Variable was not provided"))
+	class Plays {
+		constructor (plays) {
+			/**
+			 * @type Array
+			 */
+			this.plays = plays
+		}
+		add(score) {
+			const index = this.plays.findIndex(p => p.LevelID == score.map)
+			if(index != -1) {
+				this.plays.splice(index, 1)
+			} 
+			this.plays.push({
+				LevelID: score.map,
+				Hash: score.hash,
+				PP: score.pp == 0 ? null : score.pp 
+			})
+		}
+	}
 	const topchannel = DiscordClient.channels.cache.get(top1feedChannel)
 	function FormatDiff(diff) {
 		if(diff != "ExpertPlus") return diff
@@ -58,36 +76,41 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 		return map.PlayerCount
 	}
 	return new Promise(async (resolve, reject) => {
+		console.log(`New from ${user.realname}`)
 		let newmaps = []
 		let uniqueBaseLevels = {}
 		let updateBulkWrite = []
 		let playHistory = user.playHistory
+		let plays = new Plays(user.plays)
 		let mapMode = newscores.length >= 30 ? true : false
 		let maps
-		if(mapMode) maps = cachedmaps || await LevelSchema.find({})
+		if(mapMode) maps = await LevelSchema.find({})
 		for await(const score of newscores) {
 			playHistory = pushPlayHistory(playHistory, score.date)
 			let map
 			if(mapMode) map = maps.find(obj => obj.LevelID == score.map)
 			else map = await LevelSchema.findOne({ "LevelID": score.map })
+			plays.add(score)
 			if(map) {
 				const Leaderboard = GetLeaderboard(score, user, map)
 				const PlayerCount = GetPlayerCount(user, map)
 				if(score.score <= map.TopScore) {
-					updateBulkWrite.push({ updateOne: {
+					const update = { updateOne: {
 						"filter": { "LevelID": score.map },
 						"update": { $set: { "PlayerCount": PlayerCount, "Leaderboard": Leaderboard }}
-					}})
+					}}
+					updateBulkWrite.push(update)
 					continue
 				}
 				if(user.beatsaber == map.TopPlayer) {
-					updateBulkWrite.push({ updateOne: {
+					const update = { updateOne: {
 						"filter": { "LevelID": score.map },
 						"update": { $set: { "TopScore": score.score, "Leaderboard": Leaderboard }}
-					}})
+					}}
+					updateBulkWrite.push(update)
 					continue
 				}
-				updateBulkWrite.push({ updateOne: {
+				const update = { updateOne: {
 					"filter": { "LevelID": score.map },
 					"update": { $set: { 
 						"TopScore": score.score,
@@ -96,10 +119,11 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 						"PlayerCount": PlayerCount,
 						"Leaderboard": Leaderboard
 					}}
-				}})
+				}}
+				updateBulkWrite.push(update)
 				if(!user.lastmap) continue
 				let previousname = map.TopPlayerName
-				const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer})
+				const previoususer = await UserSchema.findOne({ beatsaber: map.TopPlayer}, {discord: 1, dsactive: 1, snipe: 1})
 				if(previoususer?.dsactive && previoususer?.snipe) previousname = `<@${previoususer.discord}>`
 				const row = new MessageActionRow()
 				.addComponents(
@@ -174,9 +198,9 @@ module.exports = (newscores, user, firstmap, DiscordClient) => {
 		}, {
 			"lastmap": firstmap.id,
 			"lastmapdate": firstmap.date,
-			"playHistory": playHistory
+			"playHistory": playHistory,
+			"plays": plays.plays
 		})
-		if(maps) cachedmaps = maps
 		newscores = null
 		maps = null
 		updateBulkWrite = null

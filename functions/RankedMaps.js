@@ -1,6 +1,5 @@
 const fetch = require("node-fetch")
 const { rankedmapsChannel, rankedNotiRole } = require("../info.json")
-//const { redisuri } = require("../config.json")
 const infohandle = require("./info")
 const { createClient } = require("redis")
 const { MessageEmbed } = require("discord.js")
@@ -67,6 +66,9 @@ module.exports = async (DiscordClient) => {
 			if(found) return
 			if(leaderboard.id == LastRankedMap) return found = true
 			if(newestHash != leaderboard.songHash) {
+				if(NewLastRankedMap[arrayNum]) NewLastRankedMap[arrayNum].sort((a, b) =>{
+					return b.difficulty.difficulty - a.difficulty.difficulty
+				})
 				newestHash = leaderboard.songHash
 				arrayNum++
 				NewRankedMaps[arrayNum] = []
@@ -90,6 +92,9 @@ module.exports = async (DiscordClient) => {
 			continue
 		}
 		if(!found) page++
+		if(found) NewLastRankedMap[arrayNum].sort((a, b) =>{
+			return b.difficulty.difficulty - a.difficulty.difficulty
+		})
 	}
 	if(!NewRankedMaps.length) return redisClient.quit()
 	const channel = await DiscordClient.channels.cache.get(rankedmapsChannel)

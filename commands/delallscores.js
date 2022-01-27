@@ -11,7 +11,7 @@ module.exports = {
 	async execute(message, DiscordClient, args) {
 		message.channel.send({content: "I hope you know what you are doing, deleting all scores"})
 		await UserSchema.updateMany({country: "MX"}, {
-			lastmap: null, lastmapdate: null, playHistory: []
+			lastmap: null, lastmapdate: null, playHistory: [], plays: []
 		})
 		await LevelSchema.deleteMany()
 		await BaseLevelSchema.deleteMany()

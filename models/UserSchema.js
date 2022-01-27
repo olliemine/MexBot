@@ -25,6 +25,11 @@ const UserSchema = new mongoose.Schema({
 		"plays": Number,
 		"week": Number
 	}],
+	"plays": [{
+		"LevelID": Number,
+		"Hash": String,
+		"PP": Number
+	}]
 })
 
 module.exports = mongoose.model("users", UserSchema)

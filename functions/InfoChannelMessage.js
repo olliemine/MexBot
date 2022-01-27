@@ -7,8 +7,8 @@ module.exports = async (Client, usersupdatedraw) => {
     //Check if its important
 	let important = false
 	for await(let user of usersupdatedraw) {
-		const userinfo = await UserSchema.findOne({ realname: user.user })
-		if(!userinfo.discord && !((user.lastrank > 20 && user.newrank <= 20)
+		const userinfo = await UserSchema.findOne({ realname: user.user }, {dsactive: 1})
+		if(!userinfo.dsactive && !((user.lastrank > 20 && user.newrank <= 20)
 		|| (user.lastrank > 10 && user.newrank <= 10)
 		|| (user.lastrank > 5 && user.newrank <= 5)
 		|| (user.lastrank > 1 && user.newrank == 1)

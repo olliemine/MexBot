@@ -13,7 +13,7 @@ module.exports = {
 	dm: true,
 	cooldown: 4,
 	async start() {
-		usersraw = await UserSchema.find()
+		usersraw = await UserSchema.find({}, {realname: 1, beatsaber: 1, discord: 1})
 		usersraw.forEach(u => {
 			users.push({
 				realname: u.realname,
@@ -43,13 +43,13 @@ module.exports = {
 		if (!Array.isArray(args) || !args.length) {
 			cacheduser = users.find(r => r.discord == message.author.id)
 			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
-			var user = await UserSchema.findOne({ discord: message.author.id })
+			var user = await UserSchema.findOne({ discord: message.author.id }, { beatsaber: 1 })
 			if(user) return GetPlayerData(user.beatsaber)
 			return message.channel.send({ content: "Tienes que mencionar a un usuario."})
 		} else {
 			var user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
 			let userschema
-			if(user) userschema = await UserSchema.findOne({ discord: user.id })
+			if(user) userschema = await UserSchema.findOne({ discord: user.id }, { beatsaber: 1})
 			if(userschema) return GetPlayerData(userschema.beatsaber)
 			const regex = new RegExp(["^", escapeRegExp(args.join(" ")), "$"].join(""), "i")
 			cacheduser = users.find(r => regex.test(r.realname))
@@ -151,7 +151,7 @@ module.exports = {
 		async function BuildEmbed(data) {
 			if(!data.name) return ErrorEmbed("Unknown data given, in simpler terms, olliemine is a stupid")
 			const history = data.histories.split(",")
-			const userinfo = await UserSchema.findOne({ beatsaber: data.id })
+			const userinfo = await UserSchema.findOne({ beatsaber: data.id }, { country: 1, playHistory: 1 })
 			const top1ScoreCount = async () => {
 				LevelCount = await LevelSchema.countDocuments({ TopPlayer: data.id, PlayerCount: { $gte: 2 }})
 				if(LevelCount == 0 && userinfo?.country != "MX") return ""

@@ -15,3 +15,15 @@ module.exports = {
 		// args: The command arguments passed
 	},
 }
+
+module.exports = {
+	name : "",
+	aliases: [],
+	admin: true,
+	dm: true,
+	dev: true,
+	cooldown: -1,
+	execute(message, DiscordClient, args) {
+		
+	},
+}

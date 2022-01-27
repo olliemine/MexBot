@@ -120,23 +120,23 @@ module.exports = {
 				const member = DiscordClient.users.cache.get(id)
 				let user
 				if(member) {
-					user = await UserSchema.findOne({ discord: member.id })
+					user = await UserSchema.findOne({ discord: member.id }, {realname: 1, beatsaber: 1})
 					await AddFilterUser(user, negative, unchanged)
 					continue
 				}
 				if(+argument) {
-					user = await UserSchema.findOne({ beatsaber: argument })
+					user = await UserSchema.findOne({ beatsaber: argument }, {realname: 1, beatsaber: 1})
 					await AddFilterUser(user, negative, unchanged)
 					continue
 				}
-				user = await UserSchema.findOne({ $text: { $search: argument }})
+				user = await UserSchema.findOne({ $text: { $search: argument }}, {realname: 1, beatsaber: 1})
 				await AddFilterUser(user, negative, unchanged)
 				continue
 			}
 			return fil
 		}
 		let warnings = ""
-		const userMessageInfo = await UserSchema.findOne({ discord: message.author.id, country: "MX" })
+		const userMessageInfo = await UserSchema.findOne({ discord: message.author.id, country: "MX" }, {playHistory: 0, plays: 0})
 		const filter = await GetFilter()
 		if(!filter) return message.channel.send({ content: "Unexpected Error"})
 		if(warnings) {
