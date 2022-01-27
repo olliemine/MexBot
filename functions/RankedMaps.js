@@ -54,7 +54,7 @@ module.exports = async (DiscordClient) => {
 	const LastRankedMap = await redisClient.get("LastRankedMap")
 	//const LastRankedMap = 398711
 	while(!found) {
-		const res = await fetch(`https://scoresaber.com/api/leaderboards?ranked=true&page=${page}&withMetadata=false`)
+		const res = await fetch(`https://scoresaber.com/api/leaderboards?ranked=true&page=${page}`)
 		if(res.status != 200) {
 			infohandle(DiscordClient, "RankedMaps", `${res.status} ${res.statusText} on s`)
 			break
