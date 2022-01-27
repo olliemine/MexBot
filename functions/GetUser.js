@@ -26,7 +26,7 @@ async function resResolve(res, func, full) {
 		return func(full)
 	}, 5000)
 	if(res.status == 502) return func(full)
-	if(res.status != 200) return {status: false, info: `${res.status} ${res.statusText}`}
+	if(res.status != 200) return {status: false, body: `${res.status} ${res.statusText}`}
 	const body = await res.json()
 	return {status: true, body: body}
 }
@@ -76,7 +76,7 @@ module.exports.fullSearch = async (full) => {
 	if(+full) return module.exports.idSearch(full)
 	if(regex.test(full)) {
 		const id = getIdfromLink(full)
-		if(!+id) return {status: false, info: "Unknown error expected int got string"}
+		if(!+id) return {status: false, body: "Unknown error expected int got string"}
 		return module.exports.idSearch(id)
 	}
 	return module.exports.nameSearch(full)
