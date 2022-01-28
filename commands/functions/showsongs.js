@@ -4,6 +4,7 @@ const { MessageActionRow, MessageButton, MessageEmbed } = require("discord.js")
 const table = require("text-table")
 const Vibrant = require("node-vibrant")
 const fetch = require("node-fetch")
+const { serverId } = require("../../info.json")
 
 /**
  * @typedef {import("discord.js").Message} Message
@@ -234,8 +235,8 @@ module.exports = async (datamaps, message, mode) => {
 		messagecollector.on('collect', async m => {
 			await CacheControl.GotoPage(parseInt(m.content) - 1)
 			CacheControl.PostEmbed()
-			try{
+			if(m.guildId === serverId) {
 				m.delete()
-			}catch{}
+			}
 		});
 }
