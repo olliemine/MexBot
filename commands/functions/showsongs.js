@@ -14,7 +14,6 @@ const fetch = require("node-fetch")
  * @param {("player"|"search")} mode 
  */
 module.exports = async (datamaps, message, mode) => {
-	let start = new Date()
 	function Options(leaderboard, maxscore, ranked) {
 		let options = []
 		let i = 0
@@ -35,6 +34,7 @@ module.exports = async (datamaps, message, mode) => {
 		t = "```js\n" + t + "\n```"
 		return t
 	}
+
 	function DifficultySelector(maps, selectedDiff){
 		let diffs = []
 		maps.forEach(m => {
@@ -48,10 +48,34 @@ module.exports = async (datamaps, message, mode) => {
 		})
 		return text.slice(0, -3)
 	}
+
 	function GetMode(m) {
 		if(m === "player") return true
 		if(m === "search") return false
 		throw new Error("InvalidInput")
+	}
+
+	function DeletedEmbed(page) {
+		return new MessageEmbed()
+		.setColor("GREY")
+		.setThumbnail("https://cdn.scoresaber.com/avatars/steam.png")
+		.setTitle(`Deleted - Deleted `)
+		.setURL("https://beatsaver.com/maps/25f")
+		.setDescription(`Mapped by Deleted\n\nThis map has been deleted and can't be showed.\nResult ${page + 1} of ${datamaps.length}\n`)
+		.setFooter("Made by olliemine")
+	}
+
+	function NormalEmbed(map, page, diffnumber) {
+		const info = map.Info
+		const diff = map.Difficulties[diffnumber]
+		const DiffSelector = DifficultySelector(map.Difficulties, diff.DiffInfo.FormatDiff)
+		return new MessageEmbed()
+		.setColor(map.Color)
+		.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
+		.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
+		.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
+		.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}Result ${page + 1} of ${datamaps.length}\n`)
+		.setFooter("Made by olliemine")
 	}
 	class Cache {
 		constructor(msg, row, playermode) {
@@ -68,7 +92,8 @@ module.exports = async (datamaps, message, mode) => {
 			this.maps[this.page] = {}
 			if(this.playermode) {
 				this.maps[this.page].Info = await BaseLevelSchema.findOne({ "Hash": Hash })
-				const LevelObject = await LevelSchema.findOne({ "LevelID": datamaps[this.page].LevelID }).sort({"DiffInfo.DiffSort": -1})
+				if(!this.maps[this.page].Info) return
+				const LevelObject = await LevelSchema.findOne({ "LevelID": datamaps[this.page].LevelID })
 				this.maps[this.page].Difficulties = [LevelObject]
 			} else {
 				this.maps[this.page].Info = datamaps[this.page]
@@ -80,19 +105,13 @@ module.exports = async (datamaps, message, mode) => {
 			const palette = await Vibrant.from(buffer).getPalette()
 			this.maps[this.page].Color = palette.Vibrant.hex
 		}
-		PostEmbed(err = "") {
-			if(err) err = "\n\n" + err + "\n"
-			const diff = this.maps[this.page].Difficulties[this.diff]
+		PostEmbed() {
 			const info = this.maps[this.page].Info
-			const DiffSelector = DifficultySelector(this.maps[this.page].Difficulties, this.maps[this.page].Difficulties[this.diff].DiffInfo.FormatDiff)
-			const embed = new MessageEmbed()
-			.setColor(this.maps[this.page].Color)
-			.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
-			.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
-			.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
-			.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}${err}Result ${this.page + 1} of ${datamaps.length}\n`)
-			.setFooter("Made by olliemine")
-			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [embed]})
+			if(!this.maps[this.page].Info) {
+				this.msg.edit({content: null, components: [this.row], embeds: [DeletedEmbed(this.page)]})
+				return
+			}
+			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [NormalEmbed(this.maps[this.page], this.page, this.diff)]})
 		}
 		async NextPage() {
 			this.page++
@@ -122,17 +141,19 @@ module.exports = async (datamaps, message, mode) => {
 			this.maps[this.page].LastDiff = this.diff
 		}
 		Stop() {
+			if(!this.maps[this.page].Info) {
+				const embed = DeletedEmbed()
+				.setDescription(`Mapped by Deleted\n\nThis map has been deleted and can't be showed.\n`)
+				.setFooter("")
+				this.msg.edit({content: null, components: [], embeds: [embed]})
+				return
+			}
 			const diff = this.maps[this.page].Difficulties[this.diff]
-			const info = this.maps[this.page].Info
-			const DiffSelector = DifficultySelector(this.maps[this.page].Difficulties, this.maps[this.page].Difficulties[this.diff].DiffInfo.FormatDiff)
-			const embed = new MessageEmbed()
-			.setColor(this.maps[this.page].Color)
-			.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
-			.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
-			.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
-			.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}`)
-			.setFooter("Made by olliemine")
-			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [], embeds: [embed]})
+			const DiffSelector = DifficultySelector(this.maps[this.page].Difficulties, diff.DiffInfo.FormatDiff)
+			const embed = NormalEmbed(this.maps[this.page], this.page, this.diff)
+			.setDescription(`Mapped by ${this.maps[this.page].Info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}`)
+			.setFooter("")
+			this.msg.edit({content: `<https://beatsaver.com/maps/${this.maps[this.page].Info.Code}>`, components: [], embeds: [embed]})
 			this.maps = []
 		}
 		GetNumberOfDiffs() {
@@ -166,8 +187,8 @@ module.exports = async (datamaps, message, mode) => {
 		const CacheControl = new Cache(msg, row, GetMode(mode))
 		await CacheControl.AddMap()
 		CacheControl.PostEmbed()
-		const collector = msg.createMessageComponentCollector({ componentType: "BUTTON", time: (1000*60)*5})
-		collector.on("collect", async i => {
+		const buttoncollector = msg.createMessageComponentCollector({ componentType: "BUTTON", time: (1000*60)*5})
+		buttoncollector.on("collect", async i => {
 			if(i.user.id !== message.author.id) return
 			start = new Date()
 			i.deferUpdate()
@@ -201,11 +222,20 @@ module.exports = async (datamaps, message, mode) => {
 					await CacheControl.NextPage()
 					break
 				case "exit":
-					return collector.stop()
+					return buttoncollector.stop()
 			}
 			CacheControl.PostEmbed()
 		})
-		collector.on("end", () => {
+		buttoncollector.on("end", () => {
 			return CacheControl.Stop()
 		})
+		const filter = m => m.author.id == message.author.id && +m.content
+		const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 });
+		messagecollector.on('collect', async m => {
+			await CacheControl.GotoPage(parseInt(m.content) - 1)
+			CacheControl.PostEmbed()
+			try{
+				m.delete()
+			}catch{}
+		});
 }
