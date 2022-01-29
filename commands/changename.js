@@ -28,7 +28,7 @@ module.exports = {
 		async function User() {
 			const backtext = GetBacktext(user, "user")
 			const fronttext = args.length ? args.join(" ") : user.realname
-			const fullname = `${backtext}${fronttext}`
+			const fullname = `${backtext} | ${fronttext}`
 			if(fullname.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})
 			await UserSchema.findOneAndUpdate({
 				discord: message.author.id
