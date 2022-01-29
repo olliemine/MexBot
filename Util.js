@@ -31,7 +31,7 @@ module.exports.GetUserInfo = async (args, message, projection = { playHistory: 0
 module.exports.GetBacktext = (info, type) => {
 	switch(type) {
 		case "user":
-			return !info.bsactive ? "IA" : info.country != "MX" ? info.country : `#${user.lastrank}`
+			return !info.bsactive ? "IA" : info.country != "MX" ? info.country : `#${info.lastrank}`
 			break
 		case "body":
 			return info.inactive ? "IA" : info.country != "MX" ? info.country : `#${info.countryRank}`
