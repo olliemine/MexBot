@@ -233,7 +233,9 @@ module.exports = async (datamaps, message, mode) => {
 		const filter = m => m.author.id == message.author.id && +m.content
 		const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 });
 		messagecollector.on('collect', async m => {
-			await CacheControl.GotoPage(parseInt(m.content) - 1)
+			const number = parseInt(m.content) - 1
+			if(number <= 0 || number >= datamaps.length) return
+			await CacheControl.GotoPage(number)
 			CacheControl.PostEmbed()
 			if(m.guildId === serverId) {
 				m.delete()
