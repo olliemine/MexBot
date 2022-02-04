@@ -89,7 +89,7 @@ module.exports = async () => {
 			beatsaber: userinfo.beatsaber
 		}, {
 			lastrank: user.countryRank
-		}).catch((error) => errorhandle(error))
+		})
 		if(!userinfo.dsactive) continue
 		const discorduser = await server.members.fetch(userinfo.discord).catch((error) => errorhandle(error))
 		CheckRoles(user.countryRank, discorduser)
@@ -150,7 +150,7 @@ module.exports = async () => {
 			beatsaber: user.beatsaber
 		}, {
 			bsactive: false
-		}).catch((error) => errorhandle(error))
+		})
 		if(!user.dsactive) return
 		const discorduser = await server.members.fetch(user.discord)
 		ranks.forEach((rank) => {
@@ -173,7 +173,7 @@ module.exports = async () => {
 			beatsaber: player.beatsaber
 		}, {
 			lastrank: body.countryRank
-		}).catch((error) => errorhandle(error))
+		})
 		if(!player.dsactive) continue
 		const discorduser = await server.members.fetch(player.discord)
 		CheckRoles(body.countryRank, discorduser)

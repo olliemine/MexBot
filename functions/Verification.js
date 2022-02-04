@@ -13,12 +13,12 @@ module.exports = async (user, scoresaber) => {
 		return name
 	}
 	function Refresh(id, pfp) {
-		if(pfp == "https://cdn.scoresaber.com/avatars/steam.png") fetch(`https://scoresaber.com/api/user/${id}/refresh`).catch((error) => ErrorHandler(error))
+		if(pfp == "https://cdn.scoresaber.com/avatars/steam.png") fetch(`https://scoresaber.com/api/user/${id}/refresh`)
 	}
 	const res = await GetUser.fullSearch(scoresaber)
 	if(!res.status) throw [res.body, `User ${user.user.username} recieved error ${res.body} on ${scoresaber}`]
 	const body = res.body
-	const exists = await UserSchema.findOne({ beatsaber: body.id }, {discord: 1, dsactive: 1}).catch((error) => ErrorHandler(error))
+	const exists = await UserSchema.findOne({ beatsaber: body.id }, {discord: 1, dsactive: 1})
 	if(exists && exists.discord && exists.dsactive) throw ["Ya hay una usuario con esta cuenta, Si deverdad es tu cuenta porfavor contacta a un Admin", `Account ${body.name} has already been taken ${user.user.username}`]
 	Refresh(body.id, body.profilePicture)
 	const backtext = GetBacktext(body, "body")

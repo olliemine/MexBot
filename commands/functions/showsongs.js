@@ -266,7 +266,11 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 				return buttoncollector.stop()
 		}
 		if(closed) return
-		CacheControl.PostEmbed().catch(error => ErrorHandler(error, "Couldnt post embed"))
+		try {
+			CacheControl.PostEmbed()
+		} catch(e) {
+			ErrorHandler(e, "Couldnt post embed")
+		}
 	})
 	buttoncollector.on("end", (r) => {
 		if(r === "MSG_EDIT_ERR") return

@@ -29,6 +29,8 @@ redisClient.connect().catch(err => console.log(err))
 let RecentlyExecuted = []
 let BeatsaverWebSocketReconnectRetries = 0
 
+
+
 function BeatsaverWebSocket() {
 	if(BeatsaverWebSocketReconnectRetries > 3) return infohandle("Beatsaver socket", "Connection Closed, Retries exceded")
 	const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
@@ -134,27 +136,25 @@ client.on("guildMemberRemove", async (member) => {
 		discord: member.id
 	}, {
 		dsactive: false
-	}).catch((error) => {
-		errorhandle(error)
 	})
 })
 
 client.on("guildMemberAdd", async (member) => {
-	exists = await UserSchema.countDocuments({ discord: member.id }).catch((error) => errorhandle(error))
+	exists = await UserSchema.countDocuments({ discord: member.id })
 	if(exists != 0) {
-		const user = await UserSchema.findOne({ discord: member.id }, { name: 1 }).catch((error) => errorhandle(error))
+		const user = await UserSchema.findOne({ discord: member.id }, { name: 1 })
 		const backtext = GetBacktext(user, "user")
-		member.setNickname(`${backtext} | ${user.name}`).catch((error) => errorhandle(error))
+		member.setNickname(`${backtext} | ${user.name}`)
 		if(country == "MX") {
-			member.roles.add(info.verificadoRole).catch((error) => errorhandle(error))
+			member.roles.add(info.verificadoRole)
 			CheckRoles(body.playerInfo.countryRank, member, client)
 		}
-		else member.roles.add(info.visitanteRole).catch((error) => errorhandle(error))
+		else member.roles.add(info.visitanteRole)
 		await UserSchema.findOneAndUpdate({
 			discord: member.id
 		}, {
 			dsactive: true
-		}).catch((error) => errorhandle(error))
+		})
 	}
 })
 
