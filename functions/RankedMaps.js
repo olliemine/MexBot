@@ -6,8 +6,9 @@ const { MessageEmbed } = require("discord.js")
 const LevelSchema = require("../models/LevelSchema")
 const BaseLevelSchema = require("../models/BaseLevelSchema")
 const Vibrant = require('node-vibrant')
+const { client } = require("../index")
 
-module.exports = async (DiscordClient) => {
+module.exports = async () => {
 	async function connect() {
 		try {
 			await redisClient.connect()
@@ -55,7 +56,7 @@ module.exports = async (DiscordClient) => {
 	while(!found) {
 		const res = await fetch(`https://scoresaber.com/api/leaderboards?ranked=true&page=${page}`)
 		if(res.status != 200) {
-			infohandle(DiscordClient, "RankedMaps", `${res.status} ${res.statusText} on s`)
+			infohandle("RankedMaps", `${res.status} ${res.statusText} on s`)
 			break
 		}
 		const body = await res.json()
@@ -97,7 +98,7 @@ module.exports = async (DiscordClient) => {
 		})
 	}
 	if(!NewRankedMaps.length) return redisClient.quit()
-	const channel = await DiscordClient.channels.cache.get(rankedmapsChannel)
+	const channel = await client.channels.cache.get(rankedmapsChannel)
 	let firsttime = true
 	let updateBulkWrite = []
 	let embeds = [[]]

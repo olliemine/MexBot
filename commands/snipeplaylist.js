@@ -10,7 +10,7 @@ module.exports = {
 	admin: false,
 	dm: true,
 	cooldown: 2,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		function ErrorEmbed(description) {
 			const embed = new MessageEmbed()
 			.setTitle("Error!")

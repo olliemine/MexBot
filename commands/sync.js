@@ -1,5 +1,6 @@
 const VerificationID = require("../functions/Verification")
 const { serverId } = require("../info.json")
+const { client } = require("../index")
 
 module.exports = {
 	name : "sync",
@@ -7,14 +8,13 @@ module.exports = {
 	admin: true,
 	dm: true,
 	cooldown: 1,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		if(args.length != 2) return message.channel.send({content: "Necesitas 2 argumentos."})
-		const user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+		const user = message.mentions.users.first() || client.users.cache.get(args[0])
 		if(!user) return message.channel.send({content: "Necesitas ingresar un usuario."})
-		const server = await DiscordClient.guilds.fetch(serverId)
+		const server = await client.guilds.fetch(serverId)
 		const member = await server.members.fetch(user.id)
-		console.log(member)
-		VerificationID(DiscordClient, member, args[1])
+		VerificationID(member, args[1])
 		.then(data => {
 			message.channel.send({content: "Succesfull sync"})
 		}).catch(err => {

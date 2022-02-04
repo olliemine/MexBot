@@ -5,7 +5,7 @@ const Score = require("./Score")
 const StoreUserFull = require("./StoreUserFull")
 const GetAll = require("./GetAll")
 
-module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
+module.exports = async () => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
 		const players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
 		let NewPlay = false
 		async function GetFirstMap(beatsaber) {
@@ -67,7 +67,7 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 					}
 					if(firstscore.score.id == user.lastmap) {
 						if(firstscore.score.timeSet != user.lastmapdate) {
-							await StoreMaps([new Score(firstscore)], user, firstmap, DiscordClient)
+							await StoreMaps([new Score(firstscore)], user, firstmap)
 						}
 						continue
 					}
@@ -85,11 +85,11 @@ module.exports = async (DiscordClient) => { //country: "MX", bsactive: true, las
 						checkAgain.push(user)
 						continue
 					}
-					await StoreMaps(newscores, user, firstmap, DiscordClient)
+					await StoreMaps(newscores, user, firstmap)
 					continue
 				}
 				for await (const user of checkAgain) {
-					await StoreUserFull(user, DiscordClient).then(() => {
+					await StoreUserFull(user).then(() => {
 					}).catch(() => {
 						console.log(`User ${user.realname} couldnt be checked`)
 					})

@@ -11,7 +11,7 @@ module.exports = {
 	admin: true,
 	dm: true,
 	cooldown: 15,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		message.channel.sendTyping()
 		const time = new Date()
 		if(+args[0]) {
@@ -40,14 +40,14 @@ module.exports = {
 				await UserSchema(userinfo).save()
 			}
 			console.log(userinfo.realname)
-			await StoreUserFull(userinfo, DiscordClient)
+			await StoreUserFull(userinfo)
 			await GetAll()
 			return message.channel.send({content: `Succesfully saved player ${userinfo.realname}, ${new Date() - time}`})
 		}
 		try {
-			await Top(DiscordClient)
+			await Top()
 		} catch(err) {
-			errorhandle(DiscordClient, err)
+			errorhandle(err)
 		} 
 		message.channel.send({content: `Executed successfully, ${new Date() - time}`})
 	}

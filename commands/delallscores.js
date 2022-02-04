@@ -8,7 +8,7 @@ module.exports = {
 	dm: true,
 	dev: true,
 	cooldown: -1,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		message.channel.send({content: "I hope you know what you are doing, deleting all scores"})
 		await UserSchema.updateMany({country: "MX"}, {
 			lastmap: null, lastmapdate: null, playHistory: [], plays: []

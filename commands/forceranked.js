@@ -7,13 +7,13 @@ module.exports = {
 	admin: true,
 	dm: true,
 	cooldown: 15,
-	async execute(message, DiscordClient) {
+	async execute(message) {
 		message.channel.sendTyping()
 		const time = new Date()
 		try {
-			await RankedMaps(DiscordClient)
+			await RankedMaps()
 		} catch(err) {
-			errorhandle(DiscordClient, err)
+			errorhandle(err)
 		} 
 		message.channel.send({content: `Executed successfully, ${new Date() - time}`})
 	}

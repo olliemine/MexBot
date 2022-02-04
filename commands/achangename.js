@@ -1,6 +1,8 @@
 const UserSchema = require("../models/UserSchema")
 const { Util } = require("discord.js")
 const {GetBacktext} = require("../Util")
+const { client } = require("../index")
+const ErrorHandler = require("../functions/error")
 
 module.exports = {
 	name : "achangename",
@@ -9,13 +11,21 @@ module.exports = {
 	admin: true,
 	dm: false,
 	cooldown: 1,
-	async execute(message, DiscordClient, args) {
-		let member = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+	async execute(message, args) {
+		function SetServerNickname(name) {
+			try {
+				member.setNickname(name)
+			} catch (err) {
+				return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully", message)
+			}
+			message.channel.send({content: NoMentionText(`Changed name to ${fullname}`)})
+		}
+		let member = message.mentions.users.first() || client.users.cache.get(args[0])
 		args.shift()
 		if(member) member = await message.guild.members.fetch(member.id)
 		if(!member) return message.channel.send({content: "Tienes que mencionar a un usuario"})
 		const user = await UserSchema.findOne({ discord: member.id }, {playHistory: 0, plays: 0})
-		if(member.roles.highest.position > message.guild.members.resolve(DiscordClient.user).roles.highest.position) return message.channel.send({content: "Cant change name because role higher than bot."})
+		if(member.roles.highest.position > message.guild.members.resolve(client.user).roles.highest.position) return message.channel.send({content: "Cant change name because role higher than bot."})
 		function NoMentionText(text) {
 			return Util.removeMentions(text)
 		}
@@ -23,8 +33,7 @@ module.exports = {
 			if(!Array.isArray(args) || !args.length) return message.channel.send({content: "Necesitas poner un nombre"})
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre es muy largo"})			
-			member.setNickname(new_name)
-			return message.channel.send({content: NoMentionText(`Changed name to ${new_name}`)})
+			SetServerNickname(new_name)
 		}
 		async function User() {
 			const backtext = GetBacktext(user, "user")
@@ -36,8 +45,7 @@ module.exports = {
 			}, {
 				name: fronttext
 			})
-			member.setNickname(fullname)
-			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${fullname}`)})
+			SetServerNickname(fullname)
 		}
 		if(!user) return NonUser()
 		return User()	

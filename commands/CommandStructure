@@ -7,11 +7,10 @@ module.exports = {
 	dm: true, // Whether to allow the command to be executed in the Direct Messages
 	dev: true, // Whether to only allow the dev user to execute the command
 	cooldown: -1, // Cooldown of the command in seconds (-1 to disable)
-	execute(message, DiscordClient, args) {
+	execute(message, args) {
 		// Command execution function
 
 		// message: the Message Object to the command message
-		// DiscordClient: the Discord Client
 		// args: The command arguments passed
 	},
 }
@@ -23,7 +22,7 @@ module.exports = {
 	dm: true,
 	dev: true,
 	cooldown: -1,
-	execute(message, DiscordClient, args) {
+	execute(message, args) {
 		
 	},
 }

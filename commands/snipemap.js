@@ -2,6 +2,7 @@ const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js")
 const { timeSince } = require("../Util")
+const { client } = require("../index")
 
 module.exports = {
 	name : "snipemap",
@@ -9,7 +10,7 @@ module.exports = {
 	admin: false,
 	dm: true,
 	cooldown: 2,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		function FormatDiff(diff) {
 			if(diff != "ExpertPlus") return diff
 			return "Expert+"
@@ -31,7 +32,10 @@ module.exports = {
 			const percent = ((map.TopScore / maxscore)*100).toFixed(2)
 			return message.channel.send({ content: `${map.TopPlayerName} got **${percent}%** on https://beatsaver.com/maps/${map.Code} **${timesince} ago** | ${FormatDiff(map.DiffInfo.Diff)}`, components: [row]})
 		}
-		function AddWarning(text) {
+		function AddErrors(text) {
+			errors += text + "\n"
+		}
+		function AddWarnings(text) {
 			warnings += text + "\n"
 		}
 		async function GetFilter() {
@@ -58,36 +62,35 @@ module.exports = {
 			})
 			const mentionregex = new RegExp("^<@![0-9]*>$", "g")
 			tokens.forEach(argument => {
-				console.log(argument)
 				if(rankcheck && playedcheck) return
 				switch(argument.toLowerCase()) {
 					case "ranked":
-						if(rankcheck) return AddWarning(`A Ranked token is already in use, ignoring ${argument}`)
+						if(rankcheck) return AddErrors(`A Ranked token is already in use (${argument})`)
 						fil.$and.push({ Ranked: true })
 						rankcheck = true
 						break
 					case "unranked":
-						if(rankcheck) return AddWarning(`A Ranked token is already in use, ignoring ${argument}`)
+						if(rankcheck) return AddErrors(`A Ranked token is already in use (${argument})`)
 						fil.$and.push({ Ranked: false })
 						rankcheck = true
 						break
 					case "played":
-						if(!userMessageInfo) return AddWarning(`No account found, ignoring ${argument}`)
-						if(playedcheck) return AddWarning(`A Played token is already in use, ignoring ${argument}`)
+						if(!userMessageInfo) return AddErrors(`No account found (${argument})`)
+						if(playedcheck) return AddWarnings(`Played token is already in use (${argument})`)
 						fil.$and.push({Leaderboard: {$elemMatch: {PlayerID: userMessageInfo.beatsaber}}})
 						playedcheck = true
 						break
 					case "unplayed":
-						if(!userMessageInfo) return AddWarning(`No account found, ignoring ${argument}`)	
-					if(playedcheck) return AddWarning(`A Played token is already in use, ignoring ${argument}`)
+						if(!userMessageInfo) return AddErrors(`No account found (${argument})`)	
+						if(playedcheck) return AddWarnings(`Played token is already in use (${argument})`)
 						fil.$and.push({Leaderboard: {$elemMatch: {PlayerID: {$ne: userMessageInfo.beatsaber}}}})
 						playedcheck = true	
 						return
 				}
 			})
 			async function AddFilterUser(user, negative, argument) {
-				if(!user) return AddWarning(`Invalid token: ${argument}, ignoring it`)
-				if(used.includes(user.realname)) return AddWarning(`Token for ${user.realname} already in use, ignoring it`)
+				if(!user) return AddErrors(`Invalid token (${argument})`)
+				if(used.includes(user.realname)) return AddWarnings(`Token ${user.realname} already in use, ignoring it`)
 				used.push(user.realname)
 				if(negative) return fil.$and.push({TopPlayer: {$ne: user.beatsaber}})
 				if(!fil.$or) fil.$or = []
@@ -98,13 +101,13 @@ module.exports = {
 				let negative = argument.startsWith("!")
 				if(gnegative == null) gnegative = negative
 				if(gnegative != negative) {
-					AddWarning(`Convoluded operations, ignoring ${argument}`)
+					AddErrors(`Convoluded operations (${argument})`)
 					continue
 				}
 				if(negative) argument = argument.substring(1)
 				let id = argument
 				if(mentionregex.test(argument)) id = IdfromMention(argument)
-				const member = DiscordClient.users.cache.get(id)
+				const member = client.users.cache.get(id)
 				let user
 				if(member) {
 					user = await UserSchema.findOne({ discord: member.id }, {realname: 1, beatsaber: 1})
@@ -122,10 +125,20 @@ module.exports = {
 			}
 			return fil
 		}
+		let errors = ""
 		let warnings = ""
 		const userMessageInfo = await UserSchema.findOne({ discord: message.author.id, country: "MX" }, {playHistory: 0, plays: 0})
 		const filter = await GetFilter()
 		if(!filter) return message.channel.send({ content: "Unexpected Error"})
+		if(errors) {
+			const embed = new MessageEmbed()
+			.setColor("RED")
+			.setTitle(":warning: Errors")
+			.setDescription(errors)
+			.setFooter("!snipemaphelp for more information")
+			message.channel.send({ embeds: [embed] })
+			return
+		}
 		if(warnings) {
 			const embed = new MessageEmbed()
 			.setColor("YELLOW")

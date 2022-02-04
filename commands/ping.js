@@ -1,6 +1,7 @@
 const fetch = require("node-fetch")
 const { MessageEmbed } = require("discord.js")
 const { version } = require("../info.json")
+const { client } = require("../index")
 
 module.exports = {
 	name : "ping",
@@ -8,9 +9,9 @@ module.exports = {
 	admin: false,
 	dm: true,
 	cooldown: 1,
-	async execute(message, DiscordClient) {
+	async execute(message) {
 		const botms = Date.now() - message.createdTimestamp
-		const discordms = DiscordClient.ws.ping
+		const discordms = client.ws.ping
 		const scoresaberms = () => {
 			const timer = new Date()
 			return fetch("https://scoresaber.com").then((json) => {

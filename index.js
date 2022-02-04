@@ -1,5 +1,10 @@
-//require('dotenv').config()
+require('dotenv').config()
 const Discord = require("discord.js")
+const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
+client.commands = new Discord.Collection()
+client.aliases = new Discord.Collection()
+client.login(process.env.TOKEN)
+module.exports.client = client
 const info = require("./info.json")
 const mongo = require("./mongo")
 const fetch = require("node-fetch")
@@ -16,20 +21,16 @@ const getplayer = require("./commands/getplayer")
 const VerificacionID = require("./functions/Verification")
 const RankedMaps = require("./functions/RankedMaps")
 const {GetBacktext} = require("./Util")
-const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
-client.commands = new Discord.Collection();
-client.aliases = new Discord.Collection();
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-client.login(process.env.TOKEN)
 const redis = require("redis");
 const redisClient = redis.createClient({ url: process.env.REDIS_URL })
 const WebSocket = require('ws');
-redisClient.connect()
+redisClient.connect().catch(err => console.log(err)) 
 let RecentlyExecuted = []
 let BeatsaverWebSocketReconnectRetries = 0
 
 function BeatsaverWebSocket() {
-	if(BeatsaverWebSocketReconnectRetries > 3) return infohandle(client, "Beatsaver socket", "Connection Closed, Retries exceded")
+	if(BeatsaverWebSocketReconnectRetries > 3) return infohandle("Beatsaver socket", "Connection Closed, Retries exceded")
 	const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
 	beatsaversocket.onopen = () => {
 		console.log("Connected to Beatsaver socket")
@@ -42,7 +43,7 @@ function BeatsaverWebSocket() {
 		}, 5000)
 	}
 	beatsaversocket.onerror = (err) => {
-		errorhandle(client, err)
+		errorhandle(err)
 	}
 	beatsaversocket.onmessage = async (msg) => {
 		try{
@@ -56,7 +57,7 @@ function BeatsaverWebSocket() {
 			await LevelSchema.deleteMany({Code: data.id})
 			await BaseLevelSchema.deleteOne({Code: data.id})
 		} catch(err){
-			errorhandle(client, err)
+			errorhandle(err)
 		}
 	}
 }
@@ -66,19 +67,19 @@ redisClient.once("ready", async () => {
 	redisClient.quit()
 })
 redisClient.on("error", (err) => {
-	errorhandle(client, err)
+	errorhandle(err)
 })
 client.once("ready", async() => {
 	BeatsaverWebSocket()
 	await mongo().then(() => {
 		console.log("Connected to mongo")
 	}).catch((err) => {
-		errorhandle(client, err)
+		errorhandle(err)
 	})
 	await getplayer.start()
 	console.log("Loaded cache")
 	await fetch("https://scoresaber.com/api").then(response => {
-		if(response.status != 200) return infohandle(client, "API Status", "API is offline")
+		if(response.status != 200) return infohandle("API Status", "API is offline")
 		console.log("Connected to Scoresaber API")
 	})
 	console.log(`Prefix ${info.prefix}
@@ -122,36 +123,38 @@ client.on("messageCreate", async (message) => {
 		}, 1000 * command.cooldown)
 	}
 	try{
-		command.execute(message, client, args);
+		command.execute(message, args);
 	}catch(error) {
-		errorhandle(client, error)
-		message.channel.send({ content: "There was a unexpected error."});
+		errorhandle(error, "Unexpected Error on Command Execution", message)
 	}
 })
+
 client.on("guildMemberRemove", async (member) => {
 	await UserSchema.findOneAndUpdate({
 		discord: member.id
 	}, {
 		dsactive: false
+	}).catch((error) => {
+		errorhandle(error)
 	})
 })
 
 client.on("guildMemberAdd", async (member) => {
-	exists = await UserSchema.countDocuments({ discord: member.id })
+	exists = await UserSchema.countDocuments({ discord: member.id }).catch((error) => errorhandle(error))
 	if(exists != 0) {
-		const user = await UserSchema.findOne({ discord: member.id }, { name: 1 })
+		const user = await UserSchema.findOne({ discord: member.id }, { name: 1 }).catch((error) => errorhandle(error))
 		const backtext = GetBacktext(user, "user")
-		member.setNickname(`${backtext} | ${user.name}`)
+		member.setNickname(`${backtext} | ${user.name}`).catch((error) => errorhandle(error))
 		if(country == "MX") {
-			member.roles.add(info.verificadoRole)
+			member.roles.add(info.verificadoRole).catch((error) => errorhandle(error))
 			CheckRoles(body.playerInfo.countryRank, member, client)
 		}
-		else member.roles.add(info.visitanteRole)
+		else member.roles.add(info.visitanteRole).catch((error) => errorhandle(error))
 		await UserSchema.findOneAndUpdate({
 			discord: member.id
 		}, {
 			dsactive: true
-		})
+		}).catch((error) => errorhandle(error))
 	}
 })
 
@@ -166,45 +169,45 @@ for(const file of commandFiles) {
 }
 setInterval(() => {
 	try {
-		Top(client)
+		Top()
 	} catch(err) {
-		errorhandle(client, err)
+		errorhandle(err)
 	}
 }, (1000*60)*6)//6m
 
 setInterval(async () => {
 	try {
-		UpdateUsers(client)
+		UpdateUsers()
 	} catch(err) {
-		errorhandle(client, err)
+		errorhandle(err)
 	}
 	
 }, (1000*60)*15)//15m
 setInterval(() => {
 	try {
-		RankedMaps(client)
+		RankedMaps()
 	} catch(err) {
-		errorhandle(client, err)
+		errorhandle(err)
 	}
 }, (1000*60)*30)//30m
 
 function SendAndDelete(msgcontent, msg) {
-	msg.delete()
+	msg.delete().catch((error) => errorhandle(error))
 	msg.channel.send({ content: msgcontent }).then(message => {
 		setTimeout(() => {
 			message.delete()
 		}, (1000*60)*4)
-	})
+	}).catch((error) => errorhandle(error))
 }
 
 function VerificationHandler(msg, member, id) {
-	VerificacionID(client, member, id)
+	VerificacionID( member, id)
 	.then(data => {
 		SendAndDelete("Ahora estas verificado!", msg)
-		infohandle(client, "Verification", `User ${data[0]} verified with account ${data[1]}`)
+		infohandle("Verification", `User ${data[0]} verified with account ${data[1]}`)
 	}).catch(err => {
 		SendAndDelete(`Error! ${err[0]}`, msg)
-		infohandle(client, "Verification", err[1])
+		infohandle("Verification", err[1])
 	})
 }
 
@@ -212,7 +215,7 @@ async function Verificacion(msg) {
 	const member = msg.member
 	if(msg.content.toLowerCase() === "visitante") {
 		member.roles.add(msg.guild.roles.cache.get(info.visitanteRole))
-		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor`)
+		infohandle("Verification", `User ${member.user.username} verified as a visitor`)
 		return SendAndDelete("Gracias por visitar!", msg)
 	}
 	const ohno = await fetch("https://scoresaber.com/api").then(response => {
@@ -221,7 +224,7 @@ async function Verificacion(msg) {
 	})
 	if(!ohno) {
 		member.roles.add(msg.guild.roles.cache.get(info.visitanteRole))
-		infohandle(client, "Verification", `User ${member.user.username} verified as a visitor, API is offline, later use ${msg.content}`)
+		infohandle("Verification", `User ${member.user.username} verified as a visitor, API is offline, later use ${msg.content}`)
 		member.send({ content: "Hay unos problemas con los servidores de scoresaber, seras verificado cuando los problemas se resuelvan"})
 		return SendAndDelete("Gracias por visitar!", msg)
 	}

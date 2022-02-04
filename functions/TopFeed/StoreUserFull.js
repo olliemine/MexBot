@@ -2,7 +2,7 @@ const StoreMaps = require("./StoreMaps")
 const fetch = require("node-fetch")
 const Score = require("./Score")
 
-module.exports = (userid, DiscordClient) => {
+module.exports = (userid) => {
 	return new Promise(async (resolve, reject) => {
 		let newscores = []
 		let passed = false
@@ -69,7 +69,7 @@ module.exports = (userid, DiscordClient) => {
 			if(passed) break
 		}
 		newscores.reverse()
-		await StoreMaps(newscores, userid, firstmap, DiscordClient).then(() =>{
+		await StoreMaps(newscores, userid, firstmap).then(() =>{
 			resolve()
 			return
 		})

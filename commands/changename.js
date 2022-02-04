@@ -2,6 +2,8 @@ const UserSchema = require("../models/UserSchema")
 const { Util } = require("discord.js")
 const { serverId } = require("../info.json")
 const {GetBacktext} = require("../Util")
+const { client } = require("../index")
+const ErrorHandler = require("../functions/error")
 
 module.exports = {
 	name : "changename",
@@ -10,11 +12,11 @@ module.exports = {
 	admin: false,
 	dm: true,
 	cooldown: 2,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		const user = await UserSchema.findOne({ discord: message.author.id }, {playHistory: 0, plays: 0})
-		const server = await DiscordClient.guilds.fetch(serverId)
+		const server = await client.guilds.fetch(serverId)
 		const member = await server.members.fetch(message.author.id)
-		if(member.roles.highest.position > server.members.resolve(DiscordClient.user).roles.highest.position) return message.channel.send({content: "No se puede cambiar el nombre porque tiene role mayor."})
+		if(member.roles.highest.position > server.members.resolve(client.user).roles.highest.position) return message.channel.send({content: "No se puede cambiar el nombre porque tiene role mayor."})
 		function NoMentionText(text) {
 			return Util.removeMentions(text)
 		}
@@ -35,7 +37,11 @@ module.exports = {
 			}, {
 				name: fronttext
 			})
-			member.setNickname(fullname)
+			try{
+				member.setNickname(fullname)
+			}catch(err){
+				return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully")
+			}
 			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${fullname}`)})
 		}
 		if(!user) return NonUser()

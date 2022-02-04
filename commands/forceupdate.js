@@ -7,13 +7,13 @@ module.exports = {
 	admin: true,
 	dm: true,
 	cooldown: 2,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		const time = new Date()
 		message.channel.sendTyping()
 		try {
-			await UpdateUsers(DiscordClient)
+			await UpdateUsers()
 		} catch(err) {
-			errorhandle(DiscordClient, err)
+			errorhandle(err)
 		}
 		message.channel.send({content: `Executed successfully, ${new Date() - time}`})
 	}

@@ -1,6 +1,7 @@
 const {GetUserInfo} = require("../Util")
 const UserSchema = require("../models/UserSchema")
 const showsongs = require("./functions/showsongs")
+const ErrorHandler = require("../functions/error")
 
 module.exports = {
 	name : "topsongs",
@@ -9,7 +10,7 @@ module.exports = {
 	dm: true,
 	dev: false,
 	cooldown: -1,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		let user
 		if(args.length) user = await GetUserInfo(args, message, { plays: 1, beatsaber: 1  }) 
 		else user = await UserSchema.findOne({ discord: message.author.id}, { plays: 1, beatsaber: 1  })
@@ -17,6 +18,6 @@ module.exports = {
 		const songs = user.plays.filter(a => a.PP).sort((a, b) => {
 			return b.PP - a.PP
 		})
-		await showsongs(songs, message, "player", user)
+		await showsongs(songs, message, "player", user).catch(err => ErrorHandler(err, "Unexpected Error", message))
 	},
 }

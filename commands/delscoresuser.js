@@ -9,7 +9,7 @@ module.exports = {
 	dm: true,
 	dev: true,
 	cooldown: -1,
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		const user = await GetUserInfo(args, message)
 		if(!user) {
 			return message.channel.send({content: "No user found."})

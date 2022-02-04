@@ -3,6 +3,7 @@ const UserSchema = require("../models/UserSchema")
 const LevelSchema = require("../models/LevelSchema")
 const { ChartJSNodeCanvas  } = require('chartjs-node-canvas');
 const GetUser = require("../functions/GetUser")
+const { client } = require("../index")
 let users = []
 
 module.exports = {
@@ -24,7 +25,7 @@ module.exports = {
 		usersraw = null
 		return
 	},
-	async execute(message, DiscordClient, args) {
+	async execute(message, args) {
 		function escapeRegExp(text) {
 			return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 		}
@@ -47,7 +48,7 @@ module.exports = {
 			if(user) return GetPlayerData(user.beatsaber)
 			return message.channel.send({ content: "Tienes que mencionar a un usuario."})
 		} else {
-			var user = message.mentions.users.first() || DiscordClient.users.cache.get(args[0])
+			var user = message.mentions.users.first() || client.users.cache.get(args[0])
 			let userschema
 			if(user) userschema = await UserSchema.findOne({ discord: user.id }, { beatsaber: 1})
 			if(userschema) return GetPlayerData(userschema.beatsaber)

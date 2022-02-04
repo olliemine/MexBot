@@ -37,7 +37,7 @@ module.exports.GetBacktext = (info, type) => {
 			return info.inactive ? "IA" : info.country != "MX" ? info.country : `#${info.countryRank}`
 			break
 		default:
-			return null
+			throw null
 	}
 }
 

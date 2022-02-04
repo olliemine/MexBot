@@ -6,6 +6,7 @@ const Vibrant = require("node-vibrant")
 const fetch = require("node-fetch")
 const { serverId } = require("../../info.json")
 const { timeSince } = require("../../Util")
+const ErrorEmbed = require("../../functions/error")
 
 /**
  * @typedef {import("discord.js").Message} Message
@@ -17,10 +18,19 @@ const { timeSince } = require("../../Util")
  * @param {Object=} player  
  */
 module.exports = async (datamaps, message, mode, sPlayer = null) => {
+	let closed = false
+	
 	function GetMode(m) {
 		if(m === "player") return true
 		if(m === "search") return false
 		throw new Error("InvalidInput")
+	}
+	function ErrorHandler(err, description) {
+		ErrorEmbed(err, description, message)
+		msg.delete()
+		buttoncollector.stop()
+		messagecollector.stop()
+		closed = true
 	}
 
 	class Cache {
@@ -120,6 +130,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			this.maps[this.page].Color = palette.Vibrant.hex
 		}
 		PostEmbed() {
+			if(closed) return
 			const info = this.maps[this.page].Info
 			if(!this.maps[this.page].Info) {
 				this.msg.edit({content: null, components: [this.row], embeds: [this.DeletedEmbed()]}).catch(() => {
@@ -133,20 +144,26 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 				return messagecollector.stop()
 			})
 		}
+		async AddPage() {
+			try {
+				if(!this.maps[this.page]) await this.AddMap()
+				this.diff = this.maps[this.page].LastDiff
+			} catch(err) {
+				ErrorHandler(err, "Couldnt get song")
+				return
+			}
+		}
 		async NextPage() {
 			this.page++
-			if(!this.maps[this.page]) await this.AddMap()
-			this.diff = this.maps[this.page].LastDiff
+			await this.AddPage()
 		}
 		async BackPage() {
 			this.page--
-			if(!this.maps[this.page]) await this.AddMap()
-			this.diff = this.maps[this.page].LastDiff
+			await this.AddPage()
 		}
 		async GotoPage(page) {
 			this.page = page
-			if(!this.maps[this.page]) await this.AddMap()
-			this.diff = this.maps[this.page].LastDiff
+			await this.AddPage()
 		}
 		NextDiff() {
 			this.diff--
@@ -161,6 +178,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			this.maps[this.page].LastDiff = this.diff
 		}
 		Stop() {
+			if(closed) return
 			if(!this.maps[this.page].Info) {
 				const embed = this.DeletedEmbed()
 				.setDescription(`Mapped by Deleted\n\nThis map has been deleted and can't be showed.\n`)
@@ -204,8 +222,12 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 	)
 	const msg = await message.channel.send({content: "Loading <a:paroxysm_car_crash:938980793932460053>"}) //NOTE: This is hilarious
 	const CacheControl = new Cache(msg, row, GetMode(mode))
-	await CacheControl.AddMap()
-	CacheControl.PostEmbed()
+	try{
+		await CacheControl.AddMap()
+		CacheControl.PostEmbed()
+	}catch(e){
+		ErrorHandler(e, "Couldnt post embed")
+	}
 	const buttoncollector = msg.createMessageComponentCollector({ componentType: "BUTTON", time: (1000*60)*5})
 	buttoncollector.on("collect", async i => {
 		if(i.user.id !== message.author.id) return
@@ -243,7 +265,8 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			case "exit":
 				return buttoncollector.stop()
 		}
-		CacheControl.PostEmbed()
+		if(closed) return
+		CacheControl.PostEmbed().catch(error => ErrorHandler(error, "Couldnt post embed"))
 	})
 	buttoncollector.on("end", (r) => {
 		if(r === "MSG_EDIT_ERR") return
@@ -256,6 +279,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 		if(number <= 0 || number >= datamaps.length) return
 		await CacheControl.GotoPage(number)
 		CacheControl.PostEmbed()
+		if(closed) return
 		if(m.guildId === serverId) {
 			m.delete()
 		}

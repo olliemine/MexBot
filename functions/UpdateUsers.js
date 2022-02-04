@@ -6,12 +6,13 @@ const CheckRoles = require("./CheckRoles")
 const InfoChannelMessage = require("./InfoChannelMessage")
 const LevelSchema = require("../models/LevelSchema")
 const { serverId, topRoles } = require("../info.json")
+const { client } = require("../index")
 //const MXleaderboard = require("./models/MXleaderboard")
 
-module.exports = async (Client) => {
+module.exports = async () => {
 	let usersupdatedraw = []
 	let users = await UserSchema.find({country: "MX", bsactive: true}, {playHistory: 0, plays: 0})
-	const server = await Client.guilds.fetch(serverId)
+	const server = await client.guilds.fetch(serverId)
 	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
 	async function GetInfo() {
 		const res = await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)
@@ -57,11 +58,11 @@ module.exports = async (Client) => {
 		await new UserSchema(user).save()
 	}
 	async function UpdateIA(user) {
-		infohandle(Client, "UpdateUsers", user.realname)
+		infohandle("UpdateUsers", user.realname)
 		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) return
 		const discorduser = await server.members.fetch(user.discord)
-		CheckRoles(user.lastrank, discorduser, Client)
+		CheckRoles(user.lastrank, discorduser)
 		await discorduser.setNickname(`#${user.lastrank} | ${user.name}`)
 	}
 	for await(const user of info) {
@@ -88,18 +89,18 @@ module.exports = async (Client) => {
 			beatsaber: userinfo.beatsaber
 		}, {
 			lastrank: user.countryRank
-		})
+		}).catch((error) => errorhandle(error))
 		if(!userinfo.dsactive) continue
-		const discorduser = await server.members.fetch(userinfo.discord)
-		CheckRoles(user.countryRank, discorduser, Client)
-		if(discorduser.roles.highest.position > server.members.resolve(Client.user).roles.highest.position) { 
-			infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${user.countryRank} manually`)
+		const discorduser = await server.members.fetch(userinfo.discord).catch((error) => errorhandle(error))
+		CheckRoles(user.countryRank, discorduser)
+		if(discorduser.roles.highest.position > server.members.resolve(client.user).roles.highest.position) { 
+			infohandle("asd", `${discorduser.displayName} needs to change to ${user.countryRank} manually`)
 			continue
 		}
 		try {
 			await discorduser.setNickname(`#${user.countryRank} | ${userinfo.name}`)
 		} catch(err) {
-			errorhandle(Client, err)
+			errorhandle(err)
 		}
 	}
 		
@@ -149,13 +150,13 @@ module.exports = async (Client) => {
 			beatsaber: user.beatsaber
 		}, {
 			bsactive: false
-		})
+		}).catch((error) => errorhandle(error))
 		if(!user.dsactive) return
 		const discorduser = await server.members.fetch(user.discord)
 		ranks.forEach((rank) => {
-			discorduser.roles.remove(rank)
+			discorduser.roles.remove(rank).catch((error) => errorhandle(error))
 		})
-		await discorduser.setNickname(`IA | ${user.name}`)
+		await discorduser.setNickname(`IA | ${user.name}`).catch((error) => errorhandle(error))
 	}
 	let PlayerCounter = 0
 	for await(const data of full) {
@@ -172,22 +173,22 @@ module.exports = async (Client) => {
 			beatsaber: player.beatsaber
 		}, {
 			lastrank: body.countryRank
-		})
+		}).catch((error) => errorhandle(error))
 		if(!player.dsactive) continue
 		const discorduser = await server.members.fetch(player.discord)
-		CheckRoles(body.countryRank, discorduser, Client)
-		if(discorduser.roles.highest.position > server.members.resolve(Client.user).roles.highest.position) { 
-			infohandle(Client, "asd", `${discorduser.displayName} needs to change to ${body.countryRank} manually`)
+		CheckRoles(body.countryRank, discorduser)
+		if(discorduser.roles.highest.position > server.members.resolve(client.user).roles.highest.position) { 
+			infohandle("asd", `${discorduser.displayName} needs to change to ${body.countryRank} manually`)
 			continue
 		}
 		try {
 			await discorduser.setNickname(`#${body.countryRank} | ${player.name}`)
 		} catch(err) {
-			errorhandle(Client, err)
+			errorhandle(err)
 		}
 	}
 
 	if(usersupdatedraw.length) {
-		InfoChannelMessage(Client, usersupdatedraw)
+		InfoChannelMessage(usersupdatedraw)
 	}
 }
