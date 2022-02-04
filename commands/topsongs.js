@@ -11,12 +11,12 @@ module.exports = {
 	cooldown: -1,
 	async execute(message, DiscordClient, args) {
 		let user
-		if(args.length) user = await GetUserInfo(args, message, { plays: 1 }) 
-		else user = await UserSchema.findOne({ discord: message.author.id}, { plays: 1 })
+		if(args.length) user = await GetUserInfo(args, message, { plays: 1, beatsaber: 1  }) 
+		else user = await UserSchema.findOne({ discord: message.author.id}, { plays: 1, beatsaber: 1  })
 		if(!user || !user?.plays?.length) return message.channel.send({content: "User has no account or has invalid account."})
 		const songs = user.plays.filter(a => a.PP).sort((a, b) => {
 			return b.PP - a.PP
 		})
-		await showsongs(songs, message, "player")
+		await showsongs(songs, message, "player", user)
 	},
 }

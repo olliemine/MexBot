@@ -95,7 +95,7 @@ Ready POG`)
 
 
 client.on("messageCreate", async (message) => {
-	if(message.author.bot) return
+	if(message.author.bot || (message.guildId ? message.guildId !== info.serverId : false)) return
 	if(message.channel.id === info.verificationChannel) return Verificacion(message)
 	if(!message.content.startsWith(info.prefix)) return
 	const args = message.content.slice(info.prefix.length).trim().split(/ +/)

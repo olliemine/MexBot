@@ -5,6 +5,7 @@ const table = require("text-table")
 const Vibrant = require("node-vibrant")
 const fetch = require("node-fetch")
 const { serverId } = require("../../info.json")
+const { timeSince } = require("../../Util")
 
 /**
  * @typedef {import("discord.js").Message} Message
@@ -12,72 +13,16 @@ const { serverId } = require("../../info.json")
 /**
  * @param {Array<Object>} datamaps 
  * @param {Message} message 
- * @param {("player"|"search")} mode 
+ * @param {("player"|"search")} mode
+ * @param {Object=} player  
  */
-module.exports = async (datamaps, message, mode) => {
-	function Options(leaderboard, maxscore, ranked) {
-		let options = []
-		let i = 0
-		leaderboard.forEach(player => {
-			i++
-			let row = [`${i}#`, player.PlayerName, `${((player.Score / maxscore)*100).toFixed(2)}%`]
-			if(ranked) row.push(`${player.PP.toFixed(1)} PP`)
-			if(!player.Mods[0]) return options.push(row)
-			let mods = ""
-			player.Mods.forEach(Mod => {
-				mods += `${Mod}`
-			})
-			row.push(mods)
-			options.push(row)
-		})
-		let t = table(options, {
-		})
-		t = "```js\n" + t + "\n```"
-		return t
-	}
-
-	function DifficultySelector(maps, selectedDiff){
-		let diffs = []
-		maps.forEach(m => {
-			diffs.push(m.DiffInfo.FormatDiff)
-		})
-		diffs.reverse()
-		let text = ""
-		diffs.forEach(diff => {
-			if(diff == selectedDiff) return text += `**${diff}** - `
-			text += `${diff} - `
-		})
-		return text.slice(0, -3)
-	}
-
+module.exports = async (datamaps, message, mode, sPlayer = null) => {
 	function GetMode(m) {
 		if(m === "player") return true
 		if(m === "search") return false
 		throw new Error("InvalidInput")
 	}
 
-	function DeletedEmbed(page) {
-		return new MessageEmbed()
-		.setColor("GREY")
-		.setThumbnail("https://cdn.scoresaber.com/avatars/steam.png")
-		.setTitle(`Deleted - Deleted `)
-		.setURL("https://beatsaver.com/maps/25f")
-		.setDescription(`Mapped by Deleted\n\nThis map has been deleted and can't be showed.\nResult ${page + 1} of ${datamaps.length}\n`)
-		.setFooter("Made by olliemine")
-	}
-
-	function NormalEmbed(map, page, diffnumber) {
-		const info = map.Info
-		const diff = map.Difficulties[diffnumber]
-		const DiffSelector = DifficultySelector(map.Difficulties, diff.DiffInfo.FormatDiff)
-		return new MessageEmbed()
-		.setColor(map.Color)
-		.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
-		.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
-		.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
-		.setDescription(`Mapped by ${info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}Result ${page + 1} of ${datamaps.length}\n`)
-		.setFooter("Made by olliemine")
-	}
 	class Cache {
 		constructor(msg, row, playermode) {
 			this.maps = []
@@ -86,6 +31,74 @@ module.exports = async (datamaps, message, mode) => {
 			this.msg = msg
 			this.row = row
 			this.playermode = playermode
+		}
+		DifficultySelector(){
+			const maps = this.maps[this.page].Difficulties
+			const selectedDiff = this.maps[this.page].Difficulties[this.diff].DiffInfo.FormatDiff
+			let diffs = []
+			maps.forEach(m => {
+				diffs.push(m.DiffInfo.FormatDiff)
+			})
+			diffs.reverse()
+			let text = ""
+			diffs.forEach(diff => {
+				if(diff == selectedDiff) return text += `**${diff}** - `
+				text += `${diff} - `
+			})
+			return text.slice(0, -3)
+		}
+		getPlayerLeaderboard() {
+			return this.maps[this.page].Difficulties[this.diff].Leaderboard.find(p => p.PlayerID == sPlayer.beatsaber) 
+		}
+		DeletedEmbed() {
+			return new MessageEmbed()
+			.setColor("GREY")
+			.setThumbnail("https://cdn.scoresaber.com/avatars/steam.png")
+			.setTitle(`Deleted - Deleted `)
+			.setURL("https://beatsaver.com/maps/25f")
+			.setDescription(`Mapped by Deleted\n\nThis map has been deleted and can't be showed.\nResult ${this.page + 1} of ${datamaps.length}\n`)
+			.setFooter("Made by olliemine")
+		}
+		NormalEmbed() {
+			const map = this.maps[this.page]
+			const info = map.Info
+			const diff = map.Difficulties[this.diff]
+			const DiffSelector = this.DifficultySelector(map.Difficulties, diff.DiffInfo.FormatDiff)
+			const timePlaySet = mode ? `${timeSince(this.getPlayerLeaderboard().Date)} ago\n` : ""
+			return new MessageEmbed()
+			.setColor(map.Color)
+			.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
+			.setTitle(`${info.SongAuthorName} - ${info.SongName} `)
+			.setURL(`https://scoresaber.com/leaderboard/${diff.LevelID}`)
+			.setDescription(`Mapped by ${info.MapAuthor}\n${timePlaySet}\n${DiffSelector}\n${this.Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}Result ${this.page + 1} of ${datamaps.length}\n`)
+			.setFooter("Made by olliemine")
+		}
+		Options() {
+			const diff = this.maps[this.page].Difficulties[this.diff]
+			const leaderboard = diff.Leaderboard
+			const maxscore = diff.MaxScore
+			const ranked = diff.Ranked
+			let options = []
+			let i = 0
+			leaderboard.forEach(player => {
+				const optionsPush = () => {
+					if(mode && player.PlayerID == sPlayer.beatsaber) row.push("<")
+					options.push(row)
+				}
+				i++
+				let row = [`${i}#`, player.PlayerName, `${((player.Score / maxscore)*100).toFixed(2)}%`]
+				if(ranked) row.push(`${player.PP.toFixed(1)} PP`)
+				if(!player.Mods[0]) return optionsPush()
+				let mods = ""
+				player.Mods.forEach(Mod => {
+					mods += `${Mod}`
+				})
+				row.push(mods)
+				optionsPush()
+			})
+			let t = table(options)
+			t = "```js\n" + t + "\n```"
+			return t
 		}
 		async AddMap() {
 			if(this.maps[this.page]) return
@@ -109,10 +122,16 @@ module.exports = async (datamaps, message, mode) => {
 		PostEmbed() {
 			const info = this.maps[this.page].Info
 			if(!this.maps[this.page].Info) {
-				this.msg.edit({content: null, components: [this.row], embeds: [DeletedEmbed(this.page)]})
+				this.msg.edit({content: null, components: [this.row], embeds: [this.DeletedEmbed()]}).catch(() => {
+					buttoncollector.stop("MSG_EDIT_ERR")
+					return messagecollector.stop()
+				})
 				return
 			}
-			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [NormalEmbed(this.maps[this.page], this.page, this.diff)]})
+			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [this.NormalEmbed()]}).catch(() => {
+				buttoncollector.stop("MSG_EDIT_ERR")
+				return messagecollector.stop()
+			})
 		}
 		async NextPage() {
 			this.page++
@@ -143,16 +162,15 @@ module.exports = async (datamaps, message, mode) => {
 		}
 		Stop() {
 			if(!this.maps[this.page].Info) {
-				const embed = DeletedEmbed()
+				const embed = this.DeletedEmbed()
 				.setDescription(`Mapped by Deleted\n\nThis map has been deleted and can't be showed.\n`)
 				.setFooter("")
 				this.msg.edit({content: null, components: [], embeds: [embed]})
 				return
 			}
-			const diff = this.maps[this.page].Difficulties[this.diff]
-			const DiffSelector = DifficultySelector(this.maps[this.page].Difficulties, diff.DiffInfo.FormatDiff)
-			const embed = NormalEmbed(this.maps[this.page], this.page, this.diff)
-			.setDescription(`Mapped by ${this.maps[this.page].Info.MapAuthor}\n\n${DiffSelector}\n${Options(diff.Leaderboard, diff.MaxScore, diff.Ranked)}`)
+			const DiffSelector = this.DifficultySelector()
+			const embed = this.NormalEmbed()
+			.setDescription(`Mapped by ${this.maps[this.page].Info.MapAuthor}\n\n${DiffSelector}\n${this.Options()}`)
 			.setFooter("")
 			this.msg.edit({content: `<https://beatsaver.com/maps/${this.maps[this.page].Info.Code}>`, components: [], embeds: [embed]})
 			this.maps = []
@@ -183,62 +201,63 @@ module.exports = async (datamaps, message, mode) => {
 			.setCustomId("exit")
 			.setLabel("Exit")
 			.setStyle("DANGER")
-		)
-		const msg = await message.channel.send({content: "Loading..."})
-		const CacheControl = new Cache(msg, row, GetMode(mode))
-		await CacheControl.AddMap()
+	)
+	const msg = await message.channel.send({content: "Loading <a:paroxysm_car_crash:938980793932460053>"}) //NOTE: This is hilarious
+	const CacheControl = new Cache(msg, row, GetMode(mode))
+	await CacheControl.AddMap()
+	CacheControl.PostEmbed()
+	const buttoncollector = msg.createMessageComponentCollector({ componentType: "BUTTON", time: (1000*60)*5})
+	buttoncollector.on("collect", async i => {
+		if(i.user.id !== message.author.id) return
+		start = new Date()
+		i.deferUpdate()
+		switch (i.customId) {
+			case "backsong":
+				if(CacheControl.page == 0) {
+					await CacheControl.GotoPage(datamaps.length - 1)
+					break
+				}
+				await CacheControl.BackPage()
+				break
+			case "backdiff":
+				if(CacheControl.diff == CacheControl.GetNumberOfDiffs()) {
+					CacheControl.GotoDiff(0)
+					break
+				}
+				CacheControl.BackDiff()
+				break
+			case "nextdiff":
+				if(CacheControl.diff == 0) {
+					CacheControl.GotoDiff(CacheControl.GetNumberOfDiffs())
+					break
+				}
+				CacheControl.NextDiff()
+				break
+			case "nextsong":
+				if(CacheControl.page == datamaps.length - 1) {
+					await CacheControl.GotoPage(0)
+					break
+				}
+				await CacheControl.NextPage()
+				break
+			case "exit":
+				return buttoncollector.stop()
+		}
 		CacheControl.PostEmbed()
-		const buttoncollector = msg.createMessageComponentCollector({ componentType: "BUTTON", time: (1000*60)*5})
-		buttoncollector.on("collect", async i => {
-			if(i.user.id !== message.author.id) return
-			start = new Date()
-			i.deferUpdate()
-			switch (i.customId) {
-				case "backsong":
-					if(CacheControl.page == 0) {
-						await CacheControl.GotoPage(datamaps.length - 1)
-						break
-					}
-					await CacheControl.BackPage()
-					break
-				case "backdiff":
-					if(CacheControl.diff == CacheControl.GetNumberOfDiffs()) {
-						CacheControl.GotoDiff(0)
-						break
-					}
-					CacheControl.BackDiff()
-					break
-				case "nextdiff":
-					if(CacheControl.diff == 0) {
-						CacheControl.GotoDiff(CacheControl.GetNumberOfDiffs())
-						break
-					}
-					CacheControl.NextDiff()
-					break
-				case "nextsong":
-					if(CacheControl.page == datamaps.length - 1) {
-						await CacheControl.GotoPage(0)
-						break
-					}
-					await CacheControl.NextPage()
-					break
-				case "exit":
-					return buttoncollector.stop()
-			}
-			CacheControl.PostEmbed()
-		})
-		buttoncollector.on("end", () => {
-			return CacheControl.Stop()
-		})
-		const filter = m => m.author.id == message.author.id && +m.content
-		const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 });
-		messagecollector.on('collect', async m => {
-			const number = parseInt(m.content) - 1
-			if(number <= 0 || number >= datamaps.length) return
-			await CacheControl.GotoPage(number)
-			CacheControl.PostEmbed()
-			if(m.guildId === serverId) {
-				m.delete()
-			}
-		});
+	})
+	buttoncollector.on("end", (r) => {
+		if(r === "MSG_EDIT_ERR") return
+		return CacheControl.Stop()
+	})
+	const filter = m => m.author.id == message.author.id && +m.content
+	const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 });
+	messagecollector.on('collect', async m => {
+		const number = parseInt(m.content) - 1
+		if(number <= 0 || number >= datamaps.length) return
+		await CacheControl.GotoPage(number)
+		CacheControl.PostEmbed()
+		if(m.guildId === serverId) {
+			m.delete()
+		}
+	});
 }
