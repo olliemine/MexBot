@@ -18,7 +18,7 @@ module.exports = {
 			} catch (err) {
 				return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully", message)
 			}
-			message.channel.send({content: NoMentionText(`Changed name to ${fullname}`)})
+			message.channel.send({content: NoMentionText(`Changed name to ${name}`)})
 		}
 		let member = message.mentions.users.first() || client.users.cache.get(args[0])
 		args.shift()

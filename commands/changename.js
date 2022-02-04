@@ -13,6 +13,14 @@ module.exports = {
 	dm: true,
 	cooldown: 2,
 	async execute(message, args) {
+		function SetServerNickname(name) {
+			try {
+				member.setNickname(name)
+			} catch (err) {
+				return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully", message)
+			}
+			message.channel.send({content: NoMentionText(`Changed name to ${name}`)})
+		}
 		const user = await UserSchema.findOne({ discord: message.author.id }, {playHistory: 0, plays: 0})
 		const server = await client.guilds.fetch(serverId)
 		const member = await server.members.fetch(message.author.id)
@@ -24,8 +32,7 @@ module.exports = {
 			if(!Array.isArray(args) || !args.length) return message.channel.send({content: "Necesitas poner un nombre"})
 			const new_name = args.join(" ")
 			if(new_name.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})			
-			member.setNickname(new_name)
-			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${new_name}`)})
+			SetServerNickname(new_name)
 		}
 		async function User() {
 			const backtext = GetBacktext(user, "user")
@@ -37,12 +44,7 @@ module.exports = {
 			}, {
 				name: fronttext
 			})
-			try{
-				member.setNickname(fullname)
-			}catch(err){
-				return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully")
-			}
-			return message.channel.send({content: NoMentionText(`Succesfully changed name to ${fullname}`)})
+			SetServerNickname(fullname)
 		}
 		if(!user) return NonUser()
 		return User()	
