@@ -7,7 +7,25 @@ const fetch = require("node-fetch")
 const { serverId } = require("../../info.json")
 const { timeSince } = require("../../Util")
 const ErrorEmbed = require("../../functions/error")
+let CommandInstances = {}
 
+function IdFromMessage(msg) {
+	return `${msg.author.id}-${msg.channel.id}`
+}
+
+function AddCommandInstance(msg, cache) {
+	CommandInstances[IdFromMessage(msg)] = cache
+}
+
+function RemoveCommandInstance(msg) {
+	delete CommandInstances[IdFromMessage(msg)]
+}
+
+function CommandInstancesCheckAndDelete(msg) {
+	const id = IdFromMessage(msg)
+	if(!CommandInstances[id]) return
+	CommandInstances[id].Stop()
+}
 /**
  * @typedef {import("discord.js").Message} Message
  */
@@ -19,18 +37,24 @@ const ErrorEmbed = require("../../functions/error")
  */
 module.exports = async (datamaps, message, mode, sPlayer = null) => {
 	let closed = false
-	
+	CommandInstancesCheckAndDelete(message)
 	function GetMode(m) {
 		if(m === "player") return true
 		if(m === "search") return false
 		throw new Error("InvalidInput")
 	}
+
 	function ErrorHandler(err, description) {
 		ErrorEmbed(err, description, message)
 		msg.delete()
+		CloseCache()
+	}
+
+	function CloseCache() {
+		closed = true
+		RemoveCommandInstance(message)
 		buttoncollector.stop()
 		messagecollector.stop()
-		closed = true
 	}
 
 	class Cache {
@@ -41,6 +65,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			this.msg = msg
 			this.row = row
 			this.playermode = playermode
+			AddCommandInstance(message, this)
 		}
 		DifficultySelector(){
 			const maps = this.maps[this.page].Difficulties
@@ -133,15 +158,15 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			if(closed) return
 			const info = this.maps[this.page].Info
 			if(!this.maps[this.page].Info) {
-				this.msg.edit({content: null, components: [this.row], embeds: [this.DeletedEmbed()]}).catch(() => {
-					buttoncollector.stop("MSG_EDIT_ERR")
-					return messagecollector.stop()
+				this.msg.edit({content: null, components: [this.row], embeds: [this.DeletedEmbed()]}).catch((err) => {
+					ErrorHandler(err, "Unexpected Error")
+					return
 				})
 				return
 			}
-			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [this.NormalEmbed()]}).catch(() => {
-				buttoncollector.stop("MSG_EDIT_ERR")
-				return messagecollector.stop()
+			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [this.NormalEmbed()]}).catch((err) => {
+				ErrorHandler(err, "Unexpected Error")
+				return
 			})
 		}
 		async AddPage() {
@@ -192,6 +217,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			.setFooter("")
 			this.msg.edit({content: `<https://beatsaver.com/maps/${this.maps[this.page].Info.Code}>`, components: [], embeds: [embed]})
 			this.maps = []
+			CloseCache()
 		}
 		GetNumberOfDiffs() {
 			return this.maps[this.page].Difficulties.length - 1
@@ -263,7 +289,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 				await CacheControl.NextPage()
 				break
 			case "exit":
-				return buttoncollector.stop()
+				return CacheControl.Stop()
 		}
 		if(closed) return
 		try {
@@ -272,15 +298,15 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			ErrorHandler(e, "Couldnt post embed")
 		}
 	})
-	buttoncollector.on("end", (r) => {
-		if(r === "MSG_EDIT_ERR") return
-		return CacheControl.Stop()
+	buttoncollector.once("end", () => {
+		if(closed) return
+		CacheControl.Stop()
 	})
-	const filter = m => m.author.id == message.author.id && +m.content
+	const filter = m => m.author.id == message.author.id && +m.content && m.channel.id == message.channel.id
 	const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 });
 	messagecollector.on('collect', async m => {
 		const number = parseInt(m.content) - 1
-		if(number <= 0 || number >= datamaps.length) return
+		if(number <= -1 || number >= datamaps.length) return
 		await CacheControl.GotoPage(number)
 		CacheControl.PostEmbed()
 		if(closed) return
