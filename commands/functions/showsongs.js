@@ -45,8 +45,8 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 	function CloseCache() {
 		closed = true
 		RemoveCommandInstance(message)
-		buttoncollector.stop()
-		messagecollector.stop()
+		if(buttoncollector) buttoncollector.stop()
+		if(messagecollector) messagecollector.stop()
 	}
 
 	class Cache {
@@ -91,7 +91,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			const info = map.Info
 			const diff = map.Difficulties[this.diff]
 			const DiffSelector = this.DifficultySelector(map.Difficulties, diff.DiffInfo.FormatDiff)
-			const timePlaySet = mode ? `${timeSince(this.getPlayerLeaderboard().Date)} ago\n` : ""
+			const timePlaySet = this.playermode ? `${timeSince(this.getPlayerLeaderboard().Date)} ago\n` : ""
 			return new MessageEmbed()
 			.setColor(map.Color)
 			.setThumbnail(`https://na.cdn.beatsaver.com/${info.Hash.toLowerCase()}.jpg`)
