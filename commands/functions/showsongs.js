@@ -29,6 +29,7 @@ function CommandInstancesCheckAndDelete(msg) {
  */
 module.exports = async (datamaps, message, mode, sPlayer = null) => {
 	let closed = false
+	let initialized = false
 	CommandInstancesCheckAndDelete(message)
 	function GetMode(m) {
 		if(m === "player") return true
@@ -45,8 +46,9 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 	function CloseCache() {
 		closed = true
 		RemoveCommandInstance(message)
-		if(buttoncollector) buttoncollector.stop()
-		if(messagecollector) messagecollector.stop()
+		if(!initialized) return
+		buttoncollector.stop()
+		messagecollector.stop()
 	}
 
 	class Cache {
@@ -109,7 +111,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			let i = 0
 			leaderboard.forEach(player => {
 				const optionsPush = () => {
-					if(mode && player.PlayerID == sPlayer.beatsaber) row.push("<")
+					if(this.playermode && player.PlayerID == sPlayer.beatsaber) row.push("<")
 					options.push(row)
 				}
 				i++
@@ -308,5 +310,6 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 		if(m.guildId === serverId) {
 			m.delete()
 		}
-	});
+	})
+	initialized = true
 }
