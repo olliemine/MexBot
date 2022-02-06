@@ -60,7 +60,7 @@ async function resResolve(res, func, full) {
 * Id Scoresaber lookup
 *
 * @param {String} id
-* @return {Promise<SearchObject>} status of operation and information about the result
+* @return {Promise<SearchObject>}
 *
 */
 module.exports.idSearch = async (id) => {
@@ -71,7 +71,7 @@ module.exports.idSearch = async (id) => {
 * Basic Id Scoresaber lookup
 *
 * @param {String} id
-* @return {Promise<BasicSearchObject>} status of operation and information about the result
+* @return {Promise<BasicSearchObject>}
 */
 module.exports.basicSearch = async (id) => {
 	const res = await fetch(`${scoresaberApi}/player/${id}/basic`)
@@ -81,7 +81,7 @@ module.exports.basicSearch = async (id) => {
 /** 
 * Name Scoresaber Lookup
 * @param {String} name
-* @return {Promise<SearchObject>} status of operation and information about the result
+* @return {Promise<SearchObject>}
 */
 module.exports.nameSearch = async (name) => {
 	if(name.length < 3 || name.length > 32) return {status: false, body: `404 Invalid Name`}
@@ -94,7 +94,7 @@ module.exports.nameSearch = async (name) => {
 * Id, Link or Name Scoresaber lookup
 *
 * @param {String} full - ID or LINK or NAME
-* @return {Promise<SearchObject>} status of operation and information about the result
+* @return {Promise<SearchObject>}
 */
 module.exports.fullSearch = async (full) => {
 	const regex = new RegExp("^https:\/\/scoresaber.com\/u\/[0-9]*(\\?.*)?$", "i")

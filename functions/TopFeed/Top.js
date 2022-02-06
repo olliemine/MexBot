@@ -4,9 +4,14 @@ const StoreMaps = require("./StoreMaps")
 const Score = require("./Score")
 const StoreUserFull = require("./StoreUserFull")
 const GetAll = require("./GetAll")
+const Util = require("../../Util")
 
-module.exports = async () => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
-		const players = await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
+/**
+ * @typedef {import(Util.UserObject} UserObject
+ * @param {[Util.UserObject]=} customPlayers 
+ */
+module.exports = async (customPlayers = null) => { //country: "MX", bsactive: true, lastrank: { $lte: 50 }
+		const players = customPlayers || await UserSchema.find({ country: "MX", bsactive: true, lastrank: { $lte: 50 }})
 		let NewPlay = false
 		async function GetFirstMap(beatsaber) {
 			return fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1&withMetadata=false`)
