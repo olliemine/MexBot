@@ -15,13 +15,7 @@ module.exports = {
 	cooldown: 4,
 	async start() {
 		usersraw = await UserSchema.find({}, {realname: 1, beatsaber: 1, discord: 1})
-		usersraw.forEach(u => {
-			users.push({
-				realname: u.realname,
-				beatsaber: u.beatsaber,
-				discord: u.discord
-			})
-		})
+		users = usersraw
 		usersraw = null
 		return
 	},
@@ -41,7 +35,7 @@ module.exports = {
 			if(!info.status) return ErrorEmbed(info.body)
 			return BuildEmbed(info.body)
 		}
-		if (!Array.isArray(args) || !args.length) {
+		if(!args.length) {
 			cacheduser = users.find(r => r.discord == message.author.id)
 			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
 			var user = await UserSchema.findOne({ discord: message.author.id }, { beatsaber: 1 })
@@ -57,7 +51,7 @@ module.exports = {
 			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
 			const info = await GetUser.nameSearch(args.join(" "))
 			if(!info.status) return ErrorEmbed(info.body)
-			return BuildEmbed(info.body.players[0])
+			return BuildEmbed(info.body)
 		}
 		async function GetGraph(user) {
 			function findMissingNumbers(arr) {

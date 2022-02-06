@@ -11,9 +11,7 @@ module.exports = {
 	cooldown: -1,
 	async execute(message, args) {
 		const user = await GetUserInfo(args, message)
-		if(!user) {
-			return message.channel.send({content: "No user found."})
-		}
+		if(!user) return message.channel.send({content: "No user found."})
 		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { lastmap: null, lastmapdate: null, playHistory: [], plays: []})
 		let levels = await LevelSchema.find({
 			Leaderboard: {$elemMatch: {PlayerID: user.beatsaber}}

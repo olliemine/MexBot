@@ -9,29 +9,21 @@ const { timeSince } = require("../../Util")
 const ErrorEmbed = require("../../functions/error")
 let CommandInstances = {}
 
-function IdFromMessage(msg) {
-	return `${msg.author.id}-${msg.channel.id}`
-}
+const IdFromMessage = (msg) => `${msg.author.id}-${msg.channel.id}`
 
-function AddCommandInstance(msg, cache) {
-	CommandInstances[IdFromMessage(msg)] = cache
-}
+const AddCommandInstance = (msg, cache) => CommandInstances[IdFromMessage(msg)] = cache
 
-function RemoveCommandInstance(msg) {
-	delete CommandInstances[IdFromMessage(msg)]
-}
+const RemoveCommandInstance = (msg) => delete CommandInstances[IdFromMessage(msg)]
 
 function CommandInstancesCheckAndDelete(msg) {
 	const id = IdFromMessage(msg)
 	if(!CommandInstances[id]) return
 	CommandInstances[id].Stop()
 }
-/**
- * @typedef {import("discord.js").Message} Message
- */
+
 /**
  * @param {Array<Object>} datamaps 
- * @param {Message} message 
+ * @param {import("discord.js").Message} message 
  * @param {("player"|"search")} mode
  * @param {Object=} player  
  */
@@ -298,12 +290,15 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			ErrorHandler(e, "Couldnt post embed")
 		}
 	})
+
 	buttoncollector.once("end", () => {
 		if(closed) return
 		CacheControl.Stop()
 	})
+
 	const filter = m => m.author.id == message.author.id && +m.content && m.channel.id == message.channel.id
-	const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 });
+	const messagecollector = message.channel.createMessageCollector({ filter, time: (1000*60)*5 })
+
 	messagecollector.on('collect', async m => {
 		const number = parseInt(m.content) - 1
 		if(number <= -1 || number >= datamaps.length) return

@@ -1,9 +1,7 @@
 const UserSchema = require("../models/UserSchema")
-const { Util } = require("discord.js")
 const { serverId } = require("../info.json")
-const {GetBacktext} = require("../Util")
 const { client } = require("../index")
-const ErrorHandler = require("../functions/error")
+const MainChangename = require("./functions/MainChangename")
 
 module.exports = {
 	name : "changename",
@@ -13,40 +11,8 @@ module.exports = {
 	dm: true,
 	cooldown: 2,
 	async execute(message, args) {
-		function SetServerNickname(name) {
-			try {
-				member.setNickname(name)
-			} catch (err) {
-				return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully", message)
-			}
-			message.channel.send({content: NoMentionText(`Changed name to ${name}`)})
-		}
-		const user = await UserSchema.findOne({ discord: message.author.id }, {playHistory: 0, plays: 0})
-		const server = await client.guilds.fetch(serverId)
-		const member = await server.members.fetch(message.author.id)
-		if(member.roles.highest.position > server.members.resolve(client.user).roles.highest.position) return message.channel.send({content: "No se puede cambiar el nombre porque tiene role mayor."})
-		function NoMentionText(text) {
-			return Util.removeMentions(text)
-		}
-		function NonUser() {
-			if(!Array.isArray(args) || !args.length) return message.channel.send({content: "Necesitas poner un nombre"})
-			const new_name = args.join(" ")
-			if(new_name.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})			
-			SetServerNickname(new_name)
-		}
-		async function User() {
-			const backtext = GetBacktext(user, "user")
-			const fronttext = args.length ? args.join(" ") : user.realname
-			const fullname = `${backtext} | ${fronttext}`
-			if(fullname.length > 32) return message.channel.send({content: "El nombre es muy largo, porfavor elige un nombre mas pequeño"})
-			await UserSchema.findOneAndUpdate({
-				discord: message.author.id
-			}, {
-				name: fronttext
-			})
-			SetServerNickname(fullname)
-		}
-		if(!user) return NonUser()
-		return User()	
+		const user = await UserSchema.findOne({ discord: message.author.id }, { realname: 1, bsactive: 1, country: 1, lastrank: 1 })
+		const member = message.member?.guild?.id == serverId ? message.member : client.guilds.cache.get(serverId).members.cache.get(message.author.id)
+		MainChangename(user, member, message, args)
 	},
 };

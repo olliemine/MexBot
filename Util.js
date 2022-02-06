@@ -1,16 +1,28 @@
 const UserSchema = require("./models/UserSchema")
 
 /**
- * @typedef {import("discord.js").Message} Message
+ * @typedef {Object} UserObject
+ * @prop {string} discord The discord id from the user
+ * @prop {string} beatsaber The scoresaber (steam) id from the user
+ * @prop {string} realname The official name of the user
+ * @prop {string} country The country of the user
+ * @prop {boolean} bsactive The users activeness in scoresaber
+ * @prop {boolean} dsactive Whether the user is active in discord
+ * @prop {string} name The users name in discord
+ * @prop {number} lastrank The last updated rank of the user
+ * @prop {string} lastmap The last updated map of the user
+ * @prop {string} lastmapdate The last map updated date of the user
+ * @prop {boolean} snipe Option to enable pinging in top 1 feed
+ * @prop {[{plays: Number, week: Number}]} playHistory The users play history in scoresaber
+ * @prop {[{LevelID: Number, Hash: String, PP: Number}]} plays The total users plays - DEPRACATED
  */
 
 /**
  * Returns the User Object from diferent args
- * 
  * @param {Array<String>} args 
- * @param {Message} message
+ * @param {import("discord.js").Message} message
  * @param {Object} projection
- * @returns {Promise} UserSchema Object
+ * @returns {Promise<UserObject>}
  */
 module.exports.GetUserInfo = async (args, message, projection = { playHistory: 0, plays: 0 }) => {
 	if(message) {
@@ -32,10 +44,8 @@ module.exports.GetBacktext = (info, type) => {
 	switch(type) {
 		case "user":
 			return !info.bsactive ? "IA" : info.country != "MX" ? info.country : `#${info.lastrank}`
-			break
 		case "body":
 			return info.inactive ? "IA" : info.country != "MX" ? info.country : `#${info.countryRank}`
-			break
 		default:
 			throw null
 	}

@@ -7,7 +7,6 @@ const InfoChannelMessage = require("./InfoChannelMessage")
 const LevelSchema = require("../models/LevelSchema")
 const { serverId, topRoles } = require("../info.json")
 const { client } = require("../index")
-//const MXleaderboard = require("./models/MXleaderboard")
 
 module.exports = async () => {
 	let usersupdatedraw = []
