@@ -30,7 +30,6 @@ let RecentlyExecuted = []
 let BeatsaverWebSocketReconnectRetries = 0
 
 
-
 function BeatsaverWebSocket() {
 	if(BeatsaverWebSocketReconnectRetries > 3) return infohandle("Beatsaver socket", "Connection Closed, Retries exceded")
 	const beatsaversocket = new WebSocket("wss://ws.beatsaver.com/maps")
@@ -69,7 +68,7 @@ redisClient.once("ready", async () => {
 	redisClient.quit()
 })
 redisClient.on("error", (err) => {
-	errorhandle(err)
+	console.log(err)
 })
 client.once("ready", async() => {
 	BeatsaverWebSocket()
@@ -140,22 +139,20 @@ client.on("guildMemberRemove", async (member) => {
 })
 
 client.on("guildMemberAdd", async (member) => {
-	exists = await UserSchema.countDocuments({ discord: member.id })
-	if(exists != 0) {
-		const user = await UserSchema.findOne({ discord: member.id }, { name: 1 })
-		const backtext = GetBacktext(user, "user")
-		member.setNickname(`${backtext} | ${user.name}`)
-		if(country == "MX") {
-			member.roles.add(info.verificadoRole)
-			CheckRoles(body.playerInfo.countryRank, member, client)
-		}
-		else member.roles.add(info.visitanteRole)
-		await UserSchema.findOneAndUpdate({
-			discord: member.id
-		}, {
-			dsactive: true
-		})
+	const user = await UserSchema.findOne({ discord: member.id }, { name: 1, bsactive: 1, country: 1, lastrank: 1})
+	if(!user) return
+	const backtext = GetBacktext(user, "user")
+	member.setNickname(`${backtext} | ${user.name}`)
+	if(country == "MX") {
+		member.roles.add(info.verificadoRole)
+		CheckRoles(body.playerInfo.countryRank, member, client)
 	}
+	else member.roles.add(info.visitanteRole)
+	await UserSchema.findOneAndUpdate({
+		discord: member.id
+	}, {
+		dsactive: true
+	})
 })
 
 for(const file of commandFiles) {
@@ -201,7 +198,7 @@ function SendAndDelete(msgcontent, msg) {
 }
 
 function VerificationHandler(msg, member, id) {
-	VerificacionID( member, id)
+	VerificacionID(member, id)
 	.then(data => {
 		SendAndDelete("Ahora estas verificado!", msg)
 		infohandle("Verification", `User ${data[0]} verified with account ${data[1]}`)

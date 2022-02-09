@@ -43,8 +43,10 @@ module.exports.GetUserInfo = async (args, message, projection = { playHistory: 0
 module.exports.GetBacktext = (info, type) => {
 	switch(type) {
 		case "user":
+			if(info.bsactive == null || info.country == null || info.lastrank == null) throw "Missing Arguments"
 			return !info.bsactive ? "IA" : info.country != "MX" ? info.country : `#${info.lastrank}`
 		case "body":
+			if(info.inactive == null || info.country == null || info.countryRank == null) throw "Missing Arguments"
 			return info.inactive ? "IA" : info.country != "MX" ? info.country : `#${info.countryRank}`
 		default:
 			throw null
