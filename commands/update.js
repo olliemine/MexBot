@@ -17,7 +17,7 @@ module.exports = {
 		await Top([user])
 		await msg.edit({content: "Updated top 1 feed... <a:paroxysm_car_crash:938980793932460053>"})
 		const res = await basicSearch(user.beatsaber)
-		if(!res.status) return msg.edit({content: `Error on updating rank :( ${res.body}`})
+		if(!res.status) return msg.edit({content: `Error updating rank :( ${res.body}`})
 		if(res.body.countryRank != user.lastrank) await UpdateUsers()
 		msg.edit({content: "Completed Update!"})
 	},

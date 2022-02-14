@@ -2,7 +2,7 @@ const UserSchema = require("../models/UserSchema")
 const CheckRoles = require("../functions/CheckRoles")
 const { serverId } = require("../info.json")
 const GetUser = require("../functions/GetUser")
-const {GetBacktext, GetUserInfo} = require("../Util")
+const {GetBacktext, GetUserInfo, checkNicknameChangePermission} = require("../Util")
 const { client } = require("../index")
 const ErrorHandler = require("../functions/error")
 
@@ -22,14 +22,12 @@ module.exports = {
 		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) return message.channel.send({content: "User has been activated"})
 		const server = await client.guilds.fetch(serverId)
-		const discorduser = await server.members.fetch(user.discord)
-		CheckRoles(user.lastrank, discorduser)
+		const member = await server.members.fetch(user.discord)
+		CheckRoles(user.lastrank, member)
 		const backtext = GetBacktext(body, "body")
-		try {
-			await discorduser.setNickname(`${backtext} | ${user.name}`)//Probably change later?
-		} catch(err) {
-			return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully")
-		}
-		message.channel.send({content: "User has been activated"})
+		const permission = checkNicknameChangePermission(member).catch(err => ErrorHandler(err, "Invalid Member", message))
+		if(!permission) return message.channel.send({content: "Could'nt change nickname, otherwise ran succesfully"})
+		await member.setNickname(`${backtext} | ${user.name}`).catch(err => ErrorHandler(err, "Unknown Error", message))//Probably change later?
+		message.channel.send({content: "User has been sucessfully activated"})
 	},
 }

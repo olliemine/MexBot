@@ -7,8 +7,12 @@ const InfoChannelMessage = require("./InfoChannelMessage")
 const LevelSchema = require("../models/LevelSchema")
 const { serverId, topRoles } = require("../info.json")
 const { client } = require("../index")
+const { checkNicknameChangePermission } = require("../Util")
 
 module.exports = async () => {
+	async function setNickname(member, nickname) {
+		if(checkNicknameChangePermission(member)) return await member.setNickname(nickname).catch(err => errorhandle(err))
+	}
 	let usersupdatedraw = []
 	let users = await UserSchema.find({country: "MX", bsactive: true}, {playHistory: 0, plays: 0})
 	const server = await client.guilds.fetch(serverId)
@@ -60,9 +64,9 @@ module.exports = async () => {
 		infohandle("UpdateUsers", user.realname)
 		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
 		if(!user.dsactive) return
-		const discorduser = await server.members.fetch(user.discord)
-		CheckRoles(user.lastrank, discorduser)
-		await discorduser.setNickname(`#${user.lastrank} | ${user.name}`)
+		const member = await server.members.fetch(user.discord)
+		CheckRoles(user.lastrank, member)
+		await setNickname(member, `#${user.lastrank} | ${user.name}`)
 	}
 	for await(const user of info) {
 		const userinfo = users.find(element => element.beatsaber == user.id)
@@ -90,20 +94,11 @@ module.exports = async () => {
 			lastrank: user.countryRank
 		})
 		if(!userinfo.dsactive) continue
-		const discorduser = await server.members.fetch(userinfo.discord).catch((error) => errorhandle(error))
-		CheckRoles(user.countryRank, discorduser)
-		if(discorduser.roles.highest.position > server.members.resolve(client.user).roles.highest.position) { 
-			infohandle("asd", `${discorduser.displayName} needs to change to ${user.countryRank} manually`)
-			continue
-		}
-		try {
-			await discorduser.setNickname(`#${user.countryRank} | ${userinfo.name}`)
-		} catch(err) {
-			errorhandle(err)
-		}
+		const member = await server.members.fetch(userinfo.discord).catch((error) => errorhandle(error))
+		CheckRoles(user.countryRank, member)
+		await setNickname(member, `#${user.countryRank} | ${userinfo.name}`)
 	}
 		
-
 	async function GetPage(beatsaber) {
 		return fetch(`https://scoresaber.com/api/player/${beatsaber}/full`)
 			.then((res) => {
@@ -151,11 +146,11 @@ module.exports = async () => {
 			bsactive: false
 		})
 		if(!user.dsactive) return
-		const discorduser = await server.members.fetch(user.discord)
+		const member = await server.members.fetch(user.discord)
 		ranks.forEach((rank) => {
-			discorduser.roles.remove(rank).catch((error) => errorhandle(error))
+			member.roles.remove(rank).catch((error) => errorhandle(error))
 		})
-		await discorduser.setNickname(`IA | ${user.name}`).catch((error) => errorhandle(error))
+		await setNickname(member, `IA | ${user.name}`)
 	}
 	let PlayerCounter = 0
 	for await(const data of full) {
@@ -174,17 +169,9 @@ module.exports = async () => {
 			lastrank: body.countryRank
 		})
 		if(!player.dsactive) continue
-		const discorduser = await server.members.fetch(player.discord)
-		CheckRoles(body.countryRank, discorduser)
-		if(discorduser.roles.highest.position > server.members.resolve(client.user).roles.highest.position) { 
-			infohandle("asd", `${discorduser.displayName} needs to change to ${body.countryRank} manually`)
-			continue
-		}
-		try {
-			await discorduser.setNickname(`#${body.countryRank} | ${player.name}`)
-		} catch(err) {
-			errorhandle(err)
-		}
+		const member = await server.members.fetch(player.discord)
+		CheckRoles(body.countryRank, member)
+		await setNickname(member, `#${body.countryRank} | ${player.name}`)
 	}
 
 	if(usersupdatedraw.length) {

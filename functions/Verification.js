@@ -3,7 +3,7 @@ const UserSchema = require("../models/UserSchema")
 const CheckRoles = require("./CheckRoles")
 const { visitanteRole, verificadoRole } = require("../info.json")
 const GetUser = require("./GetUser")
-const {GetBacktext} = require("../Util")
+const { GetBacktext, checkNicknameChangePermission} = require("../Util")
 const ErrorHandler = require("./error")
 
 module.exports = async (user, scoresaber) => {
@@ -23,7 +23,7 @@ module.exports = async (user, scoresaber) => {
 	Refresh(body.id, body.profilePicture)
 	const backtext = GetBacktext(body, "body")
 	const username = getName(body.name, backtext)
-	await user.setNickname(`${backtext} | ${username}`)
+	if(checkNicknameChangePermission(user)) await user.setNickname(`${backtext} | ${username}`).catch(err => ErrorHandler(err))
 	if(body.country == "MX") {
 		user.roles.add(verificadoRole).catch((error) => ErrorHandler(error))
 		CheckRoles(body.countryRank, user)

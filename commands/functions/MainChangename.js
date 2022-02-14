@@ -1,6 +1,6 @@
 const UserSchema = require("../../models/UserSchema")
 const { Util } = require("discord.js")
-const {GetBacktext} = require("../../Util")
+const {GetBacktext, checkNicknameChangePermission} = require("../../Util")
 const ErrorHandler = require("../../functions/error")
 
 /**
@@ -16,12 +16,9 @@ const ErrorHandler = require("../../functions/error")
  * @param {Array} args 
  */
 module.exports = (user, member, message, args) => {
+	if(!checkNicknameChangePermission(member)) return message.channel.send({content: "Cant change nickname"})
 	function SetServerNickname(name) {
-		try {
-			member.setNickname(name)
-		} catch (err) {
-			return ErrorHandler(err, "Couldnt set a nickname, Otherwise ran succesfully", message)
-		}
+		member.setNickname(name).then(err => ErrorHandler(err, "Unknown Error", message))
 		message.channel.send({content: NoMentionText(`Changed name to ${name}`)})
 	}
 	function NoMentionText(text) {

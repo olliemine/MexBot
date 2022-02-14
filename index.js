@@ -20,7 +20,7 @@ const fs = require("fs")
 const getplayer = require("./commands/getplayer")
 const VerificacionID = require("./functions/Verification")
 const RankedMaps = require("./functions/RankedMaps")
-const {GetBacktext} = require("./Util")
+const { GetBacktext, checkNicknameChangePermission} = require("./Util")
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 const redis = require("redis");
 const redisClient = redis.createClient({ url: process.env.REDIS_URL })
@@ -131,6 +131,7 @@ client.on("messageCreate", async (message) => {
 })
 
 client.on("guildMemberRemove", async (member) => {
+	if(member.guild.id !== info.serverId || member.user.bot) return
 	await UserSchema.findOneAndUpdate({
 		discord: member.id
 	}, {
@@ -139,10 +140,11 @@ client.on("guildMemberRemove", async (member) => {
 })
 
 client.on("guildMemberAdd", async (member) => {
+	if(member.guild.id !== info.serverId || member.user.bot) return
 	const user = await UserSchema.findOne({ discord: member.id }, { name: 1, bsactive: 1, country: 1, lastrank: 1})
 	if(!user) return
 	const backtext = GetBacktext(user, "user")
-	member.setNickname(`${backtext} | ${user.name}`)
+	if(checkNicknameChangePermission(member)) member.setNickname(`${backtext} | ${user.name}`)
 	if(country == "MX") {
 		member.roles.add(info.verificadoRole)
 		CheckRoles(body.playerInfo.countryRank, member, client)

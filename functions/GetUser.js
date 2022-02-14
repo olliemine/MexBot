@@ -51,7 +51,7 @@ async function resResolve(res, func, full) {
 	}, 5000)
 	if(res.status == 502) return func(full)
 	if(res.status != 200) return {status: false, body: `${res.status} ${res.statusText}`}
-	const body = await res.json()
+	let body = await res.json()
 	if(body.players) body = body.players[0]
 	return {status: true, body: body}
 }

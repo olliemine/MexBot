@@ -1,6 +1,10 @@
 const UserSchema = require("./models/UserSchema")
+const { client } = require("./index")
+const { serverId } = require("./info.json")
 
 /**
+ * @typedef {import("discord.js").GuildMember} GuildMember
+ * 
  * @typedef {Object} UserObject
  * @prop {string} discord The discord id from the user
  * @prop {string} beatsaber The scoresaber (steam) id from the user
@@ -18,7 +22,8 @@ const UserSchema = require("./models/UserSchema")
  */
 
 /**
- * Returns the User Object from diferent args
+ * Returns the User Object from diferent arguments
+ * 
  * @param {Array<String>} args 
  * @param {import("discord.js").Message} message
  * @param {Object} projection
@@ -34,7 +39,7 @@ module.exports.GetUserInfo = async (args, message, projection = { playHistory: 0
 }
 
 /**
- * Returns the backtext of a user
+ * Returns the backtext the nickname of a user
  * 
  * @param {Object} info
  * @param {("user"|"body")} type
@@ -49,14 +54,15 @@ module.exports.GetBacktext = (info, type) => {
 			if(info.inactive == null || info.country == null || info.countryRank == null) throw "Missing Arguments"
 			return info.inactive ? "IA" : info.country != "MX" ? info.country : `#${info.countryRank}`
 		default:
-			throw null
+			throw "Invalid Type"
 	}
 }
 
 /**
  * Returns the text of how old a play is
+ * 
  * @param {Date} date
- * @return {String} text
+ * @return {String}
  */
 module.exports.timeSince = (date) => { //https://stackoverflow.com/a/3177838
 	var seconds = Math.floor((new Date() - date) / 1000)
@@ -72,4 +78,17 @@ module.exports.timeSince = (date) => { //https://stackoverflow.com/a/3177838
 	interval = seconds / 60
 	if (interval > 1) return Math.floor(interval) + " minute" + multiple()
 	return Math.floor(seconds) + " second" + multiple()
+}
+
+/**
+ * Returns a boolean indicating whether the member is able to be changed name
+ * 
+ * @param {GuildMember} member
+ * @return {boolean} Whether a member is able to have his nickname changed
+ */
+module.exports.checkNicknameChangePermission = (member) => {
+	if(member.guild.id !== serverId) return false
+	const server = client.guilds.cache.get(serverId)
+	if(member.roles.highest.position >= server.members.resolve(client.user).roles.highest.position || server.ownerId === member.id) return false
+	return true
 }

@@ -49,7 +49,7 @@ module.exports = {
 			const regex = new RegExp(["^", escapeRegExp(args.join(" ")), "$"].join(""), "i")
 			cacheduser = users.find(r => regex.test(r.realname))
 			if(cacheduser) return GetPlayerData(cacheduser.beatsaber)
-			const info = await GetUser.nameSearch(args.join(" "))
+			const info = await GetUser.fullSearch(args.join(" "))
 			if(!info.status) return ErrorEmbed(info.body)
 			return BuildEmbed(info.body)
 		}
