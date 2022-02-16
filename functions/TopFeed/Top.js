@@ -66,7 +66,6 @@ module.exports = async (customPlayers = null) => { //country: "MX", bsactive: tr
 			})
 		}
 
-		await UpdatePlayers()
 		if(!NewPlay) return
 		await GetAll()
 		return
