@@ -1,18 +1,18 @@
-module.exports = (map) => {
+module.exports = (m) => {
 	return {
-		map = map.leaderboard.id,
-		songName = map.leaderboard.songName,
-		songAuthorName = map.leaderboard.songAuthorName,
-		mapAuthor = map.leaderboard.levelAuthorName,
-		score = map.score.baseScore,
-		hash = map.leaderboard.songHash.toUpperCase(),
-		diff = map.leaderboard.difficulty.difficultyRaw,
-		diffSort = map.leaderboard.difficulty.difficulty,
-		date = map.score.timeSet,
-		mods = map.score.modifiers.split(","), 
-		pp = map.score.pp.toFixed(1),
-		ranked = map.leaderboard.ranked,
-		stars = map.leaderboard.stars,
-		maxscore = map.leaderboard.maxScore
+		map = m.leaderboard.id,
+		songName = m.leaderboard.songName,
+		songAuthorName = m.leaderboard.songAuthorName,
+		mapAuthor = m.leaderboard.levelAuthorName,
+		score = m.score.baseScore,
+		hash = m.leaderboard.songHash.toUpperCase(),
+		diff = m.leaderboard.difficulty.difficultyRaw,
+		diffSort = m.leaderboard.difficulty.difficulty,
+		date = m.score.timeSet,
+		mods = m.score.modifiers.split(","), 
+		pp = m.score.pp.toFixed(1),
+		ranked = m.leaderboard.ranked,
+		stars = m.leaderboard.stars,
+		maxscore = m.leaderboard.maxScore
 	}
 }
