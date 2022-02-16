@@ -1,6 +1,7 @@
 const StoreMaps = require("./StoreMaps")
 const fetch = require("node-fetch")
 const Score = require("./Score")
+const { GetPromises } = require("../../Util")
 
 module.exports = (userid) => {
 	return new Promise(async (resolve, reject) => {
@@ -14,46 +15,13 @@ module.exports = (userid) => {
 				return Array.from({length: Math.ceil(body.metadata.total / 100)}, (_, i) => i + 1)
 			})
 		}
-		async function GetPage(Page) {
-			return fetch(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&withMetadata=false&page=${Page.toString()}`)
-			.then((res) => {
-				return res
-			})
-		}
-		async function GetPromises(Pages) {
-			return new Promise((resolve, reject) => {
-				let full = []
-				firstpromises = []
-				Pages.forEach((page) => {
-					firstpromises.push(page);
-				})
-				async function GetPromise(pags) {
-					promises = []
-					pags.forEach(page => {
-						promises.push(GetPage(page));
-					})
-					const unfulldata = await Promise.all(promises)
-					let checkagain = []
-					let counter = 0
-					for(const data of unfulldata) {
-						let page = pags[counter]
-						counter++
-						if(data.status == 200) {
-							full.push(data)
-							continue
-						}
-						checkagain.push(page)
-					}
-					if(checkagain.length) return setTimeout(() => { GetPromise(checkagain) }, 1000*20)
-					resolve(full)
-				}
-				GetPromise(firstpromises)
-			})
-		}
-		var pages = await getPages()
-		const data = await GetPromises(pages)
+		const pages = await getPages()
+		let functionPages = []
+		pages.forEach((page) => functionPages.push(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&withMetadata=false&page=${page.toString()}`))
+		const data = await GetPromises(fetch, functionPages)
+		if(!data) throw "Invalid Data"
 		for await(let dataPage of data) {
-			const body = await dataPage.json()
+			const body = dataPage
 			if(!firstmap) firstmap = {
 				id: body.playerScores[0].score.id,
 				date: body.playerScores[0].score.timeSet
@@ -64,7 +32,7 @@ module.exports = (userid) => {
 					passed = true
 					return
 				}
-				newscores.push(new Score(score))
+				newscores.push(Score(score))
 			})
 			if(passed) break
 		}

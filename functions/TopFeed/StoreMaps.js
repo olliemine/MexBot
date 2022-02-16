@@ -77,7 +77,7 @@ module.exports = (newscores, user, firstmap) => {
 		return map.PlayerCount
 	}
 	return new Promise(async (resolve, reject) => {
-		console.log(`New from ${user.realname}`)
+		console.log(`New Maps from ${user.realname}`)
 		let newmaps = []
 		let uniqueBaseLevels = {}
 		let updateBulkWrite = []
@@ -175,7 +175,8 @@ module.exports = (newscores, user, firstmap) => {
 				"MapAuthor": score.mapAuthor,
 				"Hash": score.hash,
 				"Code": null,
-				"Ranked": score.ranked
+				"Ranked": score.ranked,
+				"Tags": null
 			}
 			continue
 		}

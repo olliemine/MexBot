@@ -3,6 +3,7 @@
  * @prop {string} id  
  * @prop {string} name 
  * @prop {string} profilePicture
+ * @prop {string} bio 
  * @prop {string} country
  * @prop {number} pp 
  * @prop {number} rank

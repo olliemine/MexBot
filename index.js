@@ -1,4 +1,4 @@
-//require('dotenv').config()
+require('dotenv').config()
 const Discord = require("discord.js")
 const client = new Discord.Client({ intents: ["GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MEMBERS", "DIRECT_MESSAGES", "DIRECT_MESSAGE_REACTIONS", "GUILD_PRESENCES", "GUILDS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGE_TYPING"], partials: ["CHANNEL"]})
 client.commands = new Discord.Collection()
@@ -20,7 +20,7 @@ const fs = require("fs")
 const getplayer = require("./commands/getplayer")
 const VerificacionID = require("./functions/Verification")
 const RankedMaps = require("./functions/RankedMaps")
-const { GetBacktext, checkNicknameChangePermission} = require("./Util")
+const { GetBacktext } = require("./Util")
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 const redis = require("redis");
 const redisClient = redis.createClient({ url: process.env.REDIS_URL })
@@ -54,7 +54,6 @@ function BeatsaverWebSocket() {
 			if(data.createdAt == data.versions[0].createdAt) return
 			const level = await LevelSchema.findOne({Code: data.id })
 			if(!level) return
-			console.log("Updated")
 			await LevelSchema.deleteMany({Code: data.id})
 			await BaseLevelSchema.deleteOne({Code: data.id})
 		} catch(err){

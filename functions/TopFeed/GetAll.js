@@ -13,7 +13,6 @@ module.exports = () => {
 				} 
 			}
 			if(!diff?.notes) {
-				console.log(map.Hash)
 				return null
 			}
 			if(diff.notes == 1) return 115;
@@ -62,7 +61,7 @@ module.exports = () => {
 				}})
 				baseUpdateBulkWrite.push({ updateOne: {
 					"filter": { "Hash": map },
-					"update": { $set: { "Code": info.id  }}
+					"update": { $set: { "Code": info.id }}
 				}})
 				const ScoreMaps = allScoreDictHashes[map]
 				if(!ScoreMaps) continue
@@ -95,7 +94,6 @@ module.exports = () => {
 			await GetCode(mapChunk)
 			console.log(baseUpdateBulkWrite.length)
 		}
-		console.log("exporting")
 		await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 		await BaseLevelSchema.bulkWrite(baseUpdateBulkWrite, { ordered: false })
 		console.log("finished exporting")

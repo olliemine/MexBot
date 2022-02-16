@@ -7,174 +7,145 @@ const InfoChannelMessage = require("./InfoChannelMessage")
 const LevelSchema = require("../models/LevelSchema")
 const { serverId, topRoles } = require("../info.json")
 const { client } = require("../index")
-const { checkNicknameChangePermission } = require("../Util")
+const { checkNicknameChangePermission, GetPromises } = require("../Util")
 
 module.exports = async () => {
-	async function setNickname(member, nickname) {
-		if(checkNicknameChangePermission(member)) return await member.setNickname(nickname).catch(err => errorhandle(err))
-	}
-	let usersupdatedraw = []
-	let users = await UserSchema.find({country: "MX", bsactive: true}, {playHistory: 0, plays: 0})
-	const server = await client.guilds.fetch(serverId)
-	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
-	async function GetInfo() {
-		const res = await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)
-		if(res.status !== 200) return null
-		const body = await res.json()
-		return body.players
-	}
-	const info = await GetInfo()
-	if(!info) return
-	async function UpdateName(beatsaber, newname) {
-		await LevelSchema.updateMany({ 
-			TopPlayer: beatsaber
-		}, {
-			TopPlayerName: newname
+	/** 
+	 * @returns {Array<User>} 
+	 */
+	function ConvertToClasses(arr) {
+		let temp = []
+		arr.forEach(a => {
+			temp.push(new User(a))
 		})
-		await LevelSchema.updateMany(
-			{"Leaderboard.PlayerID": beatsaber},
-			{ $set: { "Leaderboard.$.PlayerName": newname }}
-		)
-		return await UserSchema.findOneAndUpdate({
-			beatsaber: beatsaber
-		}, {
-			realname: newname
-		})
+		return temp
 	}
-	async function NewUser(row, country) {
-		const user = {
-			"discord": null,
-			"beatsaber": row.id,
-			"realname": row.name,
-			"country": country,
-			"bsactive": true,
-			"dsactive": false,
-			"name": null,
-			"lastrank": 50,
-			"lastmap": null,
-			"lastmapdate": null,
-			"snipe": null,
-			"playHistory": [],
-			"plays": []
+	class User {
+		constructor(row) {
+			this.row = row
+			this.user = users.find(element => element.beatsaber == row.id)
+			this.member = this.user ? server.members.cache.get(this.user.discord) : null
 		}
-		console.log(row.name)
-		await new UserSchema(user).save()
+		async UpdateIA() {
+			if(!this.user) throw "No user"
+			infohandle("UpdateUsers", `${this.user.realname} is being activated`)
+			await UserSchema.findOneAndUpdate({ beatsaber: this.user.beatsaber }, { bsactive: true })
+			if(!this.member) return
+			CheckRoles(this.user.lastrank, this.member)
+			await this.setNickname(this.member, `#${this.user.lastrank} | ${this.user.name}`)
+		}
+		async Add() {
+			const user = {
+				"discord": null,
+				"beatsaber": this.row.id,
+				"realname": this.row.name,
+				"country": "MX",
+				"bsactive": true,
+				"dsactive": false,
+				"name": null,
+				"lastrank": 50,
+				"lastmap": null,
+				"lastmapdate": null,
+				"snipe": null,
+				"playHistory": [],
+				"plays": []
+			}
+			console.log(`user ${this.row.name} was saved`)
+			await new UserSchema(user).save()
+		}
+		async UpdateName() {
+			await LevelSchema.updateMany({ 
+				TopPlayer: this.user.beatsaber
+			}, {
+				TopPlayerName: this.row.name
+			})
+			await LevelSchema.updateMany(
+				{"Leaderboard.PlayerID": this.user.beatsaber},
+				{ $set: { "Leaderboard.$.PlayerName": this.row.name }}
+			)
+			return await UserSchema.findOneAndUpdate({
+				beatsaber: this.user.beatsaber
+			}, {
+				realname: this.row.name
+			})
+		}
+		async Update() {
+			await UserSchema.findOneAndUpdate({
+				beatsaber: this.user.beatsaber
+			}, {
+				lastrank: this.row.countryRank
+			})
+			if(!this.user.dsactive) return
+			CheckRoles(this.row.countryRank, this.member)
+			await this.setNickname(`#${this.row.countryRank} | ${this.user.name}`)
+		}
+		async InactiveAccount() {
+			await UserSchema.findOneAndUpdate({
+				beatsaber: this.user.beatsaber
+			}, {
+				bsactive: false
+			})
+			if(!this.user.dsactive) return
+			ranks.forEach((rank) => {
+				this.member.roles.remove(rank).catch((error) => errorhandle(error))
+			})
+			await this.setNickname(`IA | ${this.user.name}`)
+		}
+		async setNickname(nickname) {
+			if(checkNicknameChangePermission(this.member)) return await this.member.setNickname(nickname).catch(err => errorhandle(err))
+		} 
 	}
-	async function UpdateIA(user) {
-		infohandle("UpdateUsers", user.realname)
-		await UserSchema.findOneAndUpdate({ beatsaber: user.beatsaber }, { bsactive: true })
-		if(!user.dsactive) return
-		const member = await server.members.fetch(user.discord)
-		CheckRoles(user.lastrank, member)
-		await setNickname(member, `#${user.lastrank} | ${user.name}`)
-	}
-	for await(const user of info) {
-		const userinfo = users.find(element => element.beatsaber == user.id)
-		if(!userinfo) {
-			const exists = await UserSchema.findOne({ beatsaber: user.id }, {playHistory: 0, plays: 0})
-			if(exists) {
-				await UpdateIA(exists)
+	
+	const server = client.guilds.cache.get(serverId)
+	let usersInfoLog = []
+	let users = await UserSchema.find({country: "MX", bsactive: true}, {playHistory: 0, plays: 0})
+	const ranks = [server.roles.cache.get(topRoles[0]), server.roles.cache.get(topRoles[1]), server.roles.cache.get(topRoles[2]), server.roles.cache.get(topRoles[3])]
+	
+	//Top 50
+	const resInfo = await fetch(`https://scoresaber.com/api/players?page=1&countries=mx`)
+	if(resInfo.status !== 200) return
+	const bodyInfo = await resInfo.json()
+	if(!bodyInfo.players) return
+	let info = ConvertToClasses(bodyInfo.players)
+	await SaveUsers(info)
+
+	//Non Top 50 players
+	const GetPage = async (beatsaber) => fetch(`https://scoresaber.com/api/player/${beatsaber}/full`)
+	users = users.filter(element => element.dsactive || (!element.dsactive && element.lastrank <= 50))
+	if(!users) return
+	let userIds = []
+	users.forEach((user) => userIds.push(user.beatsaber))
+	const resIndividualInfo = await GetPromises(GetPage, userIds)
+	info = ConvertToClasses(resIndividualInfo)
+	await SaveUsers(info)
+
+	if(usersInfoLog.length) InfoChannelMessage(usersInfoLog)
+
+	async function SaveUsers(userClasses) {
+		for await(const user of userClasses) {
+			if(!user.user) {
+				const exists = await UserSchema.findOne({ beatsaber: user.id }, {playHistory: 0, plays: 0})
+				if(exists) {
+					await user.UpdateIA()
+					continue
+				}
+				await user.Add()
 				continue
 			}
-			await NewUser(user, "MX")
-			continue
-		}
-		users = users.filter(element => element.beatsaber != user.id)
-		if(user.name != userinfo.realname) await UpdateName(userinfo.beatsaber, user.name)
-		if(userinfo.lastrank == user.countryRank) continue
-		usersupdatedraw.push({
-			"user": userinfo.realname,
-			"update":  userinfo.lastrank - user.countryRank, 
-			"lastrank": userinfo.lastrank,
-			"newrank": user.countryRank
-		})
-		await UserSchema.findOneAndUpdate({
-			beatsaber: userinfo.beatsaber
-		}, {
-			lastrank: user.countryRank
-		})
-		if(!userinfo.dsactive) continue
-		const member = await server.members.fetch(userinfo.discord).catch((error) => errorhandle(error))
-		CheckRoles(user.countryRank, member)
-		await setNickname(member, `#${user.countryRank} | ${userinfo.name}`)
-	}
-		
-	async function GetPage(beatsaber) {
-		return fetch(`https://scoresaber.com/api/player/${beatsaber}/full`)
-			.then((res) => {
-				return res
-			})
-	}
-	let userslist = []
-	users = users.filter(element => element.dsactive || (!element.dsactive && element.lastrank <= 50))
-	users.forEach((user) => {
-		userslist.push(user.beatsaber)
-	})
-	if(!userslist.length) return
-	let full = []
-	function GetPromises() {
-		return new Promise((resolve, reject) => {
-			async function promise(ids) {
-				let promises = []
-				ids.forEach(id => {
-					promises.push(GetPage(id));
-				})
-				const unfulldata = await Promise.all(promises)
-				let checkagain = []
-				let counter = 0
-				for(const data of unfulldata) {
-					id = ids[counter]
-					counter++
-					if(data.status == 200) {
-						full.push(data)
-						continue
-					}
-					checkagain.push(id)
-				}
-				if(checkagain.length) return setTimeout(() => { promise(checkagain) }, 1000*20)
-				resolve()
-				return
+			if(user.row.inactive) {
+				await user.InactiveAccount()
+				continue
 			}
-			promise(userslist)
-		})
-	}
-	await GetPromises()
-	async function InactiveAccount(user) {
-		await UserSchema.findOneAndUpdate({
-			beatsaber: user.beatsaber
-		}, {
-			bsactive: false
-		})
-		if(!user.dsactive) return
-		const member = await server.members.fetch(user.discord)
-		ranks.forEach((rank) => {
-			member.roles.remove(rank).catch((error) => errorhandle(error))
-		})
-		await setNickname(member, `IA | ${user.name}`)
-	}
-	let PlayerCounter = 0
-	for await(const data of full) {
-		player = users[PlayerCounter]
-		PlayerCounter++
-		const body = await data.json()
-		if(body.name != player.realname) await UpdateName(player.beatsaber, body.name)
-		if(body.inactive == true) { 
-			InactiveAccount(player)
-			continue
+			users = users.filter(element => element.beatsaber != user.row.id)
+			if(user.row.name != user.user.realname) await user.UpdateName()
+			if(user.user.lastrank == user.row.countryRank) continue
+			usersInfoLog.push({
+				"user": userinfo.realname,
+				"update":  userinfo.lastrank - user.countryRank, 
+				"lastrank": userinfo.lastrank,
+				"newrank": user.countryRank
+			})
+			await user.Update()
 		}
-		if(player.lastrank == body.countryRank) continue
-		await UserSchema.findOneAndUpdate({
-			beatsaber: player.beatsaber
-		}, {
-			lastrank: body.countryRank
-		})
-		if(!player.dsactive) continue
-		const member = await server.members.fetch(player.discord)
-		CheckRoles(body.countryRank, member)
-		await setNickname(member, `#${body.countryRank} | ${player.name}`)
-	}
-
-	if(usersupdatedraw.length) {
-		InfoChannelMessage(usersupdatedraw)
 	}
 }

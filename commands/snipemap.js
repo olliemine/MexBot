@@ -42,7 +42,6 @@ module.exports = {
 			function IdfromMention(text) {
 				text = text.substring(3)
 				text = text.slice(0, -1)
-				console.log(text)
 				return text
 			}
 			let fil = {$and: [{ PlayerCount: {$gte: 2}} ]}
@@ -111,15 +110,11 @@ module.exports = {
 				let user
 				if(member) {
 					user = await UserSchema.findOne({ discord: member.id }, {realname: 1, beatsaber: 1})
-					await AddFilterUser(user, negative, unchanged)
-					continue
-				}
-				if(+argument) {
+				} else if(+argument) {
 					user = await UserSchema.findOne({ beatsaber: argument }, {realname: 1, beatsaber: 1})
-					await AddFilterUser(user, negative, unchanged)
-					continue
+				} else {
+					user = await UserSchema.findOne({ $text: { $search: argument }}, {realname: 1, beatsaber: 1})
 				}
-				user = await UserSchema.findOne({ $text: { $search: argument }}, {realname: 1, beatsaber: 1})
 				await AddFilterUser(user, negative, unchanged)
 				continue
 			}

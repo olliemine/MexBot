@@ -18,7 +18,6 @@ module.exports = {
 		member = await server.members.fetch(member.id)
 		if(!member) return message.channel.send({content: "Tienes que mencionar a un usuario valido"})
 		const user = await UserSchema.findOne({ discord: member.id }, {realname: 1, bsactive: 1, country: 1, lastrank: 1})
-		if(member.roles.highest.position > server.members.resolve(client.user).roles.highest.position) return message.channel.send({content: "Cant change name because role higher than bot."})
 		MainChangename(user, member, message, args)
 	},
 };

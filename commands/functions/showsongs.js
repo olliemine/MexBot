@@ -246,7 +246,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 		await CacheControl.AddMap()
 		CacheControl.PostEmbed()
 	}catch(e){
-		ErrorHandler(e, "Couldnt post embed")
+		return ErrorHandler(e, "Couldnt post embed")
 	}
 	const buttoncollector = msg.createMessageComponentCollector({ componentType: "BUTTON", time: (1000*60)*5})
 	buttoncollector.on("collect", async i => {

@@ -52,7 +52,6 @@ module.exports = async () => {
 	const timeoutTest = await timeout(connect(), 5000)
 	if(!timeoutTest) return
 	const LastRankedMap = await redisClient.get("LastRankedMap")
-	//const LastRankedMap = 398711
 	while(!found) {
 		const res = await fetch(`https://scoresaber.com/api/leaderboards?ranked=true&page=${page}`)
 		if(res.status != 200) {
@@ -61,7 +60,6 @@ module.exports = async () => {
 		}
 		const body = await res.json()
 		if(!NewLastRankedMap) NewLastRankedMap = body.leaderboards[0].id
-		console.log(NewLastRankedMap == LastRankedMap)
 		if(NewLastRankedMap == LastRankedMap) break
 		body.leaderboards.forEach(leaderboard => {
 			if(found) return

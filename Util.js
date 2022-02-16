@@ -92,3 +92,44 @@ module.exports.checkNicknameChangePermission = (member) => {
 	if(member.roles.highest.position >= server.members.resolve(client.user).roles.highest.position || server.ownerId === member.id) return false
 	return true
 }
+
+
+/**
+ * A function that returns the status of various fetch requests
+ * 
+ * @param {function} func Function that will be executed with the provided arguments
+ * @param {Array} init_args Arguments to pass to the func
+ * @param {number} [maxRetries=5] Max retries till the function is rejected
+ * @returns {Promise<Array<import("node-fetch").Response>>}
+ */
+module.exports.GetPromises = async (func, init_args, maxRetries = 5) => {
+	return new Promise((resolve, reject) => {
+		let full = []
+		let timesExecuted = 0
+		async function promise(args) {
+			timesExecuted++
+			if(timesExecuted > maxRetries) return reject("Max retries exceeded")
+			let promises = []
+			args.forEach(d => promises.push(func(d)))
+			const unfulldata = await Promise.all(promises)
+			let checkagain = []
+			let fullCounter = -1
+			let argCounter = -1
+			for await(const res of unfulldata) {
+				argCounter++
+				do {
+					fullCounter++
+				} while(full[fullCounter])
+
+				if(res.status === 200) {
+					full[fullCounter] = await res.json()
+					continue
+				}
+				checkagain.push(args[argCounter])
+			}
+			if(checkagain.length) return setTimeout(() => { promise(checkagain) }, 1000*10)
+			resolve(full)
+		}
+		promise(init_args)
+	})
+}

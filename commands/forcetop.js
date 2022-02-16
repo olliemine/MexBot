@@ -39,7 +39,6 @@ module.exports = {
 				}
 				await UserSchema(userinfo).save()
 			}
-			console.log(userinfo.realname)
 			await StoreUserFull(userinfo)
 			await GetAll()
 			return message.channel.send({content: `Succesfully saved player ${userinfo.realname}, ${new Date() - time}`})

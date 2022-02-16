@@ -1,18 +1,18 @@
-module.exports = class Score {
-	constructor(map) {
-		this.map = map.leaderboard.id,
-		this.songName = map.leaderboard.songName,
-		this.songAuthorName = map.leaderboard.songAuthorName,
-		this.mapAuthor = map.leaderboard.levelAuthorName,
-		this.score = map.score.baseScore,
-		this.hash = map.leaderboard.songHash.toUpperCase(),
-		this.diff = map.leaderboard.difficulty.difficultyRaw,
-		this.diffSort = map.leaderboard.difficulty.difficulty,
-		this.date = map.score.timeSet,
-		this.mods = map.score.modifiers.split(","), 
-		this.pp = map.score.pp.toFixed(1),
-		this.ranked = map.leaderboard.ranked,
-		this.stars = map.leaderboard.stars,
-		this.maxscore = map.leaderboard.maxScore
+module.exports = (map) => {
+	return {
+		map = map.leaderboard.id,
+		songName = map.leaderboard.songName,
+		songAuthorName = map.leaderboard.songAuthorName,
+		mapAuthor = map.leaderboard.levelAuthorName,
+		score = map.score.baseScore,
+		hash = map.leaderboard.songHash.toUpperCase(),
+		diff = map.leaderboard.difficulty.difficultyRaw,
+		diffSort = map.leaderboard.difficulty.difficulty,
+		date = map.score.timeSet,
+		mods = map.score.modifiers.split(","), 
+		pp = map.score.pp.toFixed(1),
+		ranked = map.leaderboard.ranked,
+		stars = map.leaderboard.stars,
+		maxscore = map.leaderboard.maxScore
 	}
 }
