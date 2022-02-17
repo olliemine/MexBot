@@ -139,11 +139,12 @@ module.exports = async () => {
 			users = users.filter(element => element.beatsaber != user.row.id)
 			if(user.row.name != user.user.realname) await user.UpdateName()
 			if(user.user.lastrank == user.row.countryRank) continue
+			if(user.user.lastrank > 50) return
 			usersInfoLog.push({
-				"user": userinfo.realname,
-				"update":  userinfo.lastrank - user.countryRank, 
-				"lastrank": userinfo.lastrank,
-				"newrank": user.countryRank
+				"user": user.user.realname,
+				"update":  user.user.lastrank - user.row.countryRank, 
+				"lastrank": user.user.lastrank,
+				"newrank": user.row.countryRank
 			})
 			await user.Update()
 		}
