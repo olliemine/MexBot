@@ -59,6 +59,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			this.msg = msg
 			this.row = row
 			this.playermode = playermode
+			this.warnings = ""
 			AddCommandInstance(message, this)
 		}
 		DifficultySelector(){
@@ -92,7 +93,7 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			const map = this.maps[this.page]
 			const info = map.Info
 			const diff = map.Difficulties[this.diff]
-			const DiffSelector = this.DifficultySelector(map.Difficulties, diff.DiffInfo.FormatDiff)
+			const DiffSelector = this.DifficultySelector()
 			const timePlaySet = this.playermode ? `${timeSince(this.getPlayerLeaderboard().Date)} ago\n` : ""
 			return new MessageEmbed()
 			.setColor(map.Color)
@@ -141,6 +142,18 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 			} else {
 				this.maps[this.page].Info = datamaps[this.page]
 				this.maps[this.page].Difficulties = await LevelSchema.find({ "Hash": Hash, "DiffInfo.Mode": "Standard" }).sort({"DiffInfo.DiffSort": -1})
+				if(!this.maps[this.page].Difficulties.length) {
+					if(this.page === 0) {
+						CloseCache()
+						return this.msg.edit({content: ":x: This map has been manually deleted or isn't standard mode."})
+					} //If no map existed in the first place
+
+					this.maps.splice(this.page, 1)
+					datamaps.splice(this.page, 1)
+					this.page--
+					this.warnings = "Map was manually deleted or isn't standard mode, please try again."
+					return await this.AddMap()
+				} //If either map has been removed manually or Map is not standard mode.
 			}
 			this.maps[this.page].LastDiff = 0
 			const response = await fetch(`https://na.cdn.beatsaver.com/${Hash.toLowerCase()}.jpg`)
@@ -158,17 +171,18 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 				})
 				return
 			}
-			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}>`, components: [this.row], embeds: [this.NormalEmbed()]}).catch((err) => {
+			this.msg.edit({content: `<https://beatsaver.com/maps/${info.Code}> ${this.warnings}`, components: [this.row], embeds: [this.NormalEmbed()]}).catch((err) => {
 				ErrorHandler(err, "Unexpected Error")
 				return
 			})
+			if(this.warnings) this.warnings = ""
 		}
 		async AddPage() {
 			try {
 				if(!this.maps[this.page]) await this.AddMap()
 				this.diff = this.maps[this.page].LastDiff
 			} catch(err) {
-				ErrorHandler(err, "Couldnt get song")
+				ErrorHandler(err, "Error while fetching from database")
 				return
 			}
 		}
@@ -305,7 +319,11 @@ module.exports = async (datamaps, message, mode, sPlayer = null) => {
 		const number = parseInt(m.content) - 1
 		if(number <= -1 || number >= datamaps.length) return
 		await CacheControl.GotoPage(number)
-		CacheControl.PostEmbed()
+		try {
+			CacheControl.PostEmbed()
+		} catch(e) {
+			ErrorHandler(e, "Couldnt post embed")
+		}
 		if(closed) return
 		if(m.guildId === serverId) {
 			m.delete()
