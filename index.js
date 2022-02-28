@@ -20,12 +20,12 @@ const fs = require("fs")
 const getplayer = require("./commands/getplayer")
 const VerificacionID = require("./functions/Verification")
 const RankedMaps = require("./functions/RankedMaps")
-const { GetBacktext } = require("./Util")
+const { GetBacktext, checkNicknameChangePermission } = require("./Util")
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 const redis = require("redis");
 const redisClient = redis.createClient({ url: process.env.REDIS_URL })
 const WebSocket = require('ws');
-redisClient.connect().catch(err => console.log(err)) 
+redisClient.connect()
 let RecentlyExecuted = []
 let BeatsaverWebSocketReconnectRetries = 0
 
