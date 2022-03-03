@@ -18,7 +18,7 @@ const ErrorHandler = require("../../functions/error")
 module.exports = (user, member, message, args) => {
 	if(!checkNicknameChangePermission(member)) return message.channel.send({content: "Cant change nickname"})
 	function SetServerNickname(name) {
-		member.setNickname(name).then(err => ErrorHandler(err, "Unknown Error", message))
+		member.setNickname(name).catch(err => ErrorHandler(err, "Unknown Error", message))
 		message.channel.send({content: NoMentionText(`Changed name to ${name}`)})
 	}
 	function NoMentionText(text) {
