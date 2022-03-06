@@ -190,11 +190,9 @@ setInterval(() => {
 }, (1000*60)*30)//30m
 
 function SendAndDelete(msgcontent, msg) {
-	msg.delete().catch((error) => errorhandle(error))
+	msg.delete()
 	msg.channel.send({ content: msgcontent }).then(message => {
-		setTimeout(() => {
-			message.delete()
-		}, (1000*60)*4)
+		setTimeout(() => message.delete(), 1000*3.5) 
 	}).catch((error) => errorhandle(error))
 }
 
