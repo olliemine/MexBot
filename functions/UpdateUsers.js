@@ -115,7 +115,11 @@ module.exports = async () => {
 	if(!users) return
 	let userIds = []
 	users.forEach((user) => userIds.push(user.beatsaber))
-	const resIndividualInfo = await GetPromises(GetPage, userIds)
+	try{
+		var resIndividualInfo = await GetPromises(GetPage, userIds)
+	} catch(e) {
+		return console.log(e)
+	}
 	info = ConvertToClasses(resIndividualInfo)
 	await SaveUsers(info)
 

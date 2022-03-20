@@ -18,7 +18,11 @@ module.exports = (userid) => {
 		const pages = await getPages()
 		let functionPages = []
 		pages.forEach((page) => functionPages.push(`https://scoresaber.com/api/player/${userid.beatsaber}/scores?limit=100&sort=recent&withMetadata=false&page=${page.toString()}`))
-		const data = await GetPromises(fetch, functionPages)
+		try{
+			var data = await GetPromises(fetch, functionPages)
+		} catch(e) {
+			throw e
+		}
 		if(!data) throw "Invalid Data"
 		for await(let dataPage of data) {
 			const body = dataPage

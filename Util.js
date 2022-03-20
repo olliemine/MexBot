@@ -111,7 +111,11 @@ module.exports.GetPromises = async (func, init_args, maxRetries = 5) => {
 			if(timesExecuted > maxRetries) return reject("Max retries exceeded")
 			let promises = []
 			args.forEach(d => promises.push(func(d)))
-			const unfulldata = await Promise.all(promises)
+			try {
+				var unfulldata = await Promise.all(promises)
+			} catch(e) {
+				return reject("Unexpected error in undefined promise")
+			}
 			let checkagain = []
 			let fullCounter = -1
 			let argCounter = -1

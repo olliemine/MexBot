@@ -17,10 +17,12 @@ module.exports = async (customPlayers = null) => { //country: "MX", bsactive: tr
 		players.forEach(player => playersId.push(player.beatsaber))
 		let NewPlay = false
 		const GetFirstMap = async (beatsaber) => fetch(`https://scoresaber.com/api/player/${beatsaber}/scores?sort=recent&page=1&withMetadata=false`)
-		
-		full = await GetPromises(GetFirstMap, playersId)
+		try{
+			var full = await GetPromises(GetFirstMap, playersId)
+		} catch(e) {
+			return console.log(e)
+		}
 		if(!full) return
-
 		let checkAgain = []
 		let counter = 0
 		for await (const data of full) {
