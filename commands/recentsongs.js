@@ -5,7 +5,7 @@ const ErrorHandler = require("../functions/error")
 
 module.exports = {
 	name : "recentsongs",
-	aliases: ["rsongs", "recent", "rs"],
+	aliases: ["recent", "rs"],
 	admin: false,
 	dm: true,
 	dev: false,

@@ -26,13 +26,14 @@ module.exports = async () => {
 			this.user = users.find(element => element.beatsaber == row.id)
 			this.member = this.user ? server.members.cache.get(this.user.discord) : null
 		}
-		async UpdateIA() {
-			if(!this.user) throw "No user"
-			infohandle("UpdateUsers", `${this.user.realname} is being activated`)
+		async UpdateIA(inactiveUser) {
+			this.user = inactiveUser
+			this.member = server.members.cache.get(this.user.discord)
 			await UserSchema.findOneAndUpdate({ beatsaber: this.user.beatsaber }, { bsactive: true })
-			if(!this.member) return
+			if(!this.member) return	
 			CheckRoles(this.user.lastrank, this.member)
-			await this.setNickname(this.member, `#${this.user.lastrank} | ${this.user.name}`)
+			await this.setNickname(`#${this.user.lastrank} | ${this.user.name}`)
+			infohandle("UpdateUsers", `${this.user.realname} has been activated activated`)
 		}
 		async Add() {
 			const user = {
@@ -128,9 +129,9 @@ module.exports = async () => {
 	async function SaveUsers(userClasses) {
 		for await(const user of userClasses) {
 			if(!user.user) {
-				const exists = await UserSchema.findOne({ beatsaber: user.id }, {playHistory: 0, plays: 0})
-				if(exists) {
-					await user.UpdateIA()
+				const inactiveUser = await UserSchema.findOne({ beatsaber: user.row.id }, {playHistory: 0, plays: 0})
+				if(inactiveUser) {
+					await user.UpdateIA(inactiveUser)
 					continue
 				}
 				await user.Add()
