@@ -58,7 +58,7 @@ module.exports = async (customPlayers = null) => { //country: "MX", bsactive: tr
 				checkAgain.push(user)
 				continue
 			}
-			await StoreMaps(newscores, user, firstmap)
+			await StoreMaps(newscores.reverse(), user, firstmap)
 			continue
 		}
 		for await (const user of checkAgain) {
