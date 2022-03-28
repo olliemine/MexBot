@@ -7,6 +7,7 @@ const LevelSchema = require("../models/LevelSchema")
 const BaseLevelSchema = require("../models/BaseLevelSchema")
 const Vibrant = require('node-vibrant')
 const { client } = require("../index")
+const table = require("text-table")
 
 module.exports = async () => {
 	async function connect() {
@@ -65,9 +66,6 @@ module.exports = async () => {
 			if(found) return
 			if(leaderboard.id == LastRankedMap) return found = true
 			if(newestHash != leaderboard.songHash) {
-				if(NewLastRankedMap[arrayNum]) NewLastRankedMap[arrayNum].sort((a, b) =>{
-					return b.difficulty.difficulty - a.difficulty.difficulty
-				})
 				newestHash = leaderboard.songHash
 				arrayNum++
 				NewRankedMaps[arrayNum] = []
@@ -77,7 +75,6 @@ module.exports = async () => {
 					"hash": leaderboard.songHash,
 					"songauthor": leaderboard.songAuthorName,
 					"mapper": leaderboard.levelAuthorName,
-					"code": null
 				})
 			}
 			NewRankedMaps[arrayNum].push({
@@ -91,16 +88,27 @@ module.exports = async () => {
 			continue
 		}
 		if(!found) page++
-		if(found) NewLastRankedMap[arrayNum].sort((a, b) =>{
-			return b.difficulty.difficulty - a.difficulty.difficulty
-		})
 	}
 	if(!NewRankedMaps.length) return redisClient.quit()
 	const channel = await client.channels.cache.get(rankedmapsChannel)
-	let firsttime = true
 	let updateBulkWrite = []
 	let embeds = [[]]
 	let embedsPointer = 0
+	let NewRankedMapsStarRatings = [0, 0, 0, 0, 0, 0, 0, 0, 0] //0-3 3-6 6-9 9-10 10-11 11-12 12-13 13-14 14+
+	function addToStarRatings(leaderboards) {
+		leaderboards.forEach(leaderboard => {
+			const stars = leaderboard.stars
+			if(stars < 3) return NewRankedMapsStarRatings[0]++
+			if(stars < 6) return NewRankedMapsStarRatings[1]++
+			if(stars < 9) return NewRankedMapsStarRatings[2]++
+			if(stars < 10) return NewRankedMapsStarRatings[3]++
+			if(stars < 11) return NewRankedMapsStarRatings[4]++
+			if(stars < 12) return NewRankedMapsStarRatings[5]++
+			if(stars < 13) return NewRankedMapsStarRatings[6]++
+			if(stars < 14) return NewRankedMapsStarRatings[7]++
+			NewRankedMapsStarRatings[8]++
+		});
+	}
 	for await(const leaderboards of NewRankedMaps) {
 		const body = leaderboards.shift()
 		var response = await fetch(body.coverImage)
@@ -116,6 +124,7 @@ module.exports = async () => {
 			embedsPointer++
 			embeds[embedsPointer] = []
 		}
+		addToStarRatings(leaderboards)
 		embeds[embedsPointer].push(embed)
 		await LevelSchema.updateMany({ Hash: body.hash }, { Ranked: true })
 		await BaseLevelSchema.updateOne({ Hash: body.hash }, { Ranked: true })
@@ -127,10 +136,38 @@ module.exports = async () => {
 		})
 	}
 	embeds.forEach(e => {
-		let text = firsttime ? `<@&${rankedNotiRole}>` : " "
-		channel.send({ embeds: e, content: text })
-		firsttime = false
+		channel.send({ embeds: e })
 	})
+	function GetStarRatingsfromIndex(index) {
+		switch(index) {
+			case 0:
+				return "0-3"
+			case 1:
+				return "3-6"
+			case 2:
+				return "6-9"
+			case 3:
+				return "9-10"
+			case 4:
+				return "10-11"
+			case 5:
+				return "11-12"
+			case 6:
+				return "12-13"
+			case 7:
+				return "13-14"
+			case 8:
+				return "14+"
+		}
+	}
+	let NewRankedMapsStarRatingsText = ""
+	let Options = []
+	NewRankedMapsStarRatings.forEach((num, index) => {
+		if(num === 0) return
+		Options.push([`**${num}**`, `${GetStarRatingsfromIndex(index)} ★`])
+	})
+	NewRankedMapsStarRatingsText = table(Options)
+	channel.send({ content: `<@&${rankedNotiRole}> New ranked maps! ${NewRankedMaps.length} total maps\n\n${NewRankedMapsStarRatingsText}`})
 	await LevelSchema.bulkWrite(updateBulkWrite, { ordered: false })
 	await redisClient.set("LastRankedMap", NewLastRankedMap)
 	redisClient.quit()
