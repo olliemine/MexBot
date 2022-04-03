@@ -12,17 +12,10 @@ module.exports = {
 	async execute(message) {
 		const botms = Date.now() - message.createdTimestamp
 		const discordms = client.ws.ping
-		const scoresaberms = () => {
-			const timer = new Date()
-			return fetch("https://scoresaber.com").then((json) => {
-				if(json.status != 200) return "Offline"
-				return new Date() - timer + "ms"
-			})
-		}
 		const scoresaberapims = () => {
 			const timer = new Date()
-			return fetch("https://scoresaber.com/api").then((json) => {
-				if(json.status != 200 && json.status != 429) return "Offline"
+			return fetch("https://scoresaber.com/api/player/76561199006338762/scores?sort=recent&page=1").then((json) => {
+				if(json.status != 200 && json.status != 429) return `Offline | ${json.statusText}`
 				return new Date() - timer + "ms"
 			})
 		}
@@ -31,7 +24,6 @@ module.exports = {
 		.setDescription(`
 Bot Latency: ${botms}ms
 Discord API Latency: ${discordms}ms
-Scoresaber Latency: ${await scoresaberms()}
 Scoresaber API Latency: ${await scoresaberapims()}`)
 		.setFooter(version)
 		message.channel.send({ content: "🏓Pong!", embeds: [embed]});
