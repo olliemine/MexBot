@@ -156,6 +156,16 @@ client.on("guildMemberAdd", async (member) => {
 	})
 })
 
+client.on("userUpdate", async (olduser, newuser) => {
+	console.log(newuser.username)
+	if(olduser.username === newuser.username) return
+	await UserSchema.findOneAndUpdate({
+		discord: olduser.id
+	}, {
+		dsusername: newuser.username
+	})
+})
+
 for(const file of commandFiles) {
 	const command = require(`./commands/${file}`);
 	client.commands.set(command.name, command);

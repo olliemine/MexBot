@@ -9,6 +9,11 @@ const { serverId, topRoles } = require("../info.json")
 const { client } = require("../index")
 const { checkNicknameChangePermission, GetPromises } = require("../Util")
 
+/**
+ *  @typedef {import("./GetUser").ScoresaberUserBody} ScoresaberUserBody
+ * 	@typedef {import("../Util").UserObject} UserObject
+ */
+
 module.exports = async () => {
 	/** 
 	 * @returns {Array<User>} 
@@ -22,7 +27,13 @@ module.exports = async () => {
 	}
 	class User {
 		constructor(row) {
+			/**
+			 * @type {ScoresaberUserBody}
+			 */
 			this.row = row
+			/**
+			 * @type {UserObject}
+			 */
 			this.user = users.find(element => element.beatsaber == row.id)
 			this.member = this.user ? server.members.cache.get(this.user.discord) : null
 		}
@@ -43,6 +54,7 @@ module.exports = async () => {
 				"country": "MX",
 				"bsactive": true,
 				"dsactive": false,
+				"dsusername": null,
 				"name": null,
 				"lastrank": 50,
 				"lastmap": null,

@@ -12,6 +12,7 @@ const { serverId } = require("./info.json")
  * @prop {string} country The country of the user
  * @prop {boolean} bsactive The users activeness in scoresaber
  * @prop {boolean} dsactive Whether the user is active in discord
+ * @prop {string} dsusername The username of the user in discord
  * @prop {string} name The users name in discord
  * @prop {number} lastrank The last updated rank of the user
  * @prop {string} lastmap The last updated map of the user

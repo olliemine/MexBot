@@ -35,6 +35,7 @@ module.exports = async (user, scoresaber) => {
 		}, {
 			discord: user.id,
 			dsactive: true,
+			dsusername: user.user.username,
 			name: username
 		})
 		return [user.user.username, body.name]
@@ -46,6 +47,7 @@ module.exports = async (user, scoresaber) => {
 		"country": body.country,
 		"bsactive": !body.inactive,
 		"dsactive": true,
+		"dsusername": user.user.username,
 		"name": username,
 		"lastrank": body.country == "MX" ? body.countryRank : null,
 		"lastmap": null,
